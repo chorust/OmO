@@ -21,19 +21,25 @@ jobs:
             target: x86_64-unknown-linux-gnu
             asset: linux-x86_64
             native_packages: true
+            build_jobs: ""
           - os: ubuntu-24.04-arm
             target: aarch64-unknown-linux-gnu
             asset: linux-aarch64
             native_packages: true
-          - os: macos-14
+            build_jobs: "2"
+          - os: macos-15
             target: aarch64-apple-darwin
             asset: macos-aarch64
             native_packages: false
+            build_jobs: ""
           - os: macos-15-intel
             target: x86_64-apple-darwin
             asset: macos-x86_64
             native_packages: false
+            build_jobs: ""
     runs-on: ${{ matrix.os }}
+    env:
+      CARGO_INCREMENTAL: "0"
     steps:
       - uses: actions/checkout@v4
         with:
@@ -57,6 +63,9 @@ jobs:
           ASSET: ${{ matrix.asset }}
           TAG: ${{ github.event.release.tag_name }}
         run: |
+          if [ -n "${{ matrix.build_jobs }}" ]; then
+            export CARGO_BUILD_JOBS="${{ matrix.build_jobs }}"
+          fi
           cargo +1.100.0 build --release --locked --target "$TARGET" \
             --bin omo-app --bin omo-worker
           archive="omobench-${TAG}-${ASSET}.tar.gz"

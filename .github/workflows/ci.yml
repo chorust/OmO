@@ -13,16 +13,23 @@ jobs:
           - os: ubuntu-24.04
             target: x86_64-unknown-linux-gnu
             duckomo_platform: linux_amd64
+            build_jobs: ""
           - os: ubuntu-24.04-arm
             target: aarch64-unknown-linux-gnu
             duckomo_platform: linux_arm64
-          - os: macos-14
+            build_jobs: "2"
+          - os: macos-15
             target: aarch64-apple-darwin
             duckomo_platform: osx_arm64
+            build_jobs: ""
           - os: macos-15-intel
             target: x86_64-apple-darwin
             duckomo_platform: ""
+            build_jobs: ""
     runs-on: ${{ matrix.os }}
+    env:
+      CARGO_INCREMENTAL: "0"
+      CARGO_PROFILE_DEV_DEBUG: "0"
     steps:
       - uses: actions/checkout@v4
       - name: Install Rust 1.100.0
@@ -34,9 +41,17 @@ jobs:
           sudo apt-get install -y pkg-config libgtk-4-dev libpango1.0-dev \
             libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev
       - name: Build locked workspace
-        run: cargo +1.100.0 build --workspace --locked
+        run: |
+          if [ -n "${{ matrix.build_jobs }}" ]; then
+            export CARGO_BUILD_JOBS="${{ matrix.build_jobs }}"
+          fi
+          cargo +1.100.0 build --workspace --locked
       - name: Test locked workspace
-        run: cargo +1.100.0 test --workspace --locked
+        run: |
+          if [ -n "${{ matrix.build_jobs }}" ]; then
+            export CARGO_BUILD_JOBS="${{ matrix.build_jobs }}"
+          fi
+          cargo +1.100.0 test --workspace --locked
       - name: Check dependency boundaries
         run: scripts/check-boundaries.sh
       - name: Check boundary self-test
