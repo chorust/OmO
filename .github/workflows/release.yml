@@ -1,0 +1,71 @@
+name: Release assets
+
+# A published release starts these builds. The workflow builds the four requested
+# release targets and attaches one archive to the same GitHub Release. It does
+# not run on ordinary pushes or pull requests, and it does not create a release.
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build ${{ matrix.asset }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            target: x86_64-unknown-linux-gnu
+            asset: linux-x86_64
+            native_packages: true
+          - os: ubuntu-24.04-arm
+            target: aarch64-unknown-linux-gnu
+            asset: linux-aarch64
+            native_packages: true
+          - os: macos-14
+            target: aarch64-apple-darwin
+            asset: macos-aarch64
+            native_packages: false
+          - os: macos-15-intel
+            target: x86_64-apple-darwin
+            asset: macos-x86_64
+            native_packages: false
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
+
+      - name: Install Rust 1.100.0
+        run: |
+          rustup toolchain install 1.100.0 --profile minimal --component rustfmt
+          rustup target add ${{ matrix.target }}
+
+      - name: Install Linux native prerequisites
+        if: matrix.native_packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pkg-config libgtk-4-dev libpango1.0-dev \
+            libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev
+
+      - name: Build locked release binaries
+        env:
+          TARGET: ${{ matrix.target }}
+          ASSET: ${{ matrix.asset }}
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          cargo +1.100.0 build --release --locked --target "$TARGET" \
+            --bin omo-app --bin omo-worker
+          archive="omobench-${TAG}-${ASSET}.tar.gz"
+          tar -C "target/${TARGET}/release" -czf "$archive" omo-app omo-worker
+          test -s "$archive"
+          echo "ARCHIVE=${archive}" >> "$GITHUB_ENV"
+
+      - name: Attach archive to GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.release.tag_name }}
+        run: gh release upload "$TAG" "$ARCHIVE" --repo "$GITHUB_REPOSITORY" --clobber

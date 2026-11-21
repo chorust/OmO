@@ -1,0 +1,13 @@
+{
+  "captured_at": "2026-11-17T15:06:34+08:00",
+  "pid": 2179273,
+  "process": "omo-worker",
+  "sample_seconds": 5,
+  "state_start": "S",
+  "state_end": "S",
+  "cpu_ticks_start": 4644,
+  "cpu_ticks_end": 4645,
+  "cpu_tick_delta": 1,
+  "clock_ticks_per_second": 100,
+  "cmdline": "/home/blizhan/repo/github/OmO/target/debug/omo-worker"
+}

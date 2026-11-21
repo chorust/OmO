@@ -1,0 +1,60 @@
+[package]
+name = "connector"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+sha2 = "0.10"
+parquet = "60"
+arrow = { version = "60", features = ["prettyprint", "csv"] }
+duckdb = { version = "1.20000.1" }
+futures-util = "0.3"
+rust_decimal = { version = "1", features = ["db-tokio-postgres"] }
+rusqlite = { version = "^0.40.1", features = [
+  "bundled",
+  "column_decltype",
+  "modern_sqlite",
+] }
+mysql = { version = "28.0.0" }
+tokio-postgres = { version = "0.7.18", features = [
+  "with-serde_json-1",
+  "array-impls",
+  "with-chrono-0_4",
+] }
+postgres-native-tls = "0.5"
+native-tls = "0.2"
+anyhow = "1"
+url = "^2.5.0"
+nanoid = "0.4.0"
+chrono = "^0.4"
+chrono-tz = "^0.8"
+async-trait = "^0.1"
+time = "0.3.34"
+uuid = { version = "1.7.0", features = ["v4"] }
+tokio = { version = "1.36.0", features = [
+  "macros",
+  "rt-multi-thread",
+  "time",
+  "sync",
+  "test-util",
+] }
+sqlparser = { version = "^0.63", features = ["json_example"] }
+sqlformat = "^0.5"
+log = "^0.4"
+glob = "*"
+itertools = "*"
+clickhouse = { version = "0.15.2", features = ["rustls-tls"] }
+rust_xlsxwriter = "^0.97.1"
+walkdir = "2"
+regex = "*"
+calamine = "^0.33.0"
+russh = "0.62"
+ssh2-config-rs = "0.7"
+
+
+[target.'cfg(not(target_os = "windows"))'.dependencies]
+duckdb = { version = "1.20000.1", features = ["bundled", "extensions-full"] }
+# [features]
+# duckdb = ["duckdb/bundled", "duckdb/extensions-full"]

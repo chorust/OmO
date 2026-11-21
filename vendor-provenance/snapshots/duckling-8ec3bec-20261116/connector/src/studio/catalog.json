@@ -1,0 +1,78 @@
+{
+  "schemaVersion": 1,
+  "catalogRevision": "m1-discovery-linux-arm64-2026-11-11",
+  "products": [
+    {
+      "productId": "ecmwf_ifs025",
+      "title": "ECMWF IFS 0.25",
+      "provider": "Open-Meteo",
+      "providerUrl": "https://open-meteo.com/",
+      "licenseUrl": null,
+      "attribution": "Weather data by Open-Meteo.com",
+      "representation": "om-rolling-data",
+      "directoryTemplate": "https://openmeteo.s3.us-west-2.amazonaws.com/data/ecmwf_ifs025/temperature_2m",
+      "modelKey": "ecmwf_ifs025",
+      "nativeStepSeconds": 10800,
+      "timeOriginUtc": null,
+      "readiness": "pending",
+      "evidenceRef": "specs/009-station-forecast-series/evidence/implementation/catalog-discovery.json",
+      "variables": [
+        {
+          "variableId": "temperature_2m",
+          "unit": "°C",
+          "heightOrLevel": "2 m",
+          "quantityKind": "air_temperature",
+          "readiness": "pending"
+        }
+      ]
+    },
+    {
+      "productId": "ncep_gfs025",
+      "title": "NCEP GFS 0.25",
+      "provider": "Open-Meteo",
+      "providerUrl": "https://open-meteo.com/",
+      "licenseUrl": null,
+      "attribution": "Weather data by Open-Meteo.com",
+      "representation": "om-rolling-data",
+      "directoryTemplate": null,
+      "modelKey": "ncep_gfs025",
+      "nativeStepSeconds": 3600,
+      "timeOriginUtc": null,
+      "readiness": "pending",
+      "evidenceRef": "specs/009-station-forecast-series/evidence/implementation/catalog-discovery.json",
+      "variables": [
+        {
+          "variableId": "temperature_2m",
+          "unit": null,
+          "heightOrLevel": "2 m",
+          "quantityKind": null,
+          "readiness": "pending"
+        }
+      ]
+    },
+    {
+      "productId": "meteofrance_arpege_world025",
+      "title": "Météo-France ARPEGE World 0.25",
+      "provider": "Open-Meteo",
+      "providerUrl": "https://open-meteo.com/",
+      "licenseUrl": null,
+      "attribution": "Weather data by Open-Meteo.com / Météo-France",
+      "representation": "om-rolling-data",
+      "directoryTemplate": "https://openmeteo.s3.us-west-2.amazonaws.com/data/meteofrance_arpege_world025/temperature_2m",
+      "modelKey": "meteofrance_arpege_world025",
+      "nativeStepSeconds": 3600,
+      "timeOriginUtc": null,
+      "readiness": "pending",
+      "evidenceRef": "specs/009-station-forecast-series/evidence/implementation/live-product-probe-meteofrance.json",
+      "variables": [
+        {
+          "variableId": "temperature_2m",
+          "unit": "°C",
+          "heightOrLevel": "2 m",
+          "quantityKind": "air_temperature",
+          "readiness": "pending"
+        }
+      ]
+    }
+  ]
+}

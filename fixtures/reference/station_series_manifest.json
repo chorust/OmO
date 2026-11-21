@@ -1,0 +1,48 @@
+{
+  "schema": "omo-series-spike-fixture/1",
+  "source_fixture": {
+    "repository": "https://github.com/chorust/duckomo",
+    "source_commit": "bcdb8c0739c55217abd7d342f47004164644ec0d",
+    "source_object_path": "test/data/regions/regions.om",
+    "source_object_sha256": "264fe0905d0681d0fedd08d60a43bf7974cbd161319df77e919f08b4cb582e36",
+    "source_object_bytes": 488,
+    "official_value_reference_path": "fixtures/reference/duckomo-regions-v0.4.0/regions.reference.csv",
+    "official_value_reference_sha256": "98b8349ae035ef9fc14e4e7f37caf5daa2d44f7de2cad5fe3201534cf4be1b32"
+  },
+  "array": {
+    "variable": "value",
+    "array_path": "/",
+    "shape": [2, 3, 5, 5],
+    "dimensions": ["member", "time", "lat", "lon"],
+    "member_index": 0,
+    "chunk_time_length": 3,
+    "time_step_seconds": 3600,
+    "chunk_index": 0,
+    "time_origin_utc": "1970-01-01T00:00:00Z"
+  },
+  "grid": {
+    "version": 1,
+    "type": "regular_latlon",
+    "numeric_policy": "float64_v1",
+    "earth": {"model": "sphere", "radius_m": 6371229.0},
+    "layout": {"nx": 5, "ny": 5, "order": "separate"},
+    "parameters": {
+      "lat0": 20.0,
+      "lon0": 100.0,
+      "dlat": 1.0,
+      "dlon": 1.0
+    }
+  },
+  "spatial_axes": ["lat", "lon"],
+  "nearest": {
+    "method": "sphere_haversine_f64_v1",
+    "tie_break": "lowest row-major point index",
+    "grid_longitude_output": "[-180,180)",
+    "plan_b_buffer_degrees": 0.0001
+  },
+  "window_utc": {
+    "start": "1970-01-01T00:00:00Z",
+    "end": "1970-01-01T02:00:00Z"
+  },
+  "oracle_scope": "Official OM C API value decode plus independent Python nearest-cell and UTC mapping. Source object/version identity is checked between plans, not supplied by the value oracle."
+}

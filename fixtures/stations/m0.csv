@@ -1,0 +1,10 @@
+station_id,latitude,longitude
+inside_center,22.0,102.0
+inside_corner,20.0,100.0
+off_grid,21.2,102.3
+tie_break,21.0,100.5
+wrap_0_360,22.0,462.0
+wrap_negative,22.0,-258.0
+outer_node,24.0,104.0
+outside_longitude,22.0,105.2
+outside_latitude,25.2,102.0

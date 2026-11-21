@@ -1,0 +1,2 @@
+   Compiling omo-app v0.1.0 (/home/blizhan/repo/github/OmO/crates/omo-app)
+    Finished `release` profile [optimized] target(s) in 49.25s

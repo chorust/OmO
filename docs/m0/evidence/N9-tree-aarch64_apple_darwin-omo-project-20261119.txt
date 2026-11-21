@@ -1,0 +1,22 @@
+omo-project v0.1.0 (/home/blizhan/repo/github/OmO/crates/omo-project)
+├── serde v1.0.228
+│   ├── serde_core v1.0.228
+│   └── serde_derive v1.0.228 (proc-macro)
+│       ├── proc-macro2 v1.0.107
+│       │   └── unicode-ident v1.0.27
+│       ├── quote v1.0.47
+│       │   └── proc-macro2 v1.0.107 (*)
+│       └── syn v2.0.119
+│           ├── proc-macro2 v1.0.107 (*)
+│           ├── quote v1.0.47 (*)
+│           └── unicode-ident v1.0.27
+├── serde_json v1.0.145
+│   ├── itoa v1.0.19
+│   ├── memchr v2.8.3
+│   ├── ryu v1.0.23
+│   └── serde_core v1.0.228
+└── thiserror v2.0.17
+    └── thiserror-impl v2.0.17 (proc-macro)
+        ├── proc-macro2 v1.0.107 (*)
+        ├── quote v1.0.47 (*)
+        └── syn v2.0.119 (*)

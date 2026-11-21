@@ -1,0 +1,779 @@
+{
+  "schema": "omo-series-spike-report/1",
+  "status": "passed",
+  "plan": "b",
+  "channel": "github-release-unsigned",
+  "platform": "linux_arm64",
+  "locked_artifact_sha256": "8fc579a83eccd25729c7f345e70295e3b466d81a2aaeb34d3d2a59d277cb6c2e",
+  "locked_artifact_bytes": 8783732,
+  "loaded_extension_sha256": "2189a68bebc26f2eb7fa7b7b0f1fb2e5db9bd4cea543d5941ec165f05046a83e",
+  "station_count": 9,
+  "window_utc": [
+    "1970-01-01T00:00:00Z",
+    "1970-01-01T02:00:00Z"
+  ],
+  "schema_columns": [
+    "station_id",
+    "variable",
+    "valid_time",
+    "value",
+    "grid_lat",
+    "grid_lon",
+    "distance_m",
+    "source_object",
+    "object_version"
+  ],
+  "rows_written": 27,
+  "unique_station_time_keys": 27,
+  "duplicate_rows_removed": 0,
+  "reference_comparison": {
+    "status": "passed",
+    "expected_rows": 27,
+    "actual_rows": 27,
+    "actual_unique_keys": 27,
+    "semantic_checks": {
+      "distance_m": {
+        "status": "passed",
+        "compared": 27,
+        "mismatches": []
+      },
+      "grid_lat": {
+        "status": "passed",
+        "compared": 27,
+        "mismatches": []
+      },
+      "grid_lon": {
+        "status": "passed",
+        "compared": 27,
+        "mismatches": []
+      },
+      "nearest_point_index": {
+        "status": "passed",
+        "compared": 27,
+        "mismatches": []
+      },
+      "station_variable_valid_time_key": {
+        "status": "passed",
+        "compared": 27,
+        "mismatches": []
+      },
+      "value": {
+        "status": "passed",
+        "compared": 27,
+        "mismatches": []
+      }
+    },
+    "provenance_check": {
+      "status": "passed",
+      "compared": 21,
+      "mismatches": []
+    },
+    "tolerances": {
+      "distance_absolute_meters": 0.0001,
+      "grid_coordinate_absolute_degrees": 1e-10,
+      "value_absolute": 1e-6
+    }
+  },
+  "query_elapsed_ms": 120,
+  "scan_measurement": {
+    "scan_id": 0,
+    "operation": "read_om_regions",
+    "data_bytes": 206,
+    "physical_read_bytes": 624,
+    "metadata_bytes": 393,
+    "index_bytes": 25,
+    "scan_complete": true,
+    "raw_metrics": {
+      "per_chunk": [
+        {
+          "data_bytes": 206,
+          "index_bytes": 25,
+          "metadata_bytes": 393,
+          "operation": "read_om_regions",
+          "physical_read_bytes": 624,
+          "raw_metrics": {
+            "coordinate_preparation": {
+              "complete": true,
+              "evaluations": 0
+            },
+            "grid": {
+              "definition": "nx=5,ny=5,lat0=20,lon0=100,dlat=1,dlon=1,order=separate",
+              "layout": "separate:lat,lon",
+              "source": "explicit"
+            },
+            "legacy_v2": {
+              "active_workers": 1,
+              "bind_metadata_bytes": 131,
+              "bind_metadata_requests": 3,
+              "bytes_fetched": 624,
+              "cache_policy": {
+                "application_cache": "removed"
+              },
+              "candidate_rows": 27,
+              "comparison_passed": null,
+              "coordinate_tolerance": 9.999999999999999e-10,
+              "decode_count_complete": true,
+              "dependency_commits": {
+                "duckdb": "08e34c447bae34eaee3723cac61f2878b6bdf787",
+                "extension-ci-tools": "b777c70d30942cca5bef62d6d4fa23a13362f398",
+                "om-file-format": "d8855e418e2231ae8439f0c7e840fa3f93b371e3"
+              },
+              "elapsed_ms": 11.685029,
+              "environment": {
+                "build": "release",
+                "platform": ";compiled=linux-aarch64"
+              },
+              "error_category": "",
+              "fallback_reasons": [],
+              "filter_callback_invoked": true,
+              "fixture_id": "",
+              "fixture_sha256": "",
+              "grid_definition": "nx=5,ny=5,lat0=20,lon0=100,dlat=1,dlon=1,order=separate",
+              "grid_source": "explicit",
+              "logical_positions_match": null,
+              "metadata_bytes": 393,
+              "metadata_requests": 9,
+              "null_positions_match": null,
+              "optimizer_empty": false,
+              "peak_rss_bytes": 110047232,
+              "query_id": "2-5",
+              "read_requests": 31,
+              "reference_identity": "",
+              "residual_filter_retained": true,
+              "result_rows": null,
+              "scan_metadata_bytes": 262,
+              "scan_metadata_requests": 6,
+              "scan_tasks_claimed": 9,
+              "scenario": "",
+              "schema_version": 2,
+              "selection_mode": "axis_restricted",
+              "spatial_layout": "separate:lat,lon",
+              "sql": "<redacted>",
+              "status": "success",
+              "variables": {
+                "/": {
+                  "data_bytes": 206,
+                  "data_requests": 21,
+                  "decode_count_complete": true,
+                  "decoded_chunks": 21,
+                  "index_bytes": 25,
+                  "index_requests": 1
+                }
+              }
+            },
+            "legacy_v3": {
+              "axes": {
+                "fallback_reasons": [],
+                "optimizer_empty": false,
+                "selection_mode": "axis_restricted"
+              },
+              "bytes_fetched": 624,
+              "cache": {
+                "bypass_reason": "removed",
+                "capacity_bytes": 0,
+                "charged_bytes": 0,
+                "control_bytes": 0,
+                "enabled": false,
+                "evictions": 0,
+                "hit_bytes": 0,
+                "hits": 0,
+                "misses": 0,
+                "peak_charged_bytes": 0,
+                "scope": "connection",
+                "version_strength": "unverified"
+              },
+              "candidate_rows": 27,
+              "coordinate": {
+                "data_bytes": 0,
+                "data_requests": 0,
+                "decode_count_complete": true,
+                "decoded_chunks": 0,
+                "index_bytes": 0,
+                "index_requests": 0,
+                "logical_bytes": 0,
+                "logical_data_bytes": 0,
+                "logical_data_requests": 0,
+                "logical_index_bytes": 0,
+                "logical_index_requests": 0,
+                "logical_requests": 0,
+                "physical_bytes": 0,
+                "physical_requests": 0
+              },
+              "decode_count_complete": true,
+              "elapsed_ms": 11.685029,
+              "legacy_v2": {
+                "active_workers": 1,
+                "bind_metadata_bytes": 131,
+                "bind_metadata_requests": 3,
+                "bytes_fetched": 624,
+                "cache_policy": {
+                  "application_cache": "removed"
+                },
+                "candidate_rows": 27,
+                "comparison_passed": null,
+                "coordinate_tolerance": 9.999999999999999e-10,
+                "decode_count_complete": true,
+                "dependency_commits": {
+                  "duckdb": "08e34c447bae34eaee3723cac61f2878b6bdf787",
+                  "extension-ci-tools": "b777c70d30942cca5bef62d6d4fa23a13362f398",
+                  "om-file-format": "d8855e418e2231ae8439f0c7e840fa3f93b371e3"
+                },
+                "elapsed_ms": 11.685029,
+                "environment": {
+                  "build": "release",
+                  "platform": ";compiled=linux-aarch64"
+                },
+                "error_category": "",
+                "fallback_reasons": [],
+                "filter_callback_invoked": true,
+                "fixture_id": "",
+                "fixture_sha256": "",
+                "grid_definition": "nx=5,ny=5,lat0=20,lon0=100,dlat=1,dlon=1,order=separate",
+                "grid_source": "explicit",
+                "logical_positions_match": null,
+                "metadata_bytes": 393,
+                "metadata_requests": 9,
+                "null_positions_match": null,
+                "optimizer_empty": false,
+                "peak_rss_bytes": 110047232,
+                "query_id": "2-5",
+                "read_requests": 31,
+                "reference_identity": "",
+                "residual_filter_retained": true,
+                "result_rows": null,
+                "scan_metadata_bytes": 262,
+                "scan_metadata_requests": 6,
+                "scan_tasks_claimed": 9,
+                "scenario": "",
+                "schema_version": 2,
+                "selection_mode": "axis_restricted",
+                "spatial_layout": "separate:lat,lon",
+                "sql": "<redacted>",
+                "status": "success",
+                "variables": {
+                  "/": {
+                    "data_bytes": 206,
+                    "data_requests": 21,
+                    "decode_count_complete": true,
+                    "decoded_chunks": 21,
+                    "index_bytes": 25,
+                    "index_requests": 1
+                  }
+                }
+              },
+              "logical_requested_bytes": 1124,
+              "logical_requests": 51,
+              "memory_scope": "process",
+              "metadata": {
+                "bind": {
+                  "logical_bytes": 131,
+                  "logical_requests": 3,
+                  "physical_bytes": 131,
+                  "physical_requests": 3
+                },
+                "scan": {
+                  "logical_bytes": 262,
+                  "logical_requests": 6,
+                  "physical_bytes": 262,
+                  "physical_requests": 6
+                }
+              },
+              "peak_query_owned_bytes": 19513,
+              "peak_rss_bytes": 110047232,
+              "physical_read_bytes": 624,
+              "physical_read_requests": 31,
+              "query_id": "2-5",
+              "query_memory_count_complete": true,
+              "query_memory_scope": "duckomo_owned_buffer_decoder_selection_capacities",
+              "read_requests": 31,
+              "response_body_bytes": 0,
+              "response_statuses": {},
+              "result_rows": null,
+              "result_rows_state": "unobserved",
+              "scan_complete": true,
+              "scan_id": 0,
+              "scanner_rows": 27,
+              "schema_version": 3,
+              "status": "success",
+              "tasks": {
+                "active_workers": 1,
+                "cancelled": 0,
+                "claimed": 9,
+                "completed": 9,
+                "created": 9,
+                "failed": 0,
+                "max_active_workers": 1
+              },
+              "transport_attempts": 0,
+              "transport_count_complete": true,
+              "transport_responses": 0,
+              "variables": {
+                "/": {
+                  "data_bytes": 206,
+                  "data_requests": 21,
+                  "decode_count_complete": true,
+                  "decoded_chunks": 21,
+                  "index_bytes": 25,
+                  "index_requests": 1,
+                  "logical_data_bytes": 206,
+                  "logical_data_requests": 21,
+                  "logical_index_bytes": 525,
+                  "logical_index_requests": 21
+                }
+              }
+            },
+            "memory": {
+              "coalescing_scope": "no coalescing buffers are currently allocated",
+              "component_peak_scope": "independent component high-water marks; total peak captures concurrent live accounts",
+              "components": {
+                "batch_segments": {
+                  "peak_owned_capacity_bytes": 0,
+                  "upper_bound_peak_bytes": 0
+                },
+                "bind": {
+                  "peak_owned_capacity_bytes": 5161,
+                  "upper_bound_peak_bytes": 5161
+                },
+                "coalescing": {
+                  "peak_owned_capacity_bytes": 2748,
+                  "upper_bound_peak_bytes": 2748
+                },
+                "coordinate_buffers": {
+                  "peak_owned_capacity_bytes": 0,
+                  "upper_bound_peak_bytes": 0
+                },
+                "decoder": {
+                  "peak_owned_capacity_bytes": 711,
+                  "upper_bound_peak_bytes": 1313
+                },
+                "definitions": {
+                  "peak_owned_capacity_bytes": 1086,
+                  "upper_bound_peak_bytes": 1110
+                },
+                "global_control": {
+                  "peak_owned_capacity_bytes": 4366,
+                  "upper_bound_peak_bytes": 4366
+                },
+                "region_input": {
+                  "peak_owned_capacity_bytes": 4703,
+                  "upper_bound_peak_bytes": 4703
+                },
+                "remote_inflight": {
+                  "peak_owned_capacity_bytes": 0,
+                  "upper_bound_peak_bytes": 0
+                },
+                "selector": {
+                  "peak_owned_capacity_bytes": 800,
+                  "upper_bound_peak_bytes": 800
+                },
+                "task_positions": {
+                  "peak_owned_capacity_bytes": 144,
+                  "upper_bound_peak_bytes": 144
+                },
+                "transport_control": {
+                  "peak_owned_capacity_bytes": 0,
+                  "upper_bound_peak_bytes": 0
+                },
+                "unclassified": {
+                  "peak_owned_capacity_bytes": 0,
+                  "upper_bound_peak_bytes": 0
+                }
+              },
+              "decoder_upper_bound_basis": "control+min(object_size,lut_size)+min(object_size,max(io_size_max,raw_compressed_width_bytes+2*ceil(chunk_elements/128)+4096))+chunk_scratch per active decoder; engine output reported separately",
+              "engine_output_vector_bytes": null,
+              "engine_output_vector_scope": "DuckDB-owned; not included in query-owned totals",
+              "process_peak_rss_bytes": 110047232,
+              "query_owned_complete": true,
+              "query_owned_peak_bytes": 19513,
+              "query_owned_released_at_terminal": true,
+              "query_owned_scope": "DuckOMO-owned buffers and conservative container/string capacity estimates; allocator metadata excluded",
+              "query_owned_upper_bound_peak_bytes": 20115,
+              "repeated_work": {
+                "coordinate_decoded_chunks": 0,
+                "coordinate_evaluations": 0,
+                "deduplicated": false,
+                "value_decoded_chunks": 21
+              },
+              "shared_cache_control_bytes": 0,
+              "shared_cache_peak_charged_bytes": 0,
+              "shared_cache_scope": "connection"
+            },
+            "operation": "read_om_regions",
+            "outcome": {
+              "error_category": "",
+              "scan_complete": true,
+              "status": "success",
+              "terminal_published": true
+            },
+            "query_id": "2-5",
+            "reads": {
+              "coordinates": {
+                "data_bytes": 0,
+                "data_requests": 0,
+                "decode_complete": null,
+                "decoded_chunks": 0,
+                "index_bytes": 0,
+                "index_requests": 0,
+                "logical_bytes": 0,
+                "logical_requests": 0,
+                "physical_bytes": 0,
+                "physical_requests": 0
+              },
+              "metadata": {
+                "bind_bytes": 131,
+                "bind_requests": 3,
+                "scan_bytes": 262,
+                "scan_requests": 6
+              },
+              "value_totals": {
+                "data_bytes": 206,
+                "data_requests": 21,
+                "decode_complete": true,
+                "decoded_chunks": 21,
+                "index_bytes": 25,
+                "index_requests": 1
+              },
+              "variables": {
+                "/": {
+                  "data_bytes": 206,
+                  "data_requests": 21,
+                  "decode_complete": true,
+                  "decoded_chunks": 21,
+                  "index_bytes": 25,
+                  "index_requests": 1,
+                  "logical_data_bytes": 206,
+                  "logical_data_requests": 21,
+                  "logical_index_bytes": 525,
+                  "logical_index_requests": 21
+                }
+              }
+            },
+            "regions": {
+              "applicable": false,
+              "candidate_pairs_observed": null,
+              "count_unit": "region_record_pair",
+              "empty_region_count": 0,
+              "envelope_rejected_pairs": null,
+              "geometry_batches": null,
+              "geometry_evaluate_ns": 0,
+              "geometry_evaluations": null,
+              "geometry_prepare_ns": 469652,
+              "geometry_tested_pairs": null,
+              "input_region_count": 9,
+              "input_vertex_count": 45,
+              "input_wkb_bytes": 837,
+              "match_count_complete": null,
+              "matched_pairs_exact": null,
+              "matched_pairs_observed": null,
+              "not_applicable_reason": "nearest_uses_target_sampling",
+              "owned_input_peak_bytes": 4703,
+              "owned_work_bound_bytes": 15412,
+              "owned_work_peak_bytes": 14810,
+              "spatial_internal_memory_complete": false,
+              "spatial_internal_peak_bytes": null
+            },
+            "remote_io": null,
+            "sampling": {
+              "algorithm": "sphere_haversine_f64_v1",
+              "coordinate_comparisons": 175,
+              "count_unit": "region_axis_result",
+              "distance_model": "grid_sphere",
+              "distinct_sources_observed": 21,
+              "earth_radius_m": 6371229,
+              "grid_id": "24d3fdba68856997e9868c9367ab68696a969a6f7faa30b4d3f771e5ba8ac625",
+              "layout_id": "eceb1ae7d0b672bc7a88a603e73e95d677eced1886f56998f8f98c6bc9c7d2f1",
+              "locator_cpu_ns": 15024,
+              "locator_ns": 16432,
+              "max_task_rows": 3,
+              "method": "nearest",
+              "region_target_count": 9,
+              "representative": "point_on_surface_v1",
+              "required_state_variables": [],
+              "result_count_complete": true,
+              "result_rows_exact": 27,
+              "result_rows_observed": 27,
+              "result_upper_bound": 54,
+              "source_rows_requested": 21,
+              "spatial_version": "a3dbcd1781",
+              "status_dependency_complete": null,
+              "status_rows_observed": 0,
+              "target_prepare_ns": 277635,
+              "variable_status": {}
+            },
+            "scan_id": 0,
+            "schema_version": 4,
+            "selection": {
+              "candidate_upper_bound_records": 54,
+              "coordinate_evaluations": 0,
+              "count_complete": true,
+              "exact_candidate_records": 27,
+              "fallback_reasons": [],
+              "fallback_windows": 0,
+              "mode": "axis_restricted",
+              "observed_candidate_records": 27,
+              "ranges": 0,
+              "residual_filter_retained": true,
+              "windows": 0
+            },
+            "transport": {
+              "attempts": 0,
+              "complete": true,
+              "response_body_bytes": 0,
+              "responses": 0
+            }
+          },
+          "scan_complete": true,
+          "scan_id": 0
+        }
+      ]
+    }
+  },
+  "plan_details": {
+    "buffer_degrees": 0.0001,
+    "chunk_indices": [
+      0
+    ],
+    "distance_model": "sphere_haversine_f64_v1",
+    "geometry_representative": "point_on_surface_v1",
+    "grid_info": {
+      "capabilities": {
+        "adjacency": {
+          "reason": "no verified adjacency model",
+          "status": "unsupported"
+        },
+        "area": {
+          "reason": "no verified cell area",
+          "status": "unsupported"
+        },
+        "cell_boundary": {
+          "reason": "no verified cell boundary",
+          "status": "unsupported"
+        },
+        "distance": {
+          "reason": "no distance operator is defined",
+          "status": "unsupported"
+        },
+        "point_semantics": {
+          "name": "native_point_sample",
+          "status": "defined"
+        },
+        "vector_orientation": {
+          "reason": "no verified vector orientation",
+          "status": "unsupported"
+        }
+      },
+      "crs": {
+        "axis_order": [
+          "longitude",
+          "latitude"
+        ],
+        "earth": {
+          "model": "sphere",
+          "radius_m": 6371229
+        },
+        "native_coordinate_unit": "degrees",
+        "output_crs": "+proj=longlat +R=6371229 +type=crs",
+        "source_crs_wkt": null
+      },
+      "definition": {
+        "coordinate_rule": "regular_grid_v1",
+        "earth": {
+          "model": "sphere",
+          "radius_m": 6371229
+        },
+        "grid_id": "24d3fdba68856997e9868c9367ab68696a969a6f7faa30b4d3f771e5ba8ac625",
+        "numeric_policy": "float64_v1",
+        "parameters": {
+          "allow_out_of_range_latitude": false,
+          "dlat": 1,
+          "dlon": 1,
+          "lat0": 20,
+          "lon0": 100,
+          "nx": 5,
+          "ny": 5,
+          "order": "separate"
+        },
+        "type": "regular_latlon",
+        "version": 1
+      },
+      "descriptor_version": 1,
+      "grid_type": "regular_latlon",
+      "layout": {
+        "axes": [
+          "member",
+          "time",
+          "lat",
+          "lon"
+        ],
+        "flattened": false,
+        "geometry": "regular",
+        "grid_id": "24d3fdba68856997e9868c9367ab68696a969a6f7faa30b4d3f771e5ba8ac625",
+        "latitude_axis": 2,
+        "layout_id": "eceb1ae7d0b672bc7a88a603e73e95d677eced1886f56998f8f98c6bc9c7d2f1",
+        "longitude_axis": 3,
+        "non_spatial_axes": [
+          0,
+          1
+        ],
+        "order": "separate",
+        "point_axis": null,
+        "shape": [
+          2,
+          3,
+          5,
+          5
+        ],
+        "strides": [
+          75,
+          25,
+          5,
+          1
+        ]
+      },
+      "provenance": {
+        "evidence_build_pair": null,
+        "evidence_claims": "",
+        "evidence_level": "definition-recorded",
+        "evidence_sample_id": null,
+        "evidence_source": null,
+        "identity_hash_excludes_provenance": true,
+        "source": "explicit"
+      }
+    },
+    "region_count": 9
+  },
+  "bootstrap": {
+    "duckdb_version": "v2.0.0",
+    "platform": "linux_arm64",
+    "duckomo_version": "v0.4.0",
+    "channel": "github-release-unsigned",
+    "artifact_sha256": "2189a68bebc26f2eb7fa7b7b0f1fb2e5db9bd4cea543d5941ec165f05046a83e",
+    "httpfs": {
+      "status": "loaded"
+    },
+    "spatial": {
+      "status": "loaded"
+    },
+    "probe": {
+      "duckdb_version": "v2.0.0",
+      "platform": "linux_arm64",
+      "duckomo_version": "v0.4.0",
+      "channel": "github-release-unsigned",
+      "functions_present": [
+        "read_om",
+        "read_om_series",
+        "om_grid_info",
+        "duckomo_last_scan_metrics"
+      ]
+    },
+    "golden": {
+      "fixture": "fixtures/om/chmi-aladin-cz-hsurf.om",
+      "query_id": "golden-v1",
+      "expected": "bc7cf6db243073d9baee64cdda6900cae9547a33bde00f61b8da10a7ce30254f",
+      "actual": "bc7cf6db243073d9baee64cdda6900cae9547a33bde00f61b8da10a7ce30254f",
+      "rows": 64,
+      "ok": true
+    },
+    "timings_ms": {
+      "open": 64,
+      "httpfs": 3,
+      "duckomo": 1,
+      "lock": 74,
+      "probes": 259,
+      "golden": 16
+    },
+    "extension_settings": [
+      [
+        "active_grammar_extensions",
+        "[]"
+      ],
+      [
+        "allow_community_extensions",
+        "true"
+      ],
+      [
+        "allow_extension_repositories",
+        "undecided"
+      ],
+      [
+        "allow_extensions_metadata_mismatch",
+        "false"
+      ],
+      [
+        "allow_parser_override_extension",
+        "DEFAULT"
+      ],
+      [
+        "allow_unsigned_extensions",
+        "false"
+      ],
+      [
+        "autoinstall_extension_repository",
+        ""
+      ],
+      [
+        "autoinstall_known_extensions",
+        "false"
+      ],
+      [
+        "autoload_known_extensions",
+        "false"
+      ],
+      [
+        "custom_extension_repository",
+        ""
+      ],
+      [
+        "extension_directories",
+        "[]"
+      ],
+      [
+        "extension_repository_directory",
+        ""
+      ]
+    ],
+    "r4": {
+      "unsigned_close": "ok",
+      "spatial_preinstall": "ok",
+      "spatial_after_lock": "ok"
+    }
+  },
+  "inputs": [
+    {
+      "path": "/home/blizhan/repo/github/OmO/fixtures/stations/m0.csv",
+      "bytes": 248,
+      "sha256": "508f99b6bc8ce97672df8e85c8b2f5e0788a4b65e429e3e17bb8ac476578e62c"
+    },
+    {
+      "path": "/tmp/omobench-duckomo-artifacts/duckomo-v0.4.0-duckdb-v2.0.0-linux_arm64.duckdb_extension.gz",
+      "bytes": 8783732,
+      "sha256": "8fc579a83eccd25729c7f345e70295e3b466d81a2aaeb34d3d2a59d277cb6c2e"
+    },
+    {
+      "path": "/home/blizhan/repo/github/OmO/fixtures/reference/station_series_reference.csv",
+      "bytes": 1585,
+      "sha256": "984137dba38e07fbb874380e5f8bed3cfa6e4dfb194c65be3dc9dac895d75ff0"
+    },
+    {
+      "path": "/home/blizhan/repo/github/OmO/fixtures/reference/duckomo-regions-v0.4.0/regions.reference.csv",
+      "bytes": 1121,
+      "sha256": "98b8349ae035ef9fc14e4e7f37caf5daa2d44f7de2cad5fe3201534cf4be1b32"
+    },
+    {
+      "path": "/home/blizhan/repo/github/OmO/fixtures/reference/station_series_manifest.json",
+      "bytes": 1715,
+      "sha256": "170d88880c1ff21017f58f44c3cf6b6c610d86f47eb28ae468893d3b69edc427"
+    },
+    {
+      "path": "/home/blizhan/repo/github/OmO/fixtures/reference/duckomo-regions-v0.4.0/series/value/chunk_0000.om",
+      "bytes": 488,
+      "sha256": "264fe0905d0681d0fedd08d60a43bf7974cbd161319df77e919f08b4cb582e36"
+    }
+  ],
+  "output": {
+    "path": "docs/m0/evidence/EXIT-2-spark-aarch64-20261117-plan-b.csv",
+    "bytes": 4278,
+    "sha256": "e0daeebb7b99809964020142fcd5c2c0a853a6a110dfba383cad410fb9e7f60a"
+  },
+  "report_path": "docs/m0/evidence/EXIT-2-spark-aarch64-20261117-plan-b.report.json"
+}

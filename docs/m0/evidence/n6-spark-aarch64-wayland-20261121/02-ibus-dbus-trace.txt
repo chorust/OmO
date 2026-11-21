@@ -1,0 +1,379 @@
+method call time=1795240992.350855 sender=org.freedesktop.DBus -> destination=(null destination) serial=325 path=/org/freedesktop/IBus/Panel/Extension/Emoji; interface=org.freedesktop.IBus.Panel; member=UpdateLookupTable
+method call time=1795240992.350946 sender=org.freedesktop.DBus -> destination=(null destination) serial=43 path=/org/freedesktop/IBus/Panel; interface=org.freedesktop.IBus.Panel; member=UpdateLookupTable
+method call time=1795240992.351172 sender=org.freedesktop.DBus -> destination=(null destination) serial=328 path=/org/freedesktop/IBus/Panel/Extension/Emoji; interface=org.freedesktop.IBus.Panel; member=UpdateLookupTable
+method call time=1795240992.351194 sender=org.freedesktop.DBus -> destination=(null destination) serial=46 path=/org/freedesktop/IBus/Panel; interface=org.freedesktop.IBus.Panel; member=UpdateLookupTable
+signal time=1795240992.351275 sender=:1.5 -> destination=(null destination) serial=316 path=/org/freedesktop/IBus/Engine/7; interface=org.freedesktop.IBus.Engine; member=HideLookupTable
+signal time=1795240992.351331 sender=org.freedesktop.IBus -> destination=:1.34 serial=63 path=/org/freedesktop/IBus/InputContext_34; interface=org.freedesktop.IBus.InputContext; member=UpdatePreeditTextWithMode
+   variant       struct {
+         string "IBusText"
+         array [
+         ]
+         string ""
+         variant             struct {
+               string "IBusAttrList"
+               array [
+               ]
+               array [
+               ]
+            }
+      }
+   uint32 0
+signal time=1795240992.351703 sender=:1.5 -> destination=(null destination) serial=317 path=/org/freedesktop/IBus/Engine/7; interface=org.freedesktop.IBus.Engine; member=HidePreeditText
+signal time=1795240992.351845 sender=:1.5 -> destination=(null destination) serial=319 path=/org/freedesktop/IBus/Engine/7; interface=org.freedesktop.IBus.Engine; member=HideLookupTable
+signal time=1795240992.351863 sender=:1.5 -> destination=(null destination) serial=320 path=/org/freedesktop/IBus/Engine/7; interface=org.freedesktop.IBus.Engine; member=HidePreeditText
+signal time=1795240992.351916 sender=:1.5 -> destination=(null destination) serial=322 path=/org/freedesktop/IBus/Engine/7; interface=org.freedesktop.IBus.Engine; member=HideLookupTable
+signal time=1795240992.351918 sender=:1.5 -> destination=(null destination) serial=323 path=/org/freedesktop/IBus/Engine/7; interface=org.freedesktop.IBus.Engine; member=HidePreeditText
+signal time=1795240992.351929 sender=:1.5 -> destination=(null destination) serial=325 path=/org/freedesktop/IBus/Engine/7; interface=org.freedesktop.IBus.Engine; member=HideLookupTable
+signal time=1795240992.351930 sender=:1.5 -> destination=(null destination) serial=326 path=/org/freedesktop/IBus/Engine/7; interface=org.freedesktop.IBus.Engine; member=HidePreeditText
+method call time=1795240992.854773 sender=:1.34 -> destination=org.freedesktop.IBus serial=80 path=/org/freedesktop/IBus/InputContext_34; interface=org.freedesktop.IBus.InputContext; member=ProcessKeyEvent
+   uint32 65507
+   uint32 29
+   uint32 0
+method call time=1795240992.854802 sender=org.freedesktop.DBus -> destination=(null destination) serial=140 path=/org/freedesktop/IBus/Engine/7; interface=org.freedesktop.IBus.Engine; member=ProcessKeyEvent
+   uint32 65507
+   uint32 29
+   uint32 0
+method call time=1795240992.866877 sender=:1.34 -> destination=org.freedesktop.IBus serial=82 path=/org/freedesktop/IBus/InputContext_34; interface=org.freedesktop.IBus.InputContext; member=ProcessKeyEvent
+   uint32 65507
+   uint32 29
+   uint32 1073741828
+method call time=1795240992.867224 sender=org.freedesktop.DBus -> destination=(null destination) serial=141 path=/org/freedesktop/IBus/Engine/7; interface=org.freedesktop.IBus.Engine; member=ProcessKeyEvent
+   uint32 65507
+   uint32 29
+   uint32 1073741828
+method call time=1795240992.872832 sender=:1.34 -> destination=org.freedesktop.IBus serial=84 path=/org/freedesktop/IBus/InputContext_34; interface=org.freedesktop.IBus.InputContext; member=ProcessKeyEvent
+   uint32 97
+   uint32 30
+   uint32 1073741824
+method call time=1795240992.873012 sender=org.freedesktop.DBus -> destination=(null destination) serial=142 path=/org/freedesktop/IBus/Engine/7; interface=org.freedesktop.IBus.Engine; member=ProcessKeyEvent
+   uint32 97
+   uint32 30
+   uint32 1073741824
+method call time=1795240993.090431 sender=:1.34 -> destination=org.freedesktop.IBus serial=86 path=/org/freedesktop/IBus/InputContext_34; interface=org.freedesktop.IBus.InputContext; member=ProcessKeyEvent
+   uint32 65288
+   uint32 14
+   uint32 1073741824
+method call time=1795240993.090742 sender=org.freedesktop.DBus -> destination=(null destination) serial=143 path=/org/freedesktop/IBus/Engine/7; interface=org.freedesktop.IBus.Engine; member=ProcessKeyEvent
+   uint32 65288
+   uint32 14
+   uint32 1073741824
+method call time=1795240993.501138 sender=:1.34 -> destination=org.freedesktop.IBus serial=88 path=/org/freedesktop/IBus/InputContext_34; interface=org.freedesktop.IBus.InputContext; member=ProcessKeyEvent
+   uint32 115
+   uint32 31
+   uint32 0
+method call time=1795240993.501456 sender=org.freedesktop.DBus -> destination=(null destination) serial=144 path=/org/freedesktop/IBus/Engine/7; interface=org.freedesktop.IBus.Engine; member=ProcessKeyEvent
+   uint32 115
+   uint32 31
+   uint32 0
+signal time=1795240993.510718 sender=:1.5 -> destination=(null destination) serial=333 path=/org/freedesktop/IBus/Engine/7; interface=org.freedesktop.IBus.Engine; member=UpdateLookupTable
+   [top lookup candidates: string "三", string "所", string "所以", string "🕒", string "四", string "斯"]
+signal time=1795240993.525426 sender=:1.5 -> destination=(null destination) serial=334 path=/org/freedesktop/IBus/Engine/7; interface=org.freedesktop.IBus.Engine; member=UpdatePreeditText
+   variant       struct {
+         string "IBusText"
+         array [
+         ]
+         string "三"
+         variant             struct {
+               string "IBusAttrList"
+               array [
+               ]
+               array [
+                  variant                      struct {
+                        string "IBusAttribute"
+                        array [
+                        ]
+method call time=1795240993.526574 sender=org.freedesktop.DBus -> destination=(null destination) serial=55 path=/org/freedesktop/IBus/Panel; interface=org.freedesktop.IBus.Panel; member=UpdateLookupTable
+method call time=1795240993.538099 sender=org.freedesktop.DBus -> destination=(null destination) serial=336 path=/org/freedesktop/IBus/Panel/Extension/Emoji; interface=org.freedesktop.IBus.Panel; member=UpdateLookupTable
+method call time=1795240993.548610 sender=:1.34 -> destination=org.freedesktop.IBus serial=89 path=/org/freedesktop/IBus/InputContext_34; interface=org.freedesktop.DBus.Properties; member=Get
+   string "org.freedesktop.IBus.InputContext"
+   string "PostProcessKeyEvent"
+method return time=1795240993.548613 sender=org.freedesktop.DBus -> destination=:1.34 serial=73 reply_serial=89
+   variant       array [
+         struct {
+            byte 109
+            variant                struct {
+                  string "IBusText"
+                  array [
+                  ]
+                  string "三"
+                  variant                      struct {
+                        string "IBusAttrList"
+                        array [
+                        ]
+                        array [
+                           variant                               struct {
+                                 string "IBusAttribute"
+                                 array [
+                                 ]
+                                 uint32 1
+                                 uint32 1
+                                 uint32 0
+                                 uint32 1
+                              }
+                        ]
+                     }
+               }
+         }
+         struct {
+            byte 109
+            variant                struct {
+                  string "IBusText"
+                  array [
+                  ]
+                  string "1,1,0"
+                  variant                      struct {
+                        string "IBusAttrList"
+                        array [
+                        ]
+                        array [
+                        ]
+                     }
+               }
+         }
+      ]
+method call time=1795240993.548700 sender=:1.34 -> destination=org.freedesktop.IBus serial=90 path=/org/freedesktop/IBus/InputContext_34; interface=org.freedesktop.IBus.InputContext; member=ProcessKeyEvent
+   uint32 115
+   uint32 31
+   uint32 1073741824
+method call time=1795240993.548705 sender=org.freedesktop.DBus -> destination=(null destination) serial=145 path=/org/freedesktop/IBus/Engine/7; interface=org.freedesktop.IBus.Engine; member=ProcessKeyEvent
+   uint32 115
+   uint32 31
+   uint32 1073741824
+method call time=1795240993.918123 sender=:1.34 -> destination=org.freedesktop.IBus serial=93 path=/org/freedesktop/IBus/InputContext_34; interface=org.freedesktop.IBus.InputContext; member=ProcessKeyEvent
+   uint32 104
+   uint32 35
+   uint32 0
+method call time=1795240993.918447 sender=org.freedesktop.DBus -> destination=(null destination) serial=146 path=/org/freedesktop/IBus/Engine/7; interface=org.freedesktop.IBus.Engine; member=ProcessKeyEvent
+   uint32 104
+   uint32 35
+   uint32 0
+signal time=1795240993.933643 sender=:1.5 -> destination=(null destination) serial=338 path=/org/freedesktop/IBus/Engine/7; interface=org.freedesktop.IBus.Engine; member=UpdateLookupTable
+   [top lookup candidates: string "是", string "上", string "社会", string "👆", string "时", string "说"]
+signal time=1795240993.956598 sender=:1.5 -> destination=(null destination) serial=339 path=/org/freedesktop/IBus/Engine/7; interface=org.freedesktop.IBus.Engine; member=UpdatePreeditText
+   variant       struct {
+         string "IBusText"
+         array [
+         ]
+         string "是"
+         variant             struct {
+               string "IBusAttrList"
+               array [
+               ]
+               array [
+                  variant                      struct {
+                        string "IBusAttribute"
+                        array [
+                        ]
+method call time=1795240993.958378 sender=org.freedesktop.DBus -> destination=(null destination) serial=58 path=/org/freedesktop/IBus/Panel; interface=org.freedesktop.IBus.Panel; member=UpdateLookupTable
+method call time=1795240993.979786 sender=org.freedesktop.DBus -> destination=(null destination) serial=339 path=/org/freedesktop/IBus/Panel/Extension/Emoji; interface=org.freedesktop.IBus.Panel; member=UpdateLookupTable
+method call time=1795240993.999279 sender=:1.34 -> destination=org.freedesktop.IBus serial=94 path=/org/freedesktop/IBus/InputContext_34; interface=org.freedesktop.DBus.Properties; member=Get
+   string "org.freedesktop.IBus.InputContext"
+   string "PostProcessKeyEvent"
+method return time=1795240993.999282 sender=org.freedesktop.DBus -> destination=:1.34 serial=77 reply_serial=94
+   variant       array [
+         struct {
+            byte 109
+            variant                struct {
+                  string "IBusText"
+                  array [
+                  ]
+                  string "是"
+                  variant                      struct {
+                        string "IBusAttrList"
+                        array [
+                        ]
+                        array [
+                           variant                               struct {
+                                 string "IBusAttribute"
+                                 array [
+                                 ]
+                                 uint32 1
+                                 uint32 1
+                                 uint32 0
+                                 uint32 1
+                              }
+                        ]
+                     }
+               }
+         }
+         struct {
+            byte 109
+            variant                struct {
+                  string "IBusText"
+                  array [
+                  ]
+                  string "1,1,0"
+                  variant                      struct {
+                        string "IBusAttrList"
+                        array [
+                        ]
+                        array [
+                        ]
+                     }
+               }
+         }
+      ]
+method call time=1795240993.999316 sender=:1.34 -> destination=org.freedesktop.IBus serial=95 path=/org/freedesktop/IBus/InputContext_34; interface=org.freedesktop.IBus.InputContext; member=ProcessKeyEvent
+   uint32 104
+   uint32 35
+   uint32 1073741824
+method call time=1795240993.999319 sender=org.freedesktop.DBus -> destination=(null destination) serial=147 path=/org/freedesktop/IBus/Engine/7; interface=org.freedesktop.IBus.Engine; member=ProcessKeyEvent
+   uint32 104
+   uint32 35
+   uint32 1073741824
+method call time=1795240994.335160 sender=:1.34 -> destination=org.freedesktop.IBus serial=98 path=/org/freedesktop/IBus/InputContext_34; interface=org.freedesktop.IBus.InputContext; member=ProcessKeyEvent
+   uint32 105
+   uint32 23
+   uint32 0
+method call time=1795240994.335193 sender=org.freedesktop.DBus -> destination=(null destination) serial=148 path=/org/freedesktop/IBus/Engine/7; interface=org.freedesktop.IBus.Engine; member=ProcessKeyEvent
+   uint32 105
+   uint32 23
+   uint32 0
+signal time=1795240994.341672 sender=:1.5 -> destination=(null destination) serial=343 path=/org/freedesktop/IBus/Engine/7; interface=org.freedesktop.IBus.Engine; member=UpdateLookupTable
+   [top lookup candidates: string "是", string "时", string "时间", string "十四时三分", string "14时3分", string "14:03"]
+signal time=1795240994.346655 sender=:1.5 -> destination=(null destination) serial=344 path=/org/freedesktop/IBus/Engine/7; interface=org.freedesktop.IBus.Engine; member=UpdatePreeditText
+   variant       struct {
+         string "IBusText"
+         array [
+         ]
+         string "是"
+         variant             struct {
+               string "IBusAttrList"
+               array [
+               ]
+               array [
+                  variant                      struct {
+                        string "IBusAttribute"
+                        array [
+                        ]
+method call time=1795240994.346942 sender=org.freedesktop.DBus -> destination=(null destination) serial=61 path=/org/freedesktop/IBus/Panel; interface=org.freedesktop.IBus.Panel; member=UpdateLookupTable
+method call time=1795240994.349762 sender=org.freedesktop.DBus -> destination=(null destination) serial=342 path=/org/freedesktop/IBus/Panel/Extension/Emoji; interface=org.freedesktop.IBus.Panel; member=UpdateLookupTable
+method call time=1795240994.352437 sender=:1.34 -> destination=org.freedesktop.IBus serial=99 path=/org/freedesktop/IBus/InputContext_34; interface=org.freedesktop.DBus.Properties; member=Get
+   string "org.freedesktop.IBus.InputContext"
+   string "PostProcessKeyEvent"
+method return time=1795240994.352457 sender=org.freedesktop.DBus -> destination=:1.34 serial=81 reply_serial=99
+   variant       array [
+         struct {
+            byte 109
+            variant                struct {
+                  string "IBusText"
+                  array [
+                  ]
+                  string "是"
+                  variant                      struct {
+                        string "IBusAttrList"
+                        array [
+                        ]
+                        array [
+                           variant                               struct {
+                                 string "IBusAttribute"
+                                 array [
+                                 ]
+                                 uint32 1
+                                 uint32 1
+                                 uint32 0
+                                 uint32 1
+                              }
+                        ]
+                     }
+               }
+         }
+         struct {
+            byte 109
+            variant                struct {
+                  string "IBusText"
+                  array [
+                  ]
+                  string "1,1,0"
+                  variant                      struct {
+                        string "IBusAttrList"
+                        array [
+                        ]
+                        array [
+                        ]
+                     }
+               }
+         }
+      ]
+method call time=1795240994.352489 sender=:1.34 -> destination=org.freedesktop.IBus serial=100 path=/org/freedesktop/IBus/InputContext_34; interface=org.freedesktop.IBus.InputContext; member=ProcessKeyEvent
+   uint32 105
+   uint32 23
+   uint32 1073741824
+method call time=1795240994.352492 sender=org.freedesktop.DBus -> destination=(null destination) serial=149 path=/org/freedesktop/IBus/Engine/7; interface=org.freedesktop.IBus.Engine; member=ProcessKeyEvent
+   uint32 105
+   uint32 23
+   uint32 1073741824
+method call time=1795240995.260930 sender=:1.34 -> destination=org.freedesktop.IBus serial=103 path=/org/freedesktop/IBus/InputContext_34; interface=org.freedesktop.IBus.InputContext; member=ProcessKeyEvent
+   uint32 50
+   uint32 3
+   uint32 0
+method call time=1795240995.260984 sender=org.freedesktop.DBus -> destination=(null destination) serial=150 path=/org/freedesktop/IBus/Engine/7; interface=org.freedesktop.IBus.Engine; member=ProcessKeyEvent
+   uint32 50
+   uint32 3
+   uint32 0
+signal time=1795240995.261330 sender=:1.5 -> destination=(null destination) serial=348 path=/org/freedesktop/IBus/Engine/7; interface=org.freedesktop.IBus.Engine; member=CommitText
+   variant       struct {
+         string "IBusText"
+         array [
+         ]
+         string "时"
+         variant             struct {
+               string "IBusAttrList"
+               array [
+               ]
+               array [
+               ]
+            }
+      }
+signal time=1795240995.261832 sender=:1.5 -> destination=(null destination) serial=349 path=/org/freedesktop/IBus/Engine/7; interface=org.freedesktop.IBus.Engine; member=HideLookupTable
+signal time=1795240995.261914 sender=:1.5 -> destination=(null destination) serial=350 path=/org/freedesktop/IBus/Engine/7; interface=org.freedesktop.IBus.Engine; member=HidePreeditText
+method call time=1795240995.261922 sender=org.freedesktop.DBus -> destination=(null destination) serial=64 path=/org/freedesktop/IBus/Panel; interface=org.freedesktop.IBus.Panel; member=HideLookupTable
+method call time=1795240995.261939 sender=org.freedesktop.DBus -> destination=(null destination) serial=345 path=/org/freedesktop/IBus/Panel/Extension/Emoji; interface=org.freedesktop.IBus.Panel; member=HideLookupTable
+signal time=1795240995.262037 sender=:1.5 -> destination=(null destination) serial=352 path=/org/freedesktop/IBus/Engine/7; interface=org.freedesktop.IBus.Engine; member=HideLookupTable
+signal time=1795240995.262073 sender=:1.5 -> destination=(null destination) serial=353 path=/org/freedesktop/IBus/Engine/7; interface=org.freedesktop.IBus.Engine; member=HidePreeditText
+method call time=1795240995.262386 sender=:1.34 -> destination=org.freedesktop.IBus serial=104 path=/org/freedesktop/IBus/InputContext_34; interface=org.freedesktop.DBus.Properties; member=Get
+   string "org.freedesktop.IBus.InputContext"
+   string "PostProcessKeyEvent"
+method return time=1795240995.262478 sender=org.freedesktop.DBus -> destination=:1.34 serial=85 reply_serial=104
+   variant       array [
+         struct {
+            byte 99
+            variant                struct {
+                  string "IBusText"
+                  array [
+                  ]
+                  string "时"
+                  variant                      struct {
+                        string "IBusAttrList"
+                        array [
+                        ]
+                        array [
+                        ]
+                     }
+               }
+         }
+         struct {
+            byte 104
+            variant                struct {
+                  string "IBusText"
+                  array [
+                  ]
+                  string ""
+                  variant                      struct {
+                        string "IBusAttrList"
+                        array [
+                        ]
+                        array [
+                        ]
+                     }
+               }
+         }
+      ]
+method call time=1795240995.268406 sender=:1.34 -> destination=org.freedesktop.IBus serial=105 path=/org/freedesktop/IBus/InputContext_34; interface=org.freedesktop.IBus.InputContext; member=ProcessKeyEvent
+   uint32 50
+   uint32 3
+   uint32 1073741824
+method call time=1795240995.268438 sender=org.freedesktop.DBus -> destination=(null destination) serial=151 path=/org/freedesktop/IBus/Engine/7; interface=org.freedesktop.IBus.Engine; member=ProcessKeyEvent
+   uint32 50
+   uint32 3
+   uint32 1073741824

@@ -1,0 +1,29 @@
+{
+  "status": "passed",
+  "scenario": "fake_worker_crash_recovery",
+  "iterations": 20,
+  "recoveries": 20,
+  "generation": 21,
+  "details": [
+    "generation 1 -> 2",
+    "generation 2 -> 3",
+    "generation 3 -> 4",
+    "generation 4 -> 5",
+    "generation 5 -> 6",
+    "generation 6 -> 7",
+    "generation 7 -> 8",
+    "generation 8 -> 9",
+    "generation 9 -> 10",
+    "generation 10 -> 11",
+    "generation 11 -> 12",
+    "generation 12 -> 13",
+    "generation 13 -> 14",
+    "generation 14 -> 15",
+    "generation 15 -> 16",
+    "generation 16 -> 17",
+    "generation 17 -> 18",
+    "generation 18 -> 19",
+    "generation 19 -> 20",
+    "generation 20 -> 21"
+  ]
+}

@@ -1,0 +1,119 @@
+{
+  "status": "passed",
+  "channel": "community-signed",
+  "platform": "linux_arm64",
+  "golden_mode": "locked",
+  "repeat_requested": 1,
+  "attempts_completed": 1,
+  "no_network": true,
+  "r4_requested": false,
+  "attempts": [
+    {
+      "iteration": 1,
+      "elapsed_ms": 5438,
+      "status": "passed",
+      "bootstrap": {
+        "duckdb_version": "v2.0.0",
+        "platform": "linux_arm64",
+        "duckomo_version": "v0.4.0",
+        "channel": "community-signed",
+        "artifact_sha256": "03afe7177e1ebd4bf288e056f2a3013627db1084c2968911bc8c5d135fab6542",
+        "httpfs": {
+          "status": "unavailable",
+          "reason": "network access disabled by probe mode"
+        },
+        "spatial": {
+          "status": "not_requested"
+        },
+        "probe": {
+          "duckdb_version": "v2.0.0",
+          "platform": "linux_arm64",
+          "duckomo_version": "v0.4.0",
+          "channel": "community-signed",
+          "functions_present": [
+            "read_om",
+            "read_om_series",
+            "om_grid_info",
+            "duckomo_last_scan_metrics"
+          ]
+        },
+        "golden": {
+          "fixture": "fixtures/om/chmi-aladin-cz-hsurf.om",
+          "query_id": "golden-v1",
+          "expected": "bc7cf6db243073d9baee64cdda6900cae9547a33bde00f61b8da10a7ce30254f",
+          "actual": "bc7cf6db243073d9baee64cdda6900cae9547a33bde00f61b8da10a7ce30254f",
+          "rows": 64,
+          "ok": true
+        },
+        "timings_ms": {
+          "open": 62,
+          "httpfs": 0,
+          "duckomo": 2702,
+          "lock": 46,
+          "probes": 261,
+          "golden": 16
+        },
+        "extension_settings": [
+          [
+            "active_grammar_extensions",
+            "[]"
+          ],
+          [
+            "allow_community_extensions",
+            "false"
+          ],
+          [
+            "allow_extension_repositories",
+            "forbidden"
+          ],
+          [
+            "allow_extensions_metadata_mismatch",
+            "false"
+          ],
+          [
+            "allow_parser_override_extension",
+            "DEFAULT"
+          ],
+          [
+            "allow_unsigned_extensions",
+            "false"
+          ],
+          [
+            "autoinstall_extension_repository",
+            ""
+          ],
+          [
+            "autoinstall_known_extensions",
+            "false"
+          ],
+          [
+            "autoload_known_extensions",
+            "false"
+          ],
+          [
+            "custom_extension_repository",
+            ""
+          ],
+          [
+            "extension_directories",
+            "[]"
+          ],
+          [
+            "extension_repository_directory",
+            "/tmp/omo-probe-community-netns-20261120/extensions/omo-extension-repositories"
+          ]
+        ],
+        "r4": {
+          "unsigned_close": "not_applicable",
+          "community_close": "disabled_at_open",
+          "repository_close": "forbidden_after_load",
+          "spatial_preinstall": "not_requested",
+          "spatial_after_lock": "not_run"
+        }
+      },
+      "r4": null,
+      "no_network_remote_probe": "rejected_with_capability_unavailable_remote",
+      "error": null
+    }
+  ]
+}

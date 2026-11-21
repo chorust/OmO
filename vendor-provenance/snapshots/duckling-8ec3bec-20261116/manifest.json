@@ -1,0 +1,184 @@
+{
+  "schema": "duckling-source-snapshot/1",
+  "source_repository": "/home/blizhan/repo/github/duckling",
+  "source_head": "8ec3bec749fef31caa92bdddc240155df725526f",
+  "capture_timestamp_utc": "2026-11-16T08:49:00Z",
+  "capture_method": "exact bytes copied from the approved Duckling working tree; verified against retained files by SHA-256",
+  "files": [
+    {
+      "source_path": "LICENSE",
+      "snapshot_path": "LICENSE",
+      "working_tree_status": "clean",
+      "bytes": 1063,
+      "sha256": "a57ebfdf4a7893bc2ba09a6f572c55a9f4052bebe8e6f33940df766ef61a1bcd"
+    },
+    {
+      "source_path": "connector/Cargo.toml",
+      "snapshot_path": "connector/Cargo.toml",
+      "working_tree_status": "M connector/Cargo.toml",
+      "bytes": 1446,
+      "sha256": "b06b3b851b917d84cf54a939a7e786af4aff02ac8943302fd529a2d24fc50914"
+    },
+    {
+      "source_path": "connector/src/lib.rs",
+      "snapshot_path": "connector/src/lib.rs",
+      "working_tree_status": "M connector/src/lib.rs",
+      "bytes": 270,
+      "sha256": "6246ffc9341fbb551e296e08ac28f11189d4e989ad7e99b14c882b79a20f6352"
+    },
+    {
+      "source_path": "connector/src/cancel.rs",
+      "snapshot_path": "connector/src/cancel.rs",
+      "working_tree_status": "clean",
+      "bytes": 2686,
+      "sha256": "b3cb8e5988a4c39e5d28e34031cd58099535e66821bcbf61855dfc5abb8b3dcd"
+    },
+    {
+      "source_path": "connector/src/error.rs",
+      "snapshot_path": "connector/src/error.rs",
+      "working_tree_status": "clean",
+      "bytes": 4707,
+      "sha256": "4f4cd3ee71370aa4e192601095d10598e4e393e1f91c6d166e70b42c16e305f4"
+    },
+    {
+      "source_path": "connector/src/utils.rs",
+      "snapshot_path": "connector/src/utils.rs",
+      "working_tree_status": "clean",
+      "bytes": 32370,
+      "sha256": "88cbdd6a7ad0c0eb385cba317d8ec7370e0a7595941d80dd2e6d682b5eebaaf4"
+    },
+    {
+      "source_path": "connector/src/dialect/mod.rs",
+      "snapshot_path": "connector/src/dialect/mod.rs",
+      "working_tree_status": "M connector/src/dialect/mod.rs",
+      "bytes": 10021,
+      "sha256": "d1c8b78a666bcf16e9702717bf140b11e1351d76ce21de2dd0deacda74f1e7e6"
+    },
+    {
+      "source_path": "connector/src/dialect/duckdb/bootstrap.rs",
+      "snapshot_path": "connector/src/dialect/duckdb/bootstrap.rs",
+      "working_tree_status": "?? connector/src/dialect/duckdb/bootstrap.rs",
+      "bytes": 33735,
+      "sha256": "090de27c26ca88ee2b1b4ec85c10e131cc723f08d77b4edbbb8a87b5785bf464"
+    },
+    {
+      "source_path": "connector/src/dialect/duckdb/duckdb_sync.rs",
+      "snapshot_path": "connector/src/dialect/duckdb/duckdb_sync.rs",
+      "working_tree_status": "M connector/src/dialect/duckdb/duckdb_sync.rs",
+      "bytes": 20351,
+      "sha256": "a3513ba0c2fe2eb83f0ae2ce488896287c9276aaaee47db598b880945d2637eb"
+    },
+    {
+      "source_path": "connector/src/dialect/duckdb/mod.rs",
+      "snapshot_path": "connector/src/dialect/duckdb/mod.rs",
+      "working_tree_status": "M connector/src/dialect/duckdb/mod.rs",
+      "bytes": 10725,
+      "sha256": "a72d306b8d408c94a9da477e23e535a488a1d88208664379c30ec40400354441"
+    },
+    {
+      "source_path": "connector/src/dialect/duckdb/session.rs",
+      "snapshot_path": "connector/src/dialect/duckdb/session.rs",
+      "working_tree_status": "?? connector/src/dialect/duckdb/session.rs",
+      "bytes": 26236,
+      "sha256": "68294ffda2834a1ba7cc88c823dea6629421b8452b465e7a16040a663c3e4902"
+    },
+    {
+      "source_path": "connector/src/dialect/duckdb/xlsx.rs",
+      "snapshot_path": "connector/src/dialect/duckdb/xlsx.rs",
+      "working_tree_status": "?? connector/src/dialect/duckdb/xlsx.rs",
+      "bytes": 12120,
+      "sha256": "9f6d1628e610be747dfc48b44f2e7ac17d7c37aa353e0024f84705be26b722ea"
+    },
+    {
+      "source_path": "connector/src/studio/catalog.json",
+      "snapshot_path": "connector/src/studio/catalog.json",
+      "working_tree_status": "?? connector/src/studio/catalog.json",
+      "bytes": 2663,
+      "sha256": "a7aaece33b2302dd730a66a9d8ef33fa4d51db674c2c08373ddc3b9bf22e2ec5"
+    },
+    {
+      "source_path": "connector/src/studio/catalog.rs",
+      "snapshot_path": "connector/src/studio/catalog.rs",
+      "working_tree_status": "?? connector/src/studio/catalog.rs",
+      "bytes": 5447,
+      "sha256": "48e77848336e912a8f7ae102b6a8949ec9563ea5e70dd17138bdaef8ea2a5352"
+    },
+    {
+      "source_path": "connector/src/studio/error.rs",
+      "snapshot_path": "connector/src/studio/error.rs",
+      "working_tree_status": "?? connector/src/studio/error.rs",
+      "bytes": 3654,
+      "sha256": "eb698c17dfad2306357ec94eb8a6e027c07f455a8b748720dbc7d07f230cd4ad"
+    },
+    {
+      "source_path": "connector/src/studio/export.rs",
+      "snapshot_path": "connector/src/studio/export.rs",
+      "working_tree_status": "?? connector/src/studio/export.rs",
+      "bytes": 25841,
+      "sha256": "18d2eaae2d880ce87faf80405e321a38eae761600d75f0ed5094f1eb7b318e1a"
+    },
+    {
+      "source_path": "connector/src/studio/mod.rs",
+      "snapshot_path": "connector/src/studio/mod.rs",
+      "working_tree_status": "?? connector/src/studio/mod.rs",
+      "bytes": 528,
+      "sha256": "6bc9ee1a15758e57653ddf1a38653091d82a0a12c93170755a082d117ee4072e"
+    },
+    {
+      "source_path": "connector/src/studio/model.rs",
+      "snapshot_path": "connector/src/studio/model.rs",
+      "working_tree_status": "?? connector/src/studio/model.rs",
+      "bytes": 6989,
+      "sha256": "ed3a445628ab0fde4f07699fb357533b9be479cb1911830256eaeac890d06064"
+    },
+    {
+      "source_path": "connector/src/studio/profile.rs",
+      "snapshot_path": "connector/src/studio/profile.rs",
+      "working_tree_status": "?? connector/src/studio/profile.rs",
+      "bytes": 6665,
+      "sha256": "8d722719abb88ede59757f9140350b3387b6118f79908bbcef5ec435bc8a5656"
+    },
+    {
+      "source_path": "connector/src/studio/reader.rs",
+      "snapshot_path": "connector/src/studio/reader.rs",
+      "working_tree_status": "?? connector/src/studio/reader.rs",
+      "bytes": 3647,
+      "sha256": "f0dd8ed698b5de2d7e3bb4908e079ef7b4fbd1b65037a82af40438a4ed8f8b8d"
+    },
+    {
+      "source_path": "connector/src/studio/result_query.rs",
+      "snapshot_path": "connector/src/studio/result_query.rs",
+      "working_tree_status": "?? connector/src/studio/result_query.rs",
+      "bytes": 7948,
+      "sha256": "177b84a06e6bd74f8abfb87e2360ae367fa43df2f5ac3a28e2c9f36f3b33e501"
+    },
+    {
+      "source_path": "connector/src/studio/result_relation.rs",
+      "snapshot_path": "connector/src/studio/result_relation.rs",
+      "working_tree_status": "?? connector/src/studio/result_relation.rs",
+      "bytes": 15000,
+      "sha256": "0c2c8977af68f90b505f7e432d27a47b3a27a48adf3787e33f880a0bbf72dc92"
+    },
+    {
+      "source_path": "connector/src/studio/results.rs",
+      "snapshot_path": "connector/src/studio/results.rs",
+      "working_tree_status": "?? connector/src/studio/results.rs",
+      "bytes": 15879,
+      "sha256": "d18d247f2014143e4a04ebe14d62a9a792ae324ace9412c56d901a96ff4de99c"
+    },
+    {
+      "source_path": "connector/src/studio/stations.rs",
+      "snapshot_path": "connector/src/studio/stations.rs",
+      "working_tree_status": "?? connector/src/studio/stations.rs",
+      "bytes": 15174,
+      "sha256": "5fc035f02e60259529a4a6cd1f54980de0b686c69584c07f8be998eb80689b04"
+    },
+    {
+      "source_path": "scripts/studio/duckomo-artifacts.json",
+      "snapshot_path": "scripts/studio/duckomo-artifacts.json",
+      "working_tree_status": "?? scripts/studio/duckomo-artifacts.json",
+      "bytes": 4037,
+      "sha256": "d578a8e600d79c5f9e27c5cd355beac5484c3b1dd860c27134cc605c5666842d"
+    }
+  ]
+}

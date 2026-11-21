@@ -1,0 +1,60 @@
+[package]
+name = "omo-app"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[features]
+default = ["nsh-ui"]
+nsh-ui-core = ["dep:nsh-core", "dep:nsh-base", "nsh-base/editor", "nsh-base/plot"]
+nsh-ui = ["nsh-ui-core", "dep:nsh-platform-linux", "dep:nsh-platform-macos"]
+in-process-engine = ["dep:omo-engine"]
+main-thread-probe-test = []
+dialog-test-seams = []
+
+[dependencies]
+anyhow.workspace = true
+arrow.workspace = true
+arrow-ipc.workspace = true
+clap.workspace = true
+log.workspace = true
+memmap2.workspace = true
+omo-project = { path = "../omo-project" }
+omo-protocol = { path = "../omo-protocol" }
+omo-engine = { path = "../omo-engine", optional = true }
+serde.workspace = true
+serde_json.workspace = true
+sha2.workspace = true
+tokio.workspace = true
+thiserror.workspace = true
+uuid.workspace = true
+
+[target.'cfg(target_os = "linux")'.dependencies]
+nsh-core = { workspace = true, optional = true }
+nsh-base = { workspace = true, optional = true }
+nsh-platform-linux = { version = "=0.5.1", default-features = false, features = ["editor", "highlight", "plot"], optional = true }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+nsh-core = { workspace = true, optional = true }
+nsh-base = { workspace = true, optional = true }
+nsh-platform-macos = { version = "=0.5.1", default-features = false, features = ["editor", "highlight", "plot"], optional = true }
+
+[lib]
+path = "src/lib.rs"
+
+[dev-dependencies]
+tempfile.workspace = true
+
+[[bin]]
+name = "omo-app"
+path = "src/main.rs"
+
+[[bin]]
+name = "omo-harness"
+path = "src/bin/omo-harness.rs"
+
+[[test]]
+name = "export_scan"
+path = "tests/export_scan.rs"
+required-features = ["in-process-engine"]

@@ -1,0 +1,12 @@
+{
+  "status": "passed",
+  "scenario": "fake_worker_cancel_and_host_state_machine",
+  "iterations": 3,
+  "recoveries": 0,
+  "generation": 1,
+  "details": [
+    "level 1: fake worker acknowledged interrupt",
+    "level 2: cancel state-machine outcome Drain { timeout_ms: 1000 }",
+    "level 3: cancel state-machine outcome Kill"
+  ]
+}

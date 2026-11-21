@@ -1,0 +1,14 @@
+app_pid=1025506
+DISPLAY=:102
+WAYLAND_DISPLAY=wayland-test2
+GDK_BACKEND=wayland
+XDG_RUNTIME_DIR=/tmp/omo-wayland/runtime2
+GTK_IM_MODULE=ibus
+GTK_PATH=/tmp/omo-ibus-gtk4/root/usr/lib/aarch64-linux-gnu/gtk-4.0
+ibus_engine_readback=libpinyin
+ibus_engine_exit=0
+loaded_ibus_module_mappings:
+e668ecb20000-e668ecb28000 r-xp 00000000 103:02 141693797                 /tmp/omo-ibus-gtk4/root/usr/lib/aarch64-linux-gnu/gtk-4.0/4.0.0/immodules/libim-ibus.so
+e668ecb28000-e668ecb3f000 ---p 00008000 103:02 141693797                 /tmp/omo-ibus-gtk4/root/usr/lib/aarch64-linux-gnu/gtk-4.0/4.0.0/immodules/libim-ibus.so
+e668ecb3f000-e668ecb40000 r--p 0000f000 103:02 141693797                 /tmp/omo-ibus-gtk4/root/usr/lib/aarch64-linux-gnu/gtk-4.0/4.0.0/immodules/libim-ibus.so
+e668ecb40000-e668ecb41000 rw-p 00010000 103:02 141693797                 /tmp/omo-ibus-gtk4/root/usr/lib/aarch64-linux-gnu/gtk-4.0/4.0.0/immodules/libim-ibus.so

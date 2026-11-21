@@ -1,0 +1,22 @@
+{
+  "captured_at": "2026-11-17T15:15:48+08:00",
+  "state": "ready, no ResultRef or station CSV; OMOBENCH_FIXTURE_RESULT and OMOBENCH_INITIAL_SQL unset",
+  "processes": {
+    "omo_app": {
+      "Name": "omo-app",
+      "State": "S (sleeping)",
+      "VmRSS": "200452 kB",
+      "pid": 2276589,
+      "cmdline": "/home/blizhan/repo/github/OmO/target/release/omo-app"
+    },
+    "omo_worker": {
+      "Name": "omo-worker",
+      "State": "S (sleeping)",
+      "VmRSS": "75784 kB",
+      "pid": 2276613,
+      "cmdline": "/home/blizhan/repo/github/OmO/target/debug/omo-worker"
+    }
+  },
+  "combined_rss_kib": 276236,
+  "combined_rss_mib": 269.76
+}

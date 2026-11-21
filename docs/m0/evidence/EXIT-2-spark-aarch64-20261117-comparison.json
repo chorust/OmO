@@ -1,0 +1,89 @@
+{
+  "artifacts": {
+    "grid_type": "regular_latlon",
+    "plan_a_csv": {
+      "path": "/home/blizhan/repo/github/OmO/docs/m0/evidence/EXIT-2-spark-aarch64-20261117-plan-a.csv",
+      "sha256": "8b18403cb7458477d3f5a655d2b391bf5c1c7f04a28c8b6de987e11760842761"
+    },
+    "plan_a_report": "/home/blizhan/repo/github/OmO/docs/m0/evidence/EXIT-2-spark-aarch64-20261117-plan-a.report.json",
+    "plan_b_csv": {
+      "path": "/home/blizhan/repo/github/OmO/docs/m0/evidence/EXIT-2-spark-aarch64-20261117-plan-b.csv",
+      "sha256": "e0daeebb7b99809964020142fcd5c2c0a853a6a110dfba383cad410fb9e7f60a"
+    },
+    "plan_b_report": "/home/blizhan/repo/github/OmO/docs/m0/evidence/EXIT-2-spark-aarch64-20261117-plan-b.report.json",
+    "reference_csv": {
+      "path": "/home/blizhan/repo/github/OmO/fixtures/reference/station_series_reference.csv",
+      "sha256": "984137dba38e07fbb874380e5f8bed3cfa6e4dfb194c65be3dc9dac895d75ff0"
+    }
+  },
+  "fixture": {
+    "compared_rows": 27,
+    "expected_rows": 27,
+    "out_of_domain_rows": 6,
+    "stations": 9,
+    "unique_keys_plan_a": 27,
+    "unique_keys_plan_b": 27,
+    "value_null_rows": 19
+  },
+  "host": {
+    "channel": "github-release-unsigned",
+    "duckdb_version": "v2.0.0",
+    "duckomo_version": "v0.4.0",
+    "loaded_extension_sha256": "2189a68bebc26f2eb7fa7b7b0f1fb2e5db9bd4cea543d5941ec165f05046a83e",
+    "locked_artifact_bytes": 8783732,
+    "locked_artifact_sha256": "8fc579a83eccd25729c7f345e70295e3b466d81a2aaeb34d3d2a59d277cb6c2e",
+    "platform": "linux_arm64"
+  },
+  "measurement_limits": [
+    "duckomo_last_scan_metrics values are reported separately as value data, metadata, index and physical read bytes; they are not interchangeable.",
+    "Plan A reports scan_complete=false with zero value bytes on this local 488-byte fixture; that zero is not evidence of zero physical work or a complete data-byte measurement.",
+    "The one-chunk synthetic fixture proves semantics and API behavior, not production-grid cost or scaling.",
+    "Runtime overlap is absent from this one-chunk fixture; duplicate handling is separately covered by the engine schema tests, including conflicting duplicate rejection."
+  ],
+  "mismatches": [],
+  "plan_costs": {
+    "A": {
+      "candidate_rows": 150,
+      "duckomo_value_data_bytes_reported": 0,
+      "full_grid_points": 25,
+      "index_bytes_reported": 0,
+      "metadata_bytes_reported": 131,
+      "physical_read_bytes_reported": 131,
+      "query_elapsed_ms": 49,
+      "raw_metrics_path": "/home/blizhan/repo/github/OmO/docs/m0/evidence/EXIT-2-spark-aarch64-20261117-plan-a.report.json",
+      "scan_complete": false,
+      "selected_unique_grid_points": 5,
+      "slice_feasibility": "full-grid read measured; selective grid-slice feasibility is no"
+    },
+    "B": {
+      "candidate_rows": 27,
+      "duckomo_value_data_bytes_reported": 206,
+      "index_bytes_reported": 25,
+      "metadata_bytes_reported": 393,
+      "physical_read_bytes_reported": 624,
+      "query_elapsed_ms": 120,
+      "raw_metrics_path": "/home/blizhan/repo/github/OmO/docs/m0/evidence/EXIT-2-spark-aarch64-20261117-plan-b.report.json",
+      "region_candidates": 9,
+      "scan_complete": true
+    }
+  },
+  "schema": "omo-series-plan-comparison/1",
+  "semantic_checks": {
+    "crs_equal_and_lon_lat_order": true,
+    "null_and_out_of_domain_rows": true,
+    "positive_and_negative_longitude_wrap": true,
+    "provenance_equal_between_plans": true,
+    "stable_schema": true,
+    "station_variable_time_keys": true,
+    "tie_break_lowest_row_major_index_5": true,
+    "utc_suffix": true,
+    "value_coordinates_distance_and_nearest_index": true
+  },
+  "status": "passed",
+  "tolerances": {
+    "distance_m": 0.0001,
+    "grid_lat": 1e-10,
+    "grid_lon": 1e-10,
+    "value": 1e-06
+  }
+}

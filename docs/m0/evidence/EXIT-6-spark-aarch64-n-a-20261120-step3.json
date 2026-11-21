@@ -1,0 +1,9 @@
+{
+  "at": "step3",
+  "recovery": "finished",
+  "saved": true,
+  "scenario": "export_kill_injection",
+  "staging_preserved": false,
+  "status": "passed",
+  "target": "/tmp/omo-export-kill-8cfcc02b-7bfd-47b0-a76d-11ea2e9c6b8b/report.csv"
+}

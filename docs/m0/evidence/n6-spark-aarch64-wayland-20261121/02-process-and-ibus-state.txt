@@ -1,0 +1,56 @@
+=== Timestamp (UTC) ===
+Sat Nov 21 06:03:11 UTC 2026
+=== target/release/omo-app sha256 ===
+7bf424781804ec8894a488f6d41227f5b0af12ae56d2e9231bab830cb71eb0d7  /home/blizhan/repo/github/OmO/target/release/omo-app
+=== Extracted components sha256 ===
+9796aa32ad11fcdea23ee1082a265a298406eff353eb05df8afce4ca532e4075  /tmp/omo-ibus-gtk4/root/usr/lib/aarch64-linux-gnu/gtk-4.0/4.0.0/immodules/libim-ibus.so
+a816541f82a3e6cf506858a16a0e14fc90ce83cdb045686a0e0473ae92d0e89d  /tmp/omo-ibus-wayland/root/usr/libexec/ibus-wayland
+4a8db312f9c92f5f27937311cd3d962557a2060ed7a6718c183f9e207eb0ae62  /tmp/omo-wayland/weston-run/usr/bin/weston
+=== IBus engine state ===
+ibus engine: libpinyin
+ibus address: unix:path=/tmp/omo-n6-ibus-20261121/cache/ibus/dbus-w7GRhtRL,guid=c71a1e9e9e8219fb4d7fb8e76b012c73
+=== Isolated session processes ===
+1893125    3026 /tmp/omo-x11/root/usr/bin/Xvfb :115 -screen 0 1600x1000x24 -ac -nolisten tcp
+1893148    3026 dbus-daemon --session --fork --print-address=3 --print-pid=4
+1893152    3026 ibus-daemon --daemonize --panel=disable --xim --replace --verbose
+1893178 1893152 /usr/libexec/ibus-memconf
+1893180 1893152 /usr/libexec/ibus-extension-gtk3
+1896105 1893152 /usr/libexec/ibus-engine-libpinyin --ibus
+1957634 1893152 /usr/libexec/ibus-engine-simple
+1985884 1985880 /tmp/omo-wayland/weston-run/usr/bin/weston --backend=x11 --renderer=pixman --socket=wayland-n6-ibus-20261121 --config=/tmp/omo-n6-ibus-20261121/final/weston-ibus.ini --idle-time=0 --width=1600 --height=1000 --shell=/tmp/omo-wayland/root/usr/lib/aarch64-linux-gnu/weston/desktop-shell.so --log=/tmp/omo-n6-ibus-20261121/final/02-weston.log
+1985886 1985884 /usr/libexec/ibus-ui-gtk3 --enable-wayland-im --verbose
+1985887 1985884 /usr/libexec/weston-desktop-shell
+1985956 1985880 /home/blizhan/repo/github/OmO/target/release/omo-app
+1985977 1985956 /home/blizhan/repo/github/OmO/target/release/omo-worker
+=== omo-app /proc/1985956/environ ===
+DBUS_SESSION_BUS_ADDRESS=unix:path=/tmp/dbus-Gr65C49Aqi,guid=3b29bc2fb8e495f8ba8a87436b012c73
+GDK_BACKEND=wayland
+GIO_USE_PORTALS=0
+GSK_RENDERER=cairo
+GTK_IM_MODULE=ibus
+GTK_PATH=/tmp/omo-ibus-gtk4/root/usr/lib/aarch64-linux-gnu/gtk-4.0
+GTK_USE_PORTAL=0
+HOME=/home/blizhan
+IBUS_ADDRESS=unix:path=/tmp/omo-n6-ibus-20261121/cache/ibus/dbus-w7GRhtRL,guid=c71a1e9e9e8219fb4d7fb8e76b012c73
+LANG=C.UTF-8
+LC_CTYPE=C.UTF-8
+OMOBENCH_BOOTSTRAP_CONFIG=/tmp/omo-n6-ibus-20261121/bootstrap.json
+PATH=/usr/local/bin:/usr/bin:/bin
+USER=blizhan
+WAYLAND_DISPLAY=wayland-n6-ibus-20261121
+XDG_CACHE_HOME=/tmp/omo-n6-ibus-20261121/cache
+XDG_CONFIG_HOME=/tmp/omo-n6-ibus-20261121/config
+XDG_DATA_DIRS=/tmp/omo-ibus-gtk4/root/usr/share:/usr/local/share:/usr/share
+XDG_DATA_HOME=/tmp/omo-n6-ibus-20261121/data
+XDG_RUNTIME_DIR=/tmp/omo-n6-ibus-20261121/runtime
+XDG_SESSION_TYPE=wayland
+=== omo-app /proc/1985956/maps (ibus/immodule) ===
+e72341f10000-e72341f96000 r-xp 00000000 103:02 33986012                  /usr/lib/aarch64-linux-gnu/libibus-1.0.so.5.0.529
+e72341f96000-e72341fae000 ---p 00086000 103:02 33986012                  /usr/lib/aarch64-linux-gnu/libibus-1.0.so.5.0.529
+e72341fae000-e72341fb0000 r--p 0008e000 103:02 33986012                  /usr/lib/aarch64-linux-gnu/libibus-1.0.so.5.0.529
+e72341fb0000-e72341fb1000 rw-p 00090000 103:02 33986012                  /usr/lib/aarch64-linux-gnu/libibus-1.0.so.5.0.529
+e72345070000-e72345078000 r-xp 00000000 103:02 141693797                 /tmp/omo-ibus-gtk4/root/usr/lib/aarch64-linux-gnu/gtk-4.0/4.0.0/immodules/libim-ibus.so
+e72345078000-e7234508f000 ---p 00008000 103:02 141693797                 /tmp/omo-ibus-gtk4/root/usr/lib/aarch64-linux-gnu/gtk-4.0/4.0.0/immodules/libim-ibus.so
+e7234508f000-e72345090000 r--p 0000f000 103:02 141693797                 /tmp/omo-ibus-gtk4/root/usr/lib/aarch64-linux-gnu/gtk-4.0/4.0.0/immodules/libim-ibus.so
+e72345090000-e72345091000 rw-p 00010000 103:02 141693797                 /tmp/omo-ibus-gtk4/root/usr/lib/aarch64-linux-gnu/gtk-4.0/4.0.0/immodules/libim-ibus.so
+e723482d1000-e723482d2000 r--s 00000000 103:02 142214130                 /tmp/omo-n6-ibus-20261121/runtime/dconf/user

@@ -1,0 +1,199 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.13s
+     Running unittests src/lib.rs (target/debug/build/omo-app/6e9617553f4bb4bb/out/omo_app-6e9617553f4bb4bb)
+
+running 5 tests
+test host::runtime::tests::the_latest_uncancelled_preview_is_the_only_replay_intent ... ok
+test host::main_thread_probe::tests::maximum_only_moves_upward ... ok
+test host::runtime::tests::generation_change_updates_preview_before_dispatch ... ok
+test ui::workspace::tests::removed_pending_callback_can_dispatch_and_reborrow_map ... ok
+test ui::table_view::tests::result_columns_enable_sorting ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/main.rs (target/debug/build/omo-app/53fe64d6d738b91b/out/omo_app-53fe64d6d738b91b)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/bin/omo-harness.rs (target/debug/build/omo-app/8295b60795accb52/out/omo_harness-8295b60795accb52)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/ipc_pages.rs (target/debug/build/omo-app/dc9c0e974f84fc9a/out/ipc_pages-dc9c0e974f84fc9a)
+
+running 1 test
+test plot_sample_is_evenly_distributed_and_bounded_over_the_complete_result ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.14s
+
+     Running tests/preview_queue.rs (target/debug/build/omo-app/df3741d5868a489d/out/preview_queue-df3741d5868a489d)
+
+running 4 tests
+test failed_preview_retains_last_good_result_and_marks_it_stale ... ok
+test restart_after_supersede_promotes_only_the_latest_request_to_the_new_generation ... ok
+test replayed_preview_tracks_the_replacement_worker_generation ... ok
+test one_running_preview_coalesces_updates_and_interrupts_superseded_work ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/supervisor.rs (target/debug/build/omo-app/01933a78787d9697/out/supervisor-01933a78787d9697)
+
+running 5 tests
+test cancellation_escalates_interrupt_drain_then_kill_within_ten_seconds ... ok
+test application_exit_kills_without_waiting_for_drain ... ok
+test missed_heartbeat_triggers_kill ... ok
+test crash_fails_active_jobs_and_advances_generation ... ok
+test stale_generation_frames_and_referenced_files_are_discarded ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/build/omo-engine/543795992f05de8f/out/omo_engine-543795992f05de8f)
+
+running 1 test
+test export::tests::rename_maps_kernel_exdev_to_cross_filesystem ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/lock.rs (target/debug/build/omo-engine/7d5a5ae7092de875/out/lock-7d5a5ae7092de875)
+
+running 4 tests
+test decompressed_size_and_hash_are_both_checked_before_load_callback ... ok
+test lookup_uses_all_four_key_fields ... ok
+test missing_entry_is_rejected ... ok
+test placeholder_golden_hash_is_not_ready ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/results.rs (target/debug/build/omo-engine/264509623ee21f09/out/results-264509623ee21f09)
+
+running 3 tests
+test writer_streams_batches_and_truncates_at_the_row_limit ... ok
+test writer_respects_the_byte_limit_without_collecting_the_result ... ok
+test worker_plot_artifact_is_evenly_sampled_and_does_not_replace_the_full_result ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.14s
+
+     Running tests/series_schema.rs (target/debug/build/omo-engine/345e8564892d3407/out/series_schema-345e8564892d3407)
+
+running 6 tests
+test conflicting_duplicates_fail_instead_of_hiding_a_value_difference ... ok
+test longitude_normalization_uses_half_open_minus_180_to_180_convention ... ok
+test deduplication_uses_station_variable_and_utc_time_key ... ok
+test null_values_are_valid_station_series_observations ... ok
+test station_series_time_must_be_explicit_utc ... ok
+test station_series_csv_has_the_stable_column_order ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/typing.rs (target/debug/build/omo-engine/bf22f03cf08dfb9c/out/typing-bf22f03cf08dfb9c)
+
+running 1 test
+test query_api_contract_requires_the_bootstrapped_connection_type ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/build/omo-project/8a5153c5530fc5bc/out/omo_project-8a5153c5530fc5bc)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/doc.rs (target/debug/build/omo-project/484cc3edabf49db9/out/doc-484cc3edabf49db9)
+
+running 2 tests
+test preview_key_equality_covers_every_input ... ok
+test revision_and_dirty_follow_edits_and_saves ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/build/omo-protocol/b319551a2b4c1433/out/omo_protocol-b319551a2b4c1433)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/frame.rs (target/debug/build/omo-protocol/dfa5ec2c56a333b7/out/frame-dfa5ec2c56a333b7)
+
+running 4 tests
+test frame_round_trip ... ok
+test truncated_body_is_rejected ... ok
+test truncated_length_prefix_is_rejected ... ok
+test frame_larger_than_16_mib_is_rejected ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/messages.rs (target/debug/build/omo-protocol/dc15128432c0eeea/out/messages-dc15128432c0eeea)
+
+running 3 tests
+test stale_generation_is_classified_for_discard ... ok
+test envelope_and_body_round_trip_as_json ... ok
+test result_ref_and_state_are_serializable ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/build/omo-worker/6a493c51505892a7/out/omo_worker-6a493c51505892a7)
+
+running 2 tests
+test server::tests::legacy_backend_result_remains_a_result_ref ... ok
+test server::tests::result_event_keeps_full_result_and_publishes_plot_artifact ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/bin/omo-probe.rs (target/debug/build/omo-worker/45eca26f423e353e/out/omo_probe-45eca26f423e353e)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/bin/omo-series-spike.rs (target/debug/build/omo-worker/07938898b0caecc7/out/omo_series_spike-07938898b0caecc7)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/main.rs (target/debug/build/omo-worker/b47148034bde34ed/out/omo_worker-b47148034bde34ed)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/stdout_clean.rs (target/debug/build/omo-worker/8169142b92655864/out/stdout_clean-8169142b92655864)
+
+running 1 test
+test log_pressure_stays_on_stderr_and_stdout_contains_only_protocol_frames ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests omo_app
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests omo_engine
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests omo_project
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests omo_protocol
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests omo_worker
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

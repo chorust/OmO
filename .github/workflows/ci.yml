@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            target: x86_64-unknown-linux-gnu
+            duckomo_platform: linux_amd64
+          - os: ubuntu-24.04-arm
+            target: aarch64-unknown-linux-gnu
+            duckomo_platform: linux_arm64
+          - os: macos-14
+            target: aarch64-apple-darwin
+            duckomo_platform: osx_arm64
+          - os: macos-15-intel
+            target: x86_64-apple-darwin
+            duckomo_platform: ""
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Rust 1.100.0
+        run: rustup toolchain install 1.100.0 --profile minimal
+      - name: Install Linux native prerequisites
+        if: startsWith(matrix.os, 'ubuntu-')
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pkg-config libgtk-4-dev libpango1.0-dev \
+            libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev
+      - name: Build locked workspace
+        run: cargo +1.100.0 build --workspace --locked
+      - name: Test locked workspace
+        run: cargo +1.100.0 test --workspace --locked
+      - name: Check dependency boundaries
+        run: scripts/check-boundaries.sh
+      - name: Check boundary self-test
+        run: scripts/check-boundaries.sh --self-test
+      - name: Verify locked Duckomo bootstrap and live worker
+        if: matrix.duckomo_platform != ''
+        run: python3 scripts/ci-verify-duckomo.py --repeat 3

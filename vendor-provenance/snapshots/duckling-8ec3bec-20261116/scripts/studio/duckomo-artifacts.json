@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "extension_name": "duckomo",
+  "repository": "chorust/duckomo",
+  "release": {
+    "tag": "v0.4.0",
+    "source_commit": "1bc76c3a36d26607b463909153cff9c255e19919",
+    "duckdb_version": "v2.0.0",
+    "prerelease": false,
+    "formal_t1": "OPEN",
+    "signed": false
+  },
+  "platforms": [
+    {
+      "rust_target": "x86_64-unknown-linux-gnu",
+      "platform": "linux_amd64",
+      "asset_id": 726315732,
+      "asset_name": "duckomo-v0.4.0-duckdb-v2.0.0-linux_amd64.duckdb_extension.gz",
+      "asset_url": "https://github.com/chorust/duckomo/releases/download/v0.4.0/duckomo-v0.4.0-duckdb-v2.0.0-linux_amd64.duckdb_extension.gz",
+      "archive_size": 9561128,
+      "archive_sha256": "13c4a6bc3db26a6b846dc189174c617f810db280d5c4cac760bf80185a833ac9",
+      "binary_size": 30575278,
+      "binary_sha256": "fa641c9427cda421ccfa6d02d271bc0edcb8784e83b63065f43ccfaa96afb11c",
+      "resource_relative_path": "extensions/v2.0.0/linux_amd64/duckomo.duckdb_extension",
+      "verification": "GitHub asset bytes and SHA256SUMS match the frozen v0.4.0 planning evidence; decompressed SHA-256 matches the upstream manifest extension_sha256. This baseline pin is not a governed-reader capability. formal T1 remains OPEN."
+    },
+    {
+      "rust_target": "aarch64-unknown-linux-gnu",
+      "platform": "linux_arm64",
+      "asset_id": 726315758,
+      "asset_name": "duckomo-v0.4.0-duckdb-v2.0.0-linux_arm64.duckdb_extension.gz",
+      "asset_url": "https://github.com/chorust/duckomo/releases/download/v0.4.0/duckomo-v0.4.0-duckdb-v2.0.0-linux_arm64.duckdb_extension.gz",
+      "archive_size": 8783732,
+      "archive_sha256": "8fc579a83eccd25729c7f345e70295e3b466d81a2aaeb34d3d2a59d277cb6c2e",
+      "binary_size": 29347014,
+      "binary_sha256": "2189a68bebc26f2eb7fa7b7b0f1fb2e5db9bd4cea543d5941ec165f05046a83e",
+      "resource_relative_path": "extensions/v2.0.0/linux_arm64/duckomo.duckdb_extension",
+      "verification": "GitHub asset bytes and SHA256SUMS match the frozen v0.4.0 planning evidence; decompressed SHA-256 matches the upstream manifest extension_sha256. This baseline pin is not a governed-reader capability. formal T1 remains OPEN."
+    },
+    {
+      "rust_target": "x86_64-apple-darwin",
+      "platform": "osx_amd64",
+      "asset_id": 726315760,
+      "asset_name": "duckomo-v0.4.0-duckdb-v2.0.0-osx_amd64.duckdb_extension.gz",
+      "asset_url": "https://github.com/chorust/duckomo/releases/download/v0.4.0/duckomo-v0.4.0-duckdb-v2.0.0-osx_amd64.duckdb_extension.gz",
+      "archive_size": 7199997,
+      "archive_sha256": "79101b9789adbed57b0e9e7296ce3b4f08ccbe0aef42026cee940f6e59b4aec0",
+      "binary_size": 24910358,
+      "binary_sha256": "5ecb02f82acc0296378c3dbf127b6ef2e9f6d2c0b232c36f632f214489fa0977",
+      "resource_relative_path": "extensions/v2.0.0/osx_amd64/duckomo.duckdb_extension",
+      "verification": "GitHub asset bytes and SHA256SUMS match the frozen v0.4.0 planning evidence; decompressed SHA-256 matches the upstream manifest extension_sha256. This baseline pin is not a governed-reader capability. formal T1 remains OPEN."
+    },
+    {
+      "rust_target": "aarch64-apple-darwin",
+      "platform": "osx_arm64",
+      "asset_id": 726315778,
+      "asset_name": "duckomo-v0.4.0-duckdb-v2.0.0-osx_arm64.duckdb_extension.gz",
+      "asset_url": "https://github.com/chorust/duckomo/releases/download/v0.4.0/duckomo-v0.4.0-duckdb-v2.0.0-osx_arm64.duckdb_extension.gz",
+      "archive_size": 6815070,
+      "archive_sha256": "2b5b275f31d9cccbd55fac9ffd384d96f033c36a3c25795fec89e6ffa286168c",
+      "binary_size": 24162062,
+      "binary_sha256": "42a0166a7aca65936e3595f2f73a8b94d9e6780016fd0b579b1459bc62391e69",
+      "resource_relative_path": "extensions/v2.0.0/osx_arm64/duckomo.duckdb_extension",
+      "verification": "GitHub asset bytes and SHA256SUMS match the frozen v0.4.0 planning evidence; decompressed SHA-256 matches the upstream manifest extension_sha256. This baseline pin is not a governed-reader capability. formal T1 remains OPEN."
+    }
+  ]
+}

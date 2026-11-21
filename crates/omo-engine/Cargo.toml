@@ -1,0 +1,41 @@
+[package]
+name = "omo-engine"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[features]
+test-support = []
+
+[dependencies]
+arrow.workspace = true
+arrow-ipc.workspace = true
+base64.workspace = true
+duckdb.workspace = true
+flate2.workspace = true
+hex.workspace = true
+omo-protocol = { path = "../omo-protocol" }
+serde.workspace = true
+serde_json.workspace = true
+sha2.workspace = true
+tempfile.workspace = true
+thiserror.workspace = true
+
+[[test]]
+name = "results"
+path = "tests/results.rs"
+
+[[test]]
+name = "bootstrap"
+path = "tests/bootstrap.rs"
+required-features = ["test-support"]
+
+[[test]]
+name = "export"
+path = "tests/export.rs"
+required-features = ["test-support"]
+
+[[test]]
+name = "series_schema"
+path = "tests/series_schema.rs"

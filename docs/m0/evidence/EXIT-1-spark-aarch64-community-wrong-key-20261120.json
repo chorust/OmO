@@ -1,0 +1,21 @@
+{
+  "status": "failed",
+  "channel": "community-signed",
+  "platform": "linux_arm64",
+  "golden_mode": "locked",
+  "repeat_requested": 1,
+  "attempts_completed": 1,
+  "no_network": true,
+  "r4_requested": false,
+  "attempts": [
+    {
+      "iteration": 1,
+      "elapsed_ms": 3753,
+      "status": "failed",
+      "bootstrap": null,
+      "r4": null,
+      "no_network_remote_probe": null,
+      "error": "duckomo failed to load through community-signed: cannot install Duckomo from the pinned local repository: IO Error: Attempting to install an extension file that doesn't have a valid signature, see https://duckdb.org/docs/current/operations_manual/securing_duckdb/securing_extensions; extension settings before load: [(\"active_grammar_extensions\", \"[]\"), (\"allow_community_extensions\", \"false\"), (\"allow_extension_repositories\", \"allowed\"), (\"allow_extensions_metadata_mismatch\", \"false\"), (\"allow_parser_override_extension\", \"DEFAULT\"), (\"allow_unsigned_extensions\", \"false\"), (\"autoinstall_extension_repository\", \"\"), (\"autoinstall_known_extensions\", \"false\"), (\"autoload_known_extensions\", \"false\"), (\"custom_extension_repository\", \"\"), (\"extension_directories\", \"[]\"), (\"extension_repository_directory\", \"/tmp/omo-probe-community-wrong-key-20261120/extensions/omo-extension-repositories\")]"
+    }
+  ]
+}

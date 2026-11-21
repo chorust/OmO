@@ -1,0 +1,26 @@
+{
+  "status": "passed",
+  "platform": "linux_arm64",
+  "channel": "github-release-unsigned",
+  "bootstrap": {
+    "actual": "bc7cf6db243073d9baee64cdda6900cae9547a33bde00f61b8da10a7ce30254f",
+    "expected": "bc7cf6db243073d9baee64cdda6900cae9547a33bde00f61b8da10a7ce30254f",
+    "fixture": "fixtures/om/chmi-aladin-cz-hsurf.om",
+    "ok": true,
+    "query_id": "golden-v1",
+    "rows": 64
+  },
+  "result_rows": 1000,
+  "generation": 7,
+  "export": {
+    "rows": 1000,
+    "path": "/tmp/omo-live-worker-hxd88w_2/data/result.csv",
+    "data_sha256": "dfd4a0051c7302f58e9d894a9cab2223783c40deff33b1124a5b768c067c1469",
+    "sidecar": "/tmp/omo-live-worker-hxd88w_2/data/result.csv.omo.json"
+  },
+  "cancellation": "interrupt",
+  "events_during_query": [
+    "heartbeat",
+    "failed"
+  ]
+}
