@@ -1,6 +1,10 @@
 # NSH shell decision for M0
 
-## Decision
+## Final decision (user, FR-022, 2026-11-23)
+
+**Accept NSH 0.5.1 for M0. Do not trigger the §7.3 GPUI Kit fallback.** The user classified the remaining N6 Wayland item as non-blocking: the IBus candidate popup does not map in nested Weston 13, because Weston implements only `zwp_text_input_v1` and GTK4 implements only `zwp_text_input_v3`. This closes SPIKE-1 and EXIT-3. Non-reference platforms are closed by [GitHub CI/release evidence](../evidence/CI-CROSS-PLATFORM-20261123.md) under Constitution 1.3.0. See the [final EXIT-3 record](../evidence/EXIT-3-spark-aarch64-n-a-20261123.md). The provisional analysis below is kept as the evidence basis. Its "remain open" statements are superseded by this decision.
+
+## Provisional decision (2026-11-20)
 
 Retain NSH 0.5.1 for the M0 implementation. Do not trigger the §7.3 GPUI Kit fallback on the evidence from the verified spark sessions. This is a **provisional implementation decision**, not a claim that the full N1–N9 matrix or M0 exit has passed. Revisit it if an outstanding host, session, IME, or packaging run establishes a blocking result.
 

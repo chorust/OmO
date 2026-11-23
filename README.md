@@ -204,7 +204,7 @@ flowchart LR
 | 阶段 | 状态 | 核心范围 |
 | :--- | :--- | :--- |
 | **001 · M0 Skeleton Engine** | 当前已发布 `v0.1.0-m0` | 骨架引擎、锁定引导、受监管 worker、NSH 原生壳层、站点序列方案决策与 CI/Release 验证 |
-| **002 · M1 Station Time Series** | 规划中 | 真实目录接入、站点 CSV 导入、单/多站时间序列工作流与工程持久化 |
+| **002 · M1 Station Time Series** | 规划中 | 真实目录接入（默认 ECMWF IFS HRES · 2 m 气温 · 未来 0–7 天）、站点 CSV 导入、单/多站时间序列工作流与工程持久化 |
 | **003 · M2 Static Regional Map** | 待定细化 | 静态区域地图任务、版本绑定、PNG + sidecar 导出 |
 | **004 · L1 Declarative Reports** | 待定细化 | 版本化 `ReportSpec`（`omo-report/1`）、只读快照隔离渲染 |
 | **005 · M3 Dynamical Icechunk** | 待定细化 | 统一 `Source` 抽象、STAC 发现与 Icechunk 接入，复用同一 `station_series` 输出 |

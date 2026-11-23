@@ -6,7 +6,7 @@ Only the user may classify N-results as blocking under FR-022.
 
 ## N1 — Build
 
-- [ ] Build with `cargo build --workspace --locked` on macOS 14 arm64, Linux x86_64, and spark aarch64. Spark passes; Linux x86_64 and macOS 14 arm64 remain not-run.
+- [x] Build with `cargo build --workspace --locked` on macOS 14 arm64, Linux x86_64, and spark aarch64. Spark passes locally. Linux x86_64 and macOS arm64 (`macos-15` runner) pass in [GitHub CI](evidence/CI-CROSS-PLATFORM-20261123.md) (2026-11-23, Constitution 1.3.0).
 - [x] Record exact Rust, NSH, GTK/Pango/GStreamer versions and required package list for the available Spark host run; see the [Spark N1 record](evidence/N1-spark-aarch64-n_a-20261119.md). Linux x86_64 and macOS remain not-run.
 - [x] On spark, confirm a source build after prerequisites are available; locked debug/test/release builds pass against installed system packages, without `/tmp/gtkdev` (see [N1](evidence/N1-spark-aarch64-n_a-20261119.md)).
 

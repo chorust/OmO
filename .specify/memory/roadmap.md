@@ -1,5 +1,25 @@
 <!--
-SYNC IMPACT REPORT
+SYNC IMPACT REPORT (1.0.5, 2026-11-23)
+=====================================
+Version change: 1.0.4 → 1.0.5
+Bump rationale: PATCH — record user decisions closing M0 non-reference gates with GitHub CI
+evidence, resolving OQ-4 (channel policy) and OQ-6 (M1 default product/variable/window).
+
+Changes this revision:
+  - Status: 001 in-progress → verified. Non-reference cells are closed by CI run 45104328529
+    and release run 45031395194 (docs/m0/evidence/CI-CROSS-PLATFORM-20261123.md). The user's
+    FR-022 call accepts NSH 0.5.1; N6 Wayland IBus candidate display is a non-blocking
+    limitation.
+  - Status: 002 needs-info → planned (OQ-6 resolved).
+  - C-06 updated with cross-platform CI channel outcomes and the global channel policy.
+  - OQ-4 and OQ-6 resolved.
+
+Specs affected: 001, 002
+Open questions added/resolved: OQ-4 and OQ-6 resolved; none added.
+-->
+
+<!--
+SYNC IMPACT REPORT (1.0.4)
 ==================
 Version change: 1.0.3 → 1.0.4
 Bump rationale: PATCH — record Constitution 1.3.0 cross-platform GitHub CI/release acceptance
@@ -86,7 +106,11 @@ Status legend (lifecycle): **undecided** · **needs-info** · **planned** ·
     routes. GitHub-release-unsigned passed locked bootstrap and the independent golden query
     in 100/100 fresh connections; no unsigned fallback followed the signed failure. Linux
     x86_64/macOS arm64 channel runs and cross-channel equality remain not-run. See
-    `docs/m0/decisions/channel.md`; global channel preference remains OQ-4.
+    `docs/m0/decisions/channel.md`; ~~global channel preference remains OQ-4.~~
+  - **CI evidence (2026-11-23):** In CI run 45104328529, both channels passed locked SHA-256,
+    bootstrap, and golden checks 3/3 on linux_amd64, linux_arm64, and osx_arm64, with identical
+    golden hashes. **Policy (OQ-4 resolved):** `community-signed` is preferred;
+    `github-release-unsigned` stays allowed by explicit selection; no silent fallback.
 - **C-07 — Supervised worker + state boundaries:** child-process engine, generations,
   Arrow IPC `ResultRef`, three-level cancellation, Labelize-style
   `edited`/`draft_staged`/`received`/`saved`, and an export whose single commit point is the
@@ -112,8 +136,13 @@ Status legend (lifecycle): **undecided** · **needs-info** · **planned** ·
 
 ### Foundations
 
-### 001 — M0 Skeleton & Usable Engine  [status: in-progress]
+### 001 — M0 Skeleton & Usable Engine  [status: verified]
 
+- **Status note (2026-11-23):** `v0.1.0-m0` is released. Non-reference platforms are closed by
+  GitHub CI/release evidence under Constitution 1.3.0 (user decision). The user's FR-022 call
+  accepts NSH 0.5.1, with no fallback; SPIKE-1 and EXIT-3 pass, and the N6 Wayland IBus
+  candidate popup under nested Weston 13 is recorded as a non-blocking limitation. See
+  `docs/m0/acceptance.md` and `docs/m0/evidence/EXIT-3-spark-aarch64-n-a-20261123.md`.
 - **Description:** Workspace skeleton with enforced crate boundaries and CI; a verified
   duckomo bootstrap; a supervised worker; NSH minimal-window acceptance N1–N9 on the
   platform matrix (or the documented §7.3 fallback); the nearest-series spike (A vs B);
@@ -133,7 +162,7 @@ Status legend (lifecycle): **undecided** · **needs-info** · **planned** ·
 
 ### Product milestones
 
-### 002 — M1 Stations × Forecast Series  [status: needs-info]
+### 002 — M1 Stations × Forecast Series  [status: planned]
 
 - **Description:** Station CSV import (snapshot + SHA-256 + mapping confirmation), catalog
   with readiness probes, `station_series` via the M0-chosen plan, table/plot/SQL views, export
@@ -145,8 +174,10 @@ Status legend (lifecycle): **undecided** · **needs-info** · **planned** ·
 - **Scope (in):** design §7.4.
 - **Scope (out):** maps, reports, Icechunk.
 - **Depends on:** 001.
-- **Notes:** needs-info because the default product, variable, and time window are not set
-  (OQ-6).
+- **Notes:** ~~needs-info because the default product, variable, and time window are not set
+  (OQ-6).~~ OQ-6 resolved 2026-11-23: the default is ECMWF IFS HRES (deterministic),
+  2 m air temperature, forecast horizon 0–7 days from the selected run. The exact Open-Meteo OM
+  dataset/variable identifiers and run-selection rule will be determined during 002 research.
 
 ### 003 — M2 Static Regional Map  [status: planned]
 
@@ -203,16 +234,22 @@ From design §10. OQ-8e has been resolved for M0 with the user's approval; the o
 - **OQ-3** Whether to file duckomo upstream requests (series regions/nearest, a version
   function, error taxonomy), and whether to tell duckomo that `docs/community-extensions.md`
   is stale.
-- **OQ-4** If the signed channel passes M0, does it become the default with unsigned fully
-  off? Who updates the lock on the next duckomo bump?
+- ~~**OQ-4** If the signed channel passes M0, does it become the default with unsigned fully
+  off? Who updates the lock on the next duckomo bump?~~ **Resolved (2026-11-23, user):**
+  `community-signed` is preferred; `github-release-unsigned` remains allowed by explicit
+  selection (not disabled); no silent fallback. See `docs/m0/decisions/channel.md`.
+  Lock ownership: the user decides whether to upgrade; the lock is never bumped without the
+  user's explicit confirmation. After confirmation, both channels × three locked platforms are
+  refreshed and must pass `scripts/ci-verify-duckomo.py` in CI before release.
 - **OQ-5** Intel Mac: not supported for M0 runtime acceptance or `artifacts/duckomo.lock.json`
   (community has no `osx_amd64` build, and NSH needs macOS 14+) — confirm? Note: the GitHub
   Release v0.4.0 *does* include an unsigned `duckdb-v2.0.0-osx_amd64` build (2026-11-16).
   *Constitution 1.2.0 amendment (2026-11-21):* `macos-15-intel` (`x86_64-apple-darwin`) is
   included in `.github/workflows/ci.yml` and `.github/workflows/release.yml` for build/archive
   coverage only; this does not imply Intel Mac runtime acceptance.
-- **OQ-6** M1 default product, variable, and time window. Duckling's catalog entries are all
-  pending.
+- ~~**OQ-6** M1 default product, variable, and time window. Duckling's catalog entries are all
+  pending.~~ **Resolved (2026-11-23, user):** ECMWF IFS HRES, 2 m air temperature, forecast
+  horizon 0–7 days. The exact OM identifiers will be determined during 002 research.
 - **OQ-7** Where the M3 Icechunk reader lives: an omobench crate, a standalone DuckDB
   extension, or duckomo.
 - **OQ-8** Report form and permissions:
@@ -266,4 +303,4 @@ Historical blockers found while writing this roadmap (2026-11-16, read-only chec
 
 ---
 
-**Version**: 1.0.4 | **Ratified**: 2026-11-16 | **Last Amended**: 2026-11-21
+**Version**: 1.0.5 | **Ratified**: 2026-11-16 | **Last Amended**: 2026-11-23

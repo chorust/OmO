@@ -204,7 +204,7 @@ flowchart LR
 | Milestone | Status | Scope |
 | :--- | :--- | :--- |
 | **001 · M0 Skeleton Engine** | Released (`v0.1.0-m0`) | Skeleton engine, locked bootstrap, supervised worker, NSH native shell, station-series plan decision, CI & release verification |
-| **002 · M1 Station Time Series** | Planned | Product catalog integration, UI station CSV ingestion, station time-series workflows, and project persistence |
+| **002 · M1 Station Time Series** | Planned | Product catalog integration (default: ECMWF IFS HRES · 2 m temperature · 0–7 day horizon), UI station CSV ingestion, station time-series workflows, and project persistence |
 | **003 · M2 Static Regional Map** | Needs refinement | Revision-bound regional map jobs, PNG + sidecar export |
 | **004 · L1 Declarative Reports** | Needs refinement | Versioned `ReportSpec` (`omo-report/1`), allow-listed Rust renderer on frozen read-only snapshots |
 | **005 · M3 Dynamical Icechunk** | Needs refinement | Unified `Source` abstraction, STAC discovery, and Icechunk backend emitting the same `station_series` schema |

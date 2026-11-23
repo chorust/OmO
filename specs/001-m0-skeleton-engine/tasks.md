@@ -82,7 +82,9 @@ tests first and confirm they fail.
 - [x] T026 [US2] Implement bootstrap internals from the approved FR-005 route — Implement `crates/omo-engine/src/{config.rs,bootstrap.rs,probe.rs}`: BootstrapConfig; open with `extension_directory`, setting `allow_unsigned_extensions` only for the unsigned channel; httpfs LOAD → INSTALL with 15 s timeout → degrade (`caps.remote=false`); duckomo verify+load per channel; close the unsigned window and lock config; run the probes (version, platform, extension_version == lock, the four functions) and the golden query; produce BootstrapReport; `ensure_spatial`
 - [x] T027 [US2] Implement signed loading through a private local DuckDB repository configured with the lock-pinned community key; verify installed bytes before `LOAD`, close repository access afterward, and preserve no-fallback behavior. Spark local-route evidence: `docs/m0/evidence/SPIKE-3-community-local-repository-spark-aarch64-20261120.md`; other target platforms remain unrun.
 - [x] T028 [US2] Implement the `omo-probe` bin (`--channel`, `--repeat N`, `--r4`, `--no-network`, JSON report) in `crates/omo-worker/src/bin/omo-probe.rs`
-- [ ] T029 [US2] On each platform × channel: run `omo-probe --repeat 100`, then fill `golden.result_sha256` only from the first verified run, and confirm both channels match. Evidence goes to `docs/m0/evidence/EXIT-1-<platform>-<date>.md` and `EXIT-5-<platform>-<date>.md`
+- [x] T029 [US2] On each platform × channel: run `omo-probe --repeat 100`, then fill `golden.result_sha256` only from the first verified run, and confirm both channels match. Evidence goes to `docs/m0/evidence/EXIT-1-<platform>-<date>.md` and `EXIT-5-<platform>-<date>.md`
+
+**T029 closure (2026-11-23):** Closed by user decision under Constitution 1.3.0. Spark carries 100/100 for both channels. Linux x86_64 and macOS arm64 were verified in [CI run 45104328529](../../docs/m0/evidence/CI-CROSS-PLATFORM-20261123.md): both channels passed 3/3 with the locked golden hash `bc7cf6db…254f`. That is 3 repeats, not 100.
 
 **T029 Spark status (2026-11-20):** Both current channels passed 100/100 fresh connections on probe SHA-256 `0348de869c4c3bd52b130f9ac29b94383f66ea87d9a1393bb55f1e189069936d`; they report distinct locked artifact hashes and the same 64-row golden hash `bc7cf6db243073d9baee64cdda6900cae9547a33bde00f61b8da10a7ce30254f`. Current reports and the Spark-only channel decision are in [EXIT-1](../../docs/m0/evidence/EXIT-1-spark-aarch64-n-a-20261120.md) and [EXIT-5](../../docs/m0/evidence/EXIT-5-spark-aarch64-current-20261120.md). T029 remains open because Linux x86_64 and macOS arm64 host/channel repeats are not-run; see [availability evidence](../../docs/m0/evidence/PLATFORM-AVAILABILITY-20261120.md).
 - [x] T030 [US2] Run `omo-probe --r4` (unsigned close after open; LOAD spatial after config lock) and `--no-network` (httpfs degrade; a remote task is rejected with `CapabilityUnavailable(remote)`). Write `docs/m0/decisions/r4.md`, including the mitigation choice (pre-load spatial or a spatial-capable worker)
@@ -110,7 +112,9 @@ tests first and confirm they fail.
 - [x] T039 [US3] Implement `omo-harness` subcommands `crash-inject`, `cancel`, `gen-result`, `progress`, and `export-kill` in `crates/omo-app/src/bin/omo-harness.rs`
 **T040 status (2026-11-20):** Spark harness rerun passed 20/20 fake crash recoveries and all three cancellation harness paths; supervisor tests record 0 stale results accepted. The current follow-up is [EXIT-4](../../docs/m0/evidence/EXIT-4-spark-aarch64-n-a-20261120.md). Linux x86_64 and macOS arm64 runs remain not-run, so T040 stays open.
 
-- [ ] T040 [US3] Run the crash and cancel harness on each platform; record EXIT-4 in `docs/m0/evidence/EXIT-4-<platform>-<date>.md` (recoveries, 0 stale results accepted, the cancel level that ended each task)
+- [x] T040 [US3] Run the crash and cancel harness on each platform; record EXIT-4 in `docs/m0/evidence/EXIT-4-<platform>-<date>.md` (recoveries, 0 stale results accepted, the cancel level that ended each task)
+
+**T040 closure (2026-11-23):** Closed by user decision under Constitution 1.3.0. The Spark harness evidence stands. On Linux x86_64 and macOS arm64, CI ran the supervisor crash, heartbeat, stale-generation, and cancel-escalation tests plus a live worker interrupt ([CI evidence](../../docs/m0/evidence/CI-CROSS-PLATFORM-20261123.md)). `omo-harness` itself was not run there.
 
 ---
 
@@ -129,8 +133,10 @@ tests first and confirm they fail.
 - [x] T046 [P] [US4] Implement the file dialogs (`pick_paths` for station CSV, `pick_save_path` for export; cancel → None; on error → manual path entry) in `crates/omo-app/src/ui/dialogs.rs`
 - [x] T047 [US4] Enforce the threading contract (only the engine thread writes signals, after the generation/revision check; page decoding in `background`). If `spawn`→UI delivery differs on 0.5.1, use NSH's cross-thread post and record the difference in `docs/m0/evidence/N7-notes-<date>.md`
 - [x] T048 [US4] APPROVED INSTALL — Run N2–N8 on spark × {X11, Wayland}, recording frame time p50/p95, max main-thread stall, and RSS, in `docs/m0/evidence/N<k>-spark-aarch64-<session>-20261116.md`; any session that cannot be run is recorded as `not-run (reason)`. Evidence sweep completed: X11 runs and scoped nested Weston Wayland evidence (N2–N5, N7/N8; partial N6) are linked from `docs/m0/acceptance.md`; remaining unavailable or unverified cells stay `not-run` and are not passes.
-- [ ] T049 [P] [US4] Run N2–N8 on Linux x86_64 × {Wayland, X11} → `docs/m0/evidence/N<k>-linux-x86_64-<session>-<date>.md` (host per OQ-B3)
-- [ ] T050 [P] [US4] Run N2–N8 on macOS 14 arm64 → `docs/m0/evidence/N<k>-macos14-arm64-n_a-<date>.md` (host per OQ-B3)
+- [x] T049 [P] [US4] Run N2–N8 on Linux x86_64 × {Wayland, X11} → `docs/m0/evidence/N<k>-linux-x86_64-<session>-<date>.md` (host per OQ-B3)
+- [x] T050 [P] [US4] Run N2–N8 on macOS 14 arm64 → `docs/m0/evidence/N<k>-macos14-arm64-n_a-<date>.md` (host per OQ-B3)
+
+**T049/T050 closure (2026-11-23):** Closed by user decision under Constitution 1.3.0. Interactive N2–N8 acceptance stays on the Spark reference host. Linux x86_64 and macOS arm64 cells are `ci-accepted` on locked build/test success in [CI run 45104328529](../../docs/m0/evidence/CI-CROSS-PLATFORM-20261123.md) and [release run 45031395194](https://github.com/chorust/OmO/actions/runs/45031395194). No interactive session was exercised on those platforms.
 - [x] T051 [US4] Apply user-approved FR-022 D8 classification — Classify N-results as blocking or recorded limitation using the approved examples; report N7 maximum stall without a numeric threshold; set the final plot cap from N3; write `docs/m0/decisions/shell.md` (accept NSH / evaluate a compatible NSH release / trigger the §7.3 GPUI Kit fallback; embedding is never an option). The decision retains NSH provisionally for tested spark scope and keeps unverified platforms, Wayland subcases, and EXIT-3 open. If the fallback triggers, stop and open a new spec for the `omo-app::ui` swap; do not implement it here
 
 ---
@@ -159,7 +165,9 @@ tests first and confirm they fail.
 - [x] T060 [US6] Implement the startup scan of recent export dirs in `crates/omo-app/src/host/export_scan.rs`, and wire the overwrite confirmation and `pick_save_path` in `crates/omo-app/src/ui/dialogs.rs`
 **T061 Spark status (2026-11-20):** The existing `export-kill` command was rebuilt against host-installed prerequisites and all three fault-injection points passed on Spark; see the [current EXIT-6 follow-up](../../docs/m0/evidence/EXIT-6-spark-aarch64-n-a-20261120.md). T061 remains unchecked because Linux x86_64 and macOS arm64 runs are not-run.
 
-- [ ] T061 [US6] Add `omo-harness export-kill --at step1|step2|step3` in `crates/omo-app/src/bin/omo-harness.rs`; run it on each platform and record EXIT-6 in `docs/m0/evidence/EXIT-6-<platform>-<date>.md` (expected: incomplete, incomplete, finished)
+- [x] T061 [US6] Add `omo-harness export-kill --at step1|step2|step3` in `crates/omo-app/src/bin/omo-harness.rs`; run it on each platform and record EXIT-6 in `docs/m0/evidence/EXIT-6-<platform>-<date>.md` (expected: incomplete, incomplete, finished)
+
+**T061 closure (2026-11-23):** Closed by user decision under Constitution 1.3.0. Spark `export-kill` passed all three steps. On Linux x86_64 and macOS arm64, CI ran the export unit tests ([CI evidence](../../docs/m0/evidence/CI-CROSS-PLATFORM-20261123.md)). `export-kill` itself was not run there.
 
 ---
 

@@ -1,5 +1,19 @@
 # Feature 001 implementation and acceptance audit — 2026-11-20
 
+## Addendum — 2026-11-23 CI closure
+
+This addendum supersedes the counts and "not-run"/"unverified" statements below wherever they refer to Linux x86_64, macOS arm64, or hosted CI/release.
+
+- Hosted CI and release are now verified:
+  - [CI run 45104328529](https://github.com/chorust/OmO/actions/runs/45104328529) passed on `linux_amd64`, `linux_arm64`, `osx_arm64`, and build-only `macos-15-intel`.
+  - [Release run 45031395194](https://github.com/chorust/OmO/actions/runs/45031395194) published four `v0.1.0-m0` archives.
+  - Details are in [CI-CROSS-PLATFORM-20261123.md](evidence/CI-CROSS-PLATFORM-20261123.md).
+- By user decision under Constitution 1.3.0, T029, T040, T049, T050, and T061 are closed with that CI evidence. All 66 tasks are now checked.
+- Acceptance matrix: 74 cells — 34 `pass` (6 via GitHub CI, 2 via the user's FR-022 decision), 39 `ci-accepted`, 1 `accepted-limitation`, 0 `not-run`, 0 `fail`. `ci-accepted` means the cell was accepted by policy without a target-host run. The CI evidence file lists exactly what CI exercised.
+- FR-002, FR-007, FR-008, FR-010, SC-001, and SC-002 move from Partial/Open to pass for the stated scope. Non-reference platforms are covered by 3-repeat CI probes, not 100-repeat host runs. FR-013 (spatial/R4 and network isolation) is `ci-accepted` on non-reference platforms, because CI ran no `--r4` or `--no-network` probe.
+- FR-022 final call (user, 2026-11-23): NSH 0.5.1 is accepted for M0 and no fallback is triggered. The N6 Wayland IBus candidate popup is a non-blocking limitation, and SPIKE-1 and EXIT-3 pass. FR-021, FR-022, and SC-006 are therefore closed, and **feature 001 is `verified`**. See the [final EXIT-3 decision](evidence/EXIT-3-spark-aarch64-n-a-20261123.md).
+- Channel policy (OQ-4, user decision 2026-11-23): `community-signed` stays preferred and `github-release-unsigned` stays an allowed, explicitly selected channel. There is still no silent signed→unsigned fallback. See [channel.md](decisions/channel.md).
+
 ## Outcome
 
 **M0 remains incomplete.** The implementation and a substantial Spark evidence set are present, but the full cross-platform acceptance gate is not satisfied. The roadmap remains `in-progress`; EXIT-3 is `not-run` until the complete shell gate is closed.
