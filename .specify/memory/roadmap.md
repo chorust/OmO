@@ -10,7 +10,7 @@ Changes this revision:
     and release run 45031395194 (docs/m0/evidence/CI-CROSS-PLATFORM-20261123.md). The user's
     FR-022 call accepts NSH 0.5.1; N6 Wayland IBus candidate display is a non-blocking
     limitation.
-  - Status: 002 needs-info → planned (OQ-6 resolved).
+  - Status: 002 needs-info → planned (OQ-6 resolved) → specced (draft spec 2026-11-23).
   - C-06 updated with cross-platform CI channel outcomes and the global channel policy.
   - OQ-4 and OQ-6 resolved.
 
@@ -162,7 +162,7 @@ Status legend (lifecycle): **undecided** · **needs-info** · **planned** ·
 
 ### Product milestones
 
-### 002 — M1 Stations × Forecast Series  [status: planned]
+### 002 — M1 Stations × Forecast Series  [status: specced]
 
 - **Description:** Station CSV import (snapshot + SHA-256 + mapping confirmation), catalog
   with readiness probes, `station_series` via the M0-chosen plan, table/plot/SQL views, export
@@ -174,10 +174,14 @@ Status legend (lifecycle): **undecided** · **needs-info** · **planned** ·
 - **Scope (in):** design §7.4.
 - **Scope (out):** maps, reports, Icechunk.
 - **Depends on:** 001.
+- **Spec dir:** specs/002-m1-station-time-series/ (draft 2026-11-23)
 - **Notes:** ~~needs-info because the default product, variable, and time window are not set
   (OQ-6).~~ OQ-6 resolved 2026-11-23: the default is ECMWF IFS HRES (deterministic),
-  2 m air temperature, forecast horizon 0–7 days from the selected run. The exact Open-Meteo OM
-  dataset/variable identifiers and run-selection rule will be determined during 002 research.
+  2 m air temperature, forecast horizon 0–7 days from the selected run. Refined 2026-11-23
+  (user): the product is the 9 km `ecmwf_ifs` (reduced Gaussian O1280), so M1 must add and
+  validate an O1280 nearest-point sampling plan (the M0 Plan B covers regular grids only). The
+  default run is the latest completely published run of any cycle; 06Z/18Z runs give a
+  0–144 h result labelled as truncated.
 
 ### 003 — M2 Static Regional Map  [status: planned]
 
