@@ -6,4 +6,6 @@ pub mod generation;
 pub mod messages;
 pub mod plot;
 pub mod result_ref;
+pub mod series;
 pub mod state;
+pub mod utc;

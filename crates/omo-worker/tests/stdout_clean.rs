@@ -7,7 +7,7 @@ use omo_protocol::{
     frame::{decode_frame, encode_frame},
     messages::Envelope,
 };
-use omo_worker::server::{WorkerBackend, WorkerExit, serve};
+use omo_worker::server::{BackendError, WorkerBackend, WorkerExit, serve};
 use serde_json::{Value, json};
 
 struct NoisyBackend;
@@ -24,7 +24,7 @@ impl WorkerBackend for NoisyBackend {
         Ok(())
     }
 
-    fn query(&mut self, _body: &Value) -> Result<Value, String> {
+    fn query(&mut self, _body: &Value) -> Result<Value, BackendError> {
         Ok(json!({}))
     }
 

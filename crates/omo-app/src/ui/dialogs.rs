@@ -91,3 +91,48 @@ pub(crate) fn confirm_export_path(
         }
     });
 }
+
+pub(crate) fn choose_project_open(
+    on_selected: impl Fn(PathBuf) + 'static,
+    on_error: impl Fn(String) + 'static,
+) {
+    spawn(async move {
+        let answer = pick_paths(
+            OpenDialog::files()
+                .filter(FileFilter::new("Omobench projects", ["omoproj"]))
+                .title("Open project")
+                .button_label("Open"),
+        )
+        .await;
+        match answer {
+            Ok(Some(paths)) => {
+                if let Some(path) = paths.into_iter().next() {
+                    on_selected(path);
+                }
+            }
+            Ok(None) => {}
+            Err(error) => on_error(error),
+        }
+    });
+}
+
+pub(crate) fn choose_project_save(
+    on_selected: impl Fn(PathBuf) + 'static,
+    on_error: impl Fn(String) + 'static,
+) {
+    spawn(async move {
+        let answer = pick_save_path(
+            SaveDialog::new()
+                .file_name("untitled.omoproj")
+                .filter(FileFilter::new("Omobench projects", ["omoproj"]))
+                .title("Save project")
+                .button_label("Save"),
+        )
+        .await;
+        match answer {
+            Ok(Some(path)) => on_selected(path),
+            Ok(None) => {}
+            Err(error) => on_error(error),
+        }
+    });
+}

@@ -73,3 +73,31 @@ pub(crate) fn sql_requires_remote(sql: &str) -> bool {
         .iter()
         .any(|scheme| normalized.contains(scheme))
 }
+
+/// Bind `stations` (and optional `station_series`) temporary views on a bootstrapped connection.
+pub fn setup_sql_session(
+    conn: &BootstrappedConn,
+    stations_csv_path: &str,
+    series_parquet_path: Option<&str>,
+) -> Result<Vec<String>, QueryError> {
+    let db = conn.connection()?;
+    let stations_lit = crate::series::quote_sql_literal(stations_csv_path);
+    let create_stations = format!(
+        "CREATE OR REPLACE TEMP VIEW stations AS SELECT * FROM read_csv({stations_lit}, header=true, auto_detect=true)"
+    );
+    db.execute_batch(&create_stations)
+        .map_err(|error| QueryError::DuckDb(error.to_string()))?;
+    let mut views = vec!["stations".to_owned()];
+    if let Some(parquet) = series_parquet_path {
+        let parquet_lit = crate::series::quote_sql_literal(parquet);
+        let create_series = format!(
+            "CREATE OR REPLACE TEMP VIEW station_series AS SELECT * FROM read_parquet({parquet_lit})"
+        );
+        db.execute_batch(&create_series)
+            .map_err(|error| QueryError::DuckDb(error.to_string()))?;
+        views.push("station_series".to_owned());
+    } else {
+        let _ = db.execute_batch("DROP VIEW IF EXISTS station_series");
+    }
+    Ok(views)
+}

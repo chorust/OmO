@@ -41,3 +41,6 @@ __pycache__/
 # pi wake-parent local secrets (never commit)
 .pi/env.wake-parent.local
 .pi/**/*.local
+
+# Local oracle virtualenv (scripts/requirements-oracle.txt)
+.venv-oracle/

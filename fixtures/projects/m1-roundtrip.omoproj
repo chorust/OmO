@@ -1,0 +1,645 @@
+{
+  "schema": "omo-project/1",
+  "doc_id": "6f1c0000-0000-4000-8000-000000000001",
+  "stations": {
+    "content_sha256": "8dfb18f5c208e6f32882bdfd841f72019af98749cae0e9620db49dbf245e0dfd",
+    "mapping": {
+      "id": "id",
+      "lat": "lat",
+      "lon": "lon",
+      "name": "name"
+    },
+    "source": {
+      "orig_path": "fixtures/stations/m1-100.csv",
+      "orig_sha256": "4fd363217177b94005569604c4cd464c1cee7174f5940e8b990dd36de60888cc",
+      "imported_at_utc": "2026-11-23T07:00:00Z"
+    },
+    "rows": [
+      {
+        "station_id": "1",
+        "latitude": -80.0,
+        "longitude": -170.0,
+        "name": "北京0"
+      },
+      {
+        "station_id": "2",
+        "latitude": -78.63,
+        "longitude": -166.9,
+        "name": "上海1"
+      },
+      {
+        "station_id": "3",
+        "latitude": -77.26,
+        "longitude": -163.8,
+        "name": "广州2"
+      },
+      {
+        "station_id": "4",
+        "latitude": -75.89,
+        "longitude": -160.7,
+        "name": "深圳3"
+      },
+      {
+        "station_id": "5",
+        "latitude": -74.52,
+        "longitude": -157.6,
+        "name": "成都4"
+      },
+      {
+        "station_id": "6",
+        "latitude": -73.15,
+        "longitude": -154.5,
+        "name": "杭州5"
+      },
+      {
+        "station_id": "7",
+        "latitude": -71.78,
+        "longitude": -151.4,
+        "name": "西安6"
+      },
+      {
+        "station_id": "8",
+        "latitude": -70.41,
+        "longitude": -148.3,
+        "name": "武汉7"
+      },
+      {
+        "station_id": "9",
+        "latitude": -69.04,
+        "longitude": -145.2,
+        "name": "南京8"
+      },
+      {
+        "station_id": "10",
+        "latitude": -67.67,
+        "longitude": -142.1,
+        "name": "重庆9"
+      },
+      {
+        "station_id": "11",
+        "latitude": -66.3,
+        "longitude": -139.0,
+        "name": "天津10"
+      },
+      {
+        "station_id": "12",
+        "latitude": -64.93,
+        "longitude": -135.9,
+        "name": "苏州11"
+      },
+      {
+        "station_id": "13",
+        "latitude": -63.56,
+        "longitude": -132.8,
+        "name": "长沙12"
+      },
+      {
+        "station_id": "14",
+        "latitude": -62.19,
+        "longitude": -129.7,
+        "name": "郑州13"
+      },
+      {
+        "station_id": "15",
+        "latitude": -60.82,
+        "longitude": -126.6,
+        "name": "青岛14"
+      },
+      {
+        "station_id": "16",
+        "latitude": -59.45,
+        "longitude": -123.5,
+        "name": "大连15"
+      },
+      {
+        "station_id": "17",
+        "latitude": -58.08,
+        "longitude": -120.4,
+        "name": "厦门16"
+      },
+      {
+        "station_id": "18",
+        "latitude": -56.71,
+        "longitude": -117.30000000000001,
+        "name": "昆明17"
+      },
+      {
+        "station_id": "19",
+        "latitude": -55.34,
+        "longitude": -114.2,
+        "name": "哈尔滨18"
+      },
+      {
+        "station_id": "20",
+        "latitude": -53.97,
+        "longitude": -111.1,
+        "name": "沈阳19"
+      },
+      {
+        "station_id": "21",
+        "latitude": -52.6,
+        "longitude": -108.0,
+        "name": "北京20"
+      },
+      {
+        "station_id": "22",
+        "latitude": -51.23,
+        "longitude": -104.9,
+        "name": "上海21"
+      },
+      {
+        "station_id": "23",
+        "latitude": -49.86,
+        "longitude": -101.8,
+        "name": "广州22"
+      },
+      {
+        "station_id": "24",
+        "latitude": -48.49,
+        "longitude": -98.7,
+        "name": "深圳23"
+      },
+      {
+        "station_id": "25",
+        "latitude": -47.12,
+        "longitude": -95.6,
+        "name": "成都24"
+      },
+      {
+        "station_id": "26",
+        "latitude": -45.75,
+        "longitude": -92.5,
+        "name": "杭州25"
+      },
+      {
+        "station_id": "27",
+        "latitude": -44.38,
+        "longitude": -89.4,
+        "name": "西安26"
+      },
+      {
+        "station_id": "28",
+        "latitude": -43.01,
+        "longitude": -86.3,
+        "name": "武汉27"
+      },
+      {
+        "station_id": "29",
+        "latitude": -41.64,
+        "longitude": -83.2,
+        "name": "南京28"
+      },
+      {
+        "station_id": "30",
+        "latitude": -40.27,
+        "longitude": -80.1,
+        "name": "重庆29"
+      },
+      {
+        "station_id": "31",
+        "latitude": -38.9,
+        "longitude": -77.0,
+        "name": "天津30"
+      },
+      {
+        "station_id": "32",
+        "latitude": -37.53,
+        "longitude": -73.9,
+        "name": "苏州31"
+      },
+      {
+        "station_id": "33",
+        "latitude": -36.16,
+        "longitude": -70.8,
+        "name": "长沙32"
+      },
+      {
+        "station_id": "34",
+        "latitude": -34.79,
+        "longitude": -67.7,
+        "name": "郑州33"
+      },
+      {
+        "station_id": "35",
+        "latitude": -33.42,
+        "longitude": -64.60000000000002,
+        "name": "青岛34"
+      },
+      {
+        "station_id": "36",
+        "latitude": -32.05,
+        "longitude": -61.5,
+        "name": "大连35"
+      },
+      {
+        "station_id": "37",
+        "latitude": -30.68,
+        "longitude": -58.4,
+        "name": "厦门36"
+      },
+      {
+        "station_id": "38",
+        "latitude": -29.31,
+        "longitude": -55.3,
+        "name": "昆明37"
+      },
+      {
+        "station_id": "39",
+        "latitude": -27.94,
+        "longitude": -52.2,
+        "name": "哈尔滨38"
+      },
+      {
+        "station_id": "40",
+        "latitude": -26.57,
+        "longitude": -49.1,
+        "name": "沈阳39"
+      },
+      {
+        "station_id": "41",
+        "latitude": -25.2,
+        "longitude": -46.0,
+        "name": "北京40"
+      },
+      {
+        "station_id": "42",
+        "latitude": -23.83,
+        "longitude": -42.9,
+        "name": "上海41"
+      },
+      {
+        "station_id": "43",
+        "latitude": -22.46,
+        "longitude": -39.8,
+        "name": "广州42"
+      },
+      {
+        "station_id": "44",
+        "latitude": -21.09,
+        "longitude": -36.7,
+        "name": "深圳43"
+      },
+      {
+        "station_id": "45",
+        "latitude": -19.72,
+        "longitude": -33.6,
+        "name": "成都44"
+      },
+      {
+        "station_id": "46",
+        "latitude": -18.35,
+        "longitude": -30.5,
+        "name": "杭州45"
+      },
+      {
+        "station_id": "47",
+        "latitude": -16.98,
+        "longitude": -27.4,
+        "name": "西安46"
+      },
+      {
+        "station_id": "48",
+        "latitude": -15.61,
+        "longitude": -24.3,
+        "name": "武汉47"
+      },
+      {
+        "station_id": "49",
+        "latitude": -14.24,
+        "longitude": -21.2,
+        "name": "南京48"
+      },
+      {
+        "station_id": "50",
+        "latitude": -12.87,
+        "longitude": -18.1,
+        "name": "重庆49"
+      },
+      {
+        "station_id": "51",
+        "latitude": -11.5,
+        "longitude": -15.0,
+        "name": "天津50"
+      },
+      {
+        "station_id": "52",
+        "latitude": -10.13,
+        "longitude": -11.899999999999977,
+        "name": "苏州51"
+      },
+      {
+        "station_id": "53",
+        "latitude": -8.76,
+        "longitude": -8.8,
+        "name": "长沙52"
+      },
+      {
+        "station_id": "54",
+        "latitude": -7.39,
+        "longitude": -5.7,
+        "name": "郑州53"
+      },
+      {
+        "station_id": "55",
+        "latitude": -6.02,
+        "longitude": -2.6,
+        "name": "青岛54"
+      },
+      {
+        "station_id": "56",
+        "latitude": -4.65,
+        "longitude": 0.5,
+        "name": "大连55"
+      },
+      {
+        "station_id": "57",
+        "latitude": -3.28,
+        "longitude": 3.6,
+        "name": "厦门56"
+      },
+      {
+        "station_id": "58",
+        "latitude": -1.91,
+        "longitude": 6.7,
+        "name": "昆明57"
+      },
+      {
+        "station_id": "59",
+        "latitude": -0.54,
+        "longitude": 9.8,
+        "name": "哈尔滨58"
+      },
+      {
+        "station_id": "60",
+        "latitude": 0.83,
+        "longitude": 12.9,
+        "name": "沈阳59"
+      },
+      {
+        "station_id": "61",
+        "latitude": 2.2,
+        "longitude": 16.0,
+        "name": "北京60"
+      },
+      {
+        "station_id": "62",
+        "latitude": 3.57,
+        "longitude": 19.1,
+        "name": "上海61"
+      },
+      {
+        "station_id": "63",
+        "latitude": 4.94,
+        "longitude": 22.2,
+        "name": "广州62"
+      },
+      {
+        "station_id": "64",
+        "latitude": 6.31,
+        "longitude": 25.3,
+        "name": "深圳63"
+      },
+      {
+        "station_id": "65",
+        "latitude": 7.68,
+        "longitude": 28.4,
+        "name": "成都64"
+      },
+      {
+        "station_id": "66",
+        "latitude": 9.05,
+        "longitude": 31.5,
+        "name": "杭州65"
+      },
+      {
+        "station_id": "67",
+        "latitude": 10.42,
+        "longitude": 34.6,
+        "name": "西安66"
+      },
+      {
+        "station_id": "68",
+        "latitude": 11.79,
+        "longitude": 37.7,
+        "name": "武汉67"
+      },
+      {
+        "station_id": "69",
+        "latitude": 13.16,
+        "longitude": 40.8,
+        "name": "南京68"
+      },
+      {
+        "station_id": "70",
+        "latitude": 14.53,
+        "longitude": 43.9,
+        "name": "重庆69"
+      },
+      {
+        "station_id": "71",
+        "latitude": 15.9,
+        "longitude": 47.0,
+        "name": "天津70"
+      },
+      {
+        "station_id": "72",
+        "latitude": 17.27,
+        "longitude": 50.1,
+        "name": "苏州71"
+      },
+      {
+        "station_id": "73",
+        "latitude": 18.64,
+        "longitude": 53.2,
+        "name": "长沙72"
+      },
+      {
+        "station_id": "74",
+        "latitude": 20.01,
+        "longitude": 56.3,
+        "name": "郑州73"
+      },
+      {
+        "station_id": "75",
+        "latitude": 21.38,
+        "longitude": 59.4,
+        "name": "青岛74"
+      },
+      {
+        "station_id": "76",
+        "latitude": 22.75,
+        "longitude": 62.5,
+        "name": "大连75"
+      },
+      {
+        "station_id": "77",
+        "latitude": 24.12,
+        "longitude": 65.6,
+        "name": "厦门76"
+      },
+      {
+        "station_id": "78",
+        "latitude": 25.49,
+        "longitude": 68.7,
+        "name": "昆明77"
+      },
+      {
+        "station_id": "79",
+        "latitude": 26.86,
+        "longitude": 71.8,
+        "name": "哈尔滨78"
+      },
+      {
+        "station_id": "80",
+        "latitude": 28.23,
+        "longitude": 74.9,
+        "name": "沈阳79"
+      },
+      {
+        "station_id": "81",
+        "latitude": 29.6,
+        "longitude": 78.0,
+        "name": "北京80"
+      },
+      {
+        "station_id": "82",
+        "latitude": 30.97,
+        "longitude": 81.1,
+        "name": "上海81"
+      },
+      {
+        "station_id": "83",
+        "latitude": 32.34,
+        "longitude": 84.2,
+        "name": "广州82"
+      },
+      {
+        "station_id": "84",
+        "latitude": 33.71,
+        "longitude": 87.3,
+        "name": "深圳83"
+      },
+      {
+        "station_id": "85",
+        "latitude": 35.08,
+        "longitude": 90.4,
+        "name": "成都84"
+      },
+      {
+        "station_id": "86",
+        "latitude": 36.45,
+        "longitude": 93.5,
+        "name": "杭州85"
+      },
+      {
+        "station_id": "87",
+        "latitude": 37.82,
+        "longitude": 96.6,
+        "name": "西安86"
+      },
+      {
+        "station_id": "88",
+        "latitude": 39.19,
+        "longitude": 99.7,
+        "name": "武汉87"
+      },
+      {
+        "station_id": "89",
+        "latitude": 40.56,
+        "longitude": 102.8,
+        "name": "南京88"
+      },
+      {
+        "station_id": "90",
+        "latitude": 41.93,
+        "longitude": 105.9,
+        "name": "重庆89"
+      },
+      {
+        "station_id": "91",
+        "latitude": 43.3,
+        "longitude": 109.0,
+        "name": "天津90"
+      },
+      {
+        "station_id": "92",
+        "latitude": 44.67,
+        "longitude": 112.1,
+        "name": "苏州91"
+      },
+      {
+        "station_id": "93",
+        "latitude": 46.04,
+        "longitude": 115.2,
+        "name": "长沙92"
+      },
+      {
+        "station_id": "94",
+        "latitude": 47.41,
+        "longitude": 118.3,
+        "name": "郑州93"
+      },
+      {
+        "station_id": "95",
+        "latitude": 48.78,
+        "longitude": 121.4,
+        "name": "青岛94"
+      },
+      {
+        "station_id": "96",
+        "latitude": 50.15,
+        "longitude": 124.5,
+        "name": "大连95"
+      },
+      {
+        "station_id": "97",
+        "latitude": 51.52,
+        "longitude": 127.6,
+        "name": "厦门96"
+      },
+      {
+        "station_id": "98",
+        "latitude": 52.89,
+        "longitude": 130.7,
+        "name": "昆明97"
+      },
+      {
+        "station_id": "99",
+        "latitude": 54.26,
+        "longitude": 133.8,
+        "name": "哈尔滨98"
+      },
+      {
+        "station_id": "100",
+        "latitude": 55.63,
+        "longitude": 136.9,
+        "name": "沈阳99"
+      }
+    ]
+  },
+  "catalog_selection": {
+    "entry_id": "ecmwf_ifs.temperature_2m",
+    "catalog_version": "2026-11-23.1"
+  },
+  "window": {
+    "start_h": 0,
+    "end_h": 168
+  },
+  "max_distance_m": 7200,
+  "sql_tabs": [
+    {
+      "title": "Daily max",
+      "sql": "SELECT station_id, substr(valid_time, 1, 10) AS day, MAX(value) AS t_max FROM station_series GROUP BY 1, 2 ORDER BY 1, 2"
+    }
+  ],
+  "view": {
+    "selected_station_ids": [
+      "S001",
+      "S002"
+    ],
+    "chart": {
+      "show_legend": true,
+      "y_auto": true
+    }
+  }
+}

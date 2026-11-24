@@ -92,6 +92,16 @@ struct ExportKillArgs {
     /// Keep the recovery files in this directory instead of a temporary directory.
     #[arg(long)]
     directory: Option<PathBuf>,
+    /// What is being exported: the M0 fixture bytes, or a received M1 series result
+    /// (`omo-export-sidecar/2` with stations, catalog, run, window, plan and attribution).
+    #[arg(long, value_enum, default_value = "fixture")]
+    source: ExportKillSource,
+}
+
+#[derive(Clone, Copy, Debug, ValueEnum)]
+enum ExportKillSource {
+    Fixture,
+    Series,
 }
 
 #[derive(Clone, Copy, Debug, ValueEnum)]
@@ -402,15 +412,34 @@ fn export_kill_enabled(args: ExportKillArgs) -> anyhow::Result<()> {
     let staging = root.join(format!(".report.csv.omo-tmp-{suffix}"));
     std::fs::create_dir(&staging)?;
     std::fs::write(staging.join(".omo-owner"), STAGING_OWNER_MARKER)?;
-    let new_data = b"new data";
+    let series_csv = b"station_id,valid_time,value\nA1,2026-11-23T06:00:00Z,12.5\nA1,2026-11-23T07:00:00Z,12.9\n";
+    let new_data: &[u8] = match args.source {
+        ExportKillSource::Fixture => b"new data",
+        ExportKillSource::Series => series_csv,
+    };
     std::fs::write(staging.join("data"), new_data)?;
     let new_hash = format!("{:x}", Sha256::digest(new_data));
-    std::fs::write(
-        staging.join("sidecar"),
-        serde_json::to_vec(&json!({
+    let new_sidecar = match args.source {
+        ExportKillSource::Fixture => json!({
             "schema":"omo-export-sidecar/1", "data":{"sha256":new_hash}
-        }))?,
-    )?;
+        }),
+        ExportKillSource::Series => json!({
+            "schema": omo_protocol::export::SIDECAR_SCHEMA_V2,
+            "data": {"sha256": new_hash},
+            "stations": {"sha256": "deadbeef", "count": 1},
+            "catalog": {"entry_id": "ecmwf_ifs.temperature_2m", "version": "harness"},
+            "run": {
+                "reference_time_utc": "2026-11-23T06:00:00Z", "cycle": "06",
+                "object_url": "https://openmeteo.s3.amazonaws.com/data_run/ecmwf_ifs/2026/11/23/0600Z/temperature_2m.om",
+                "object_version": "harness"
+            },
+            "window": {"requested": [0, 168], "effective": [0, 144], "truncated": true},
+            "plan": "G",
+            "query": null,
+            "attribution": ["Weather data by Open-Meteo.com (CC BY 4.0)", "Copyright © 2026 ECMWF"],
+        }),
+    };
+    std::fs::write(staging.join("sidecar"), serde_json::to_vec(&new_sidecar)?)?;
 
     let injected_at = match args.at {
         ExportKillPoint::Step1 => ExportStep::OldSidecarMoved,
@@ -451,7 +480,7 @@ fn export_kill_enabled(args: ExportKillArgs) -> anyhow::Result<()> {
     println!(
         "{}",
         serde_json::to_string_pretty(&json!({
-            "status":"passed", "scenario":"export_kill_injection", "at":format!("{:?}", args.at).to_lowercase(),
+            "status":"passed", "scenario":"export_kill_injection", "source":format!("{:?}", args.source).to_lowercase(), "at":format!("{:?}", args.at).to_lowercase(),
             "recovery":format!("{:?}", expected).to_lowercase(), "target":target,
             "saved":saved, "staging_preserved":staging.exists()
         }))?

@@ -37,5 +37,10 @@ path = "tests/export.rs"
 required-features = ["test-support"]
 
 [[test]]
+name = "export_v2"
+path = "tests/export_v2.rs"
+required-features = ["test-support"]
+
+[[test]]
 name = "series_schema"
 path = "tests/series_schema.rs"

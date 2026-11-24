@@ -2,6 +2,7 @@
 
 pub mod plan_a;
 pub mod plan_b;
+pub mod plan_g;
 pub mod reference;
 pub mod schema;
 
@@ -39,8 +40,63 @@ pub struct SeriesRun {
     pub plan_details: Value,
 }
 
+/// Cancellation shared by a series request and the extra DuckDB connections it opens.
+///
+/// The worker's interrupt reaches only the main connection; Plan G reads on per-worker
+/// connections, so each registers its handle here and the flag is checked between reads.
+#[derive(Default)]
+pub struct SeriesCancel {
+    flag: std::sync::atomic::AtomicBool,
+    handles: std::sync::Mutex<Vec<std::sync::Arc<duckdb::InterruptHandle>>>,
+}
+
+impl SeriesCancel {
+    pub fn reset(&self) {
+        self.flag.store(false, std::sync::atomic::Ordering::SeqCst);
+        self.handles
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .clear();
+    }
+
+    pub fn cancel(&self) {
+        self.flag.store(true, std::sync::atomic::Ordering::SeqCst);
+        for handle in self
+            .handles
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .iter()
+        {
+            handle.interrupt();
+        }
+    }
+
+    pub fn is_cancelled(&self) -> bool {
+        self.flag.load(std::sync::atomic::Ordering::SeqCst)
+    }
+
+    /// Track another connection; interrupt it at once when cancellation already happened.
+    pub fn register(&self, handle: std::sync::Arc<duckdb::InterruptHandle>) {
+        let mut handles = self.handles.lock().unwrap_or_else(|e| e.into_inner());
+        if self.is_cancelled() {
+            handle.interrupt();
+        }
+        handles.push(handle);
+    }
+
+    pub fn check(&self) -> Result<(), SeriesError> {
+        if self.is_cancelled() {
+            Err(SeriesError::Cancelled)
+        } else {
+            Ok(())
+        }
+    }
+}
+
 #[derive(Debug, Error)]
 pub enum SeriesError {
+    #[error("series request interrupted")]
+    Cancelled,
     #[error("series input I/O failed: {0}")]
     Io(#[from] std::io::Error),
     #[error("DuckDB failed during {stage}: {reason}")]
@@ -55,6 +111,10 @@ pub enum SeriesError {
         variable: String,
         valid_time: String,
     },
+    #[error("grid mismatch: {0}")]
+    GridMismatch(String),
+    #[error("source object changed during the read: {0}")]
+    SourceChanged(String),
 }
 
 pub const GRID_SQL: &str =
@@ -128,6 +188,80 @@ pub fn read_stations(path: &Path) -> Result<Vec<Station>, SeriesError> {
     Ok(stations)
 }
 
+pub fn read_canonical_stations(path: &Path) -> Result<Vec<Station>, SeriesError> {
+    let content = fs::read_to_string(path)?;
+    let mut lines = content.lines();
+    let header = lines.next().unwrap_or("");
+    if header == "station_id,latitude,longitude" {
+        return read_stations(path);
+    }
+    if header != "station_id,latitude,longitude,name,elevation_m" {
+        return Err(SeriesError::InvalidInput(format!(
+            "unexpected canonical station CSV header `{header}`"
+        )));
+    }
+    let mut stations = Vec::new();
+    for (line_idx, line) in lines.enumerate() {
+        if line.trim().is_empty() {
+            continue;
+        }
+        let fields = parse_simple_csv_row(line);
+        if fields.len() < 3 {
+            return Err(SeriesError::InvalidInput(format!(
+                "canonical station CSV line {} has fewer than 3 columns",
+                line_idx + 2
+            )));
+        }
+        let latitude: f64 = fields[1].parse().map_err(|error| {
+            SeriesError::InvalidInput(format!(
+                "invalid latitude on line {}: {error}",
+                line_idx + 2
+            ))
+        })?;
+        let longitude: f64 = fields[2].parse().map_err(|error| {
+            SeriesError::InvalidInput(format!(
+                "invalid longitude on line {}: {error}",
+                line_idx + 2
+            ))
+        })?;
+        stations.push(Station {
+            station_id: fields[0].clone(),
+            latitude,
+            longitude,
+        });
+    }
+    Ok(stations)
+}
+
+fn parse_simple_csv_row(line: &str) -> Vec<String> {
+    let mut out = Vec::new();
+    let mut current = String::new();
+    let mut in_quotes = false;
+    let mut chars = line.chars().peekable();
+    while let Some(ch) = chars.next() {
+        if in_quotes {
+            if ch == '"' {
+                if chars.peek() == Some(&'"') {
+                    chars.next();
+                    current.push('"');
+                } else {
+                    in_quotes = false;
+                }
+            } else {
+                current.push(ch);
+            }
+        } else if ch == '"' {
+            in_quotes = true;
+        } else if ch == ',' {
+            out.push(std::mem::take(&mut current));
+        } else {
+            current.push(ch);
+        }
+    }
+    out.push(current);
+    out
+}
+
 pub fn normalize_longitude(longitude: f64) -> f64 {
     let mut normalized = longitude % 360.0;
     if normalized < -180.0 {
@@ -181,7 +315,7 @@ pub fn deduplicate_rows(
     Ok((unique.into_values().collect(), duplicates))
 }
 
-pub fn read_latest_scan_measurement(
+pub(crate) fn read_latest_scan_measurement(
     connection: &duckdb::Connection,
 ) -> Result<ScanMeasurement, SeriesError> {
     let found = connection
@@ -378,7 +512,17 @@ pub fn validate_grid_descriptor(descriptor: &Value) -> Result<(), SeriesError> {
     regular_grid_from_descriptor(descriptor).map(|_| ())
 }
 
-pub fn query_grid_descriptor(
+pub fn latest_scan_measurement(
+    conn: &crate::conn::BootstrappedConn,
+) -> Result<ScanMeasurement, SeriesError> {
+    let connection = conn.connection().map_err(|error| SeriesError::DuckDb {
+        stage: "scan_metrics_conn",
+        reason: error.to_string(),
+    })?;
+    read_latest_scan_measurement(connection)
+}
+
+pub(crate) fn query_grid_descriptor(
     connection: &duckdb::Connection,
     object_path: &Path,
 ) -> Result<Value, SeriesError> {

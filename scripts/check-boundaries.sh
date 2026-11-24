@@ -24,6 +24,10 @@ APP_FORBIDDEN_RE = re.compile(
     r"^(?:duckdb|libduckdb-sys|gpui.*|tauri.*|.*quickjs.*|nsh-js|nsh-platform-gpui)$",
     re.I,
 )
+APP_DIRECT_FORBIDDEN_RE = re.compile(
+    r"^(?:reqwest|ureq|hyper|isahc)$",
+    re.I,
+)
 HOST_NSH_RE = re.compile(r"\bnsh_[A-Za-z0-9_]*\b")
 
 
@@ -150,7 +154,7 @@ def static_violations(base: pathlib.Path) -> list[str]:
     for table in dependency_tables(app_data):
         for name, spec in table.items():
             for dep in dependency_names(name, spec):
-                if APP_FORBIDDEN_RE.match(dep):
+                if APP_FORBIDDEN_RE.match(dep) or APP_DIRECT_FORBIDDEN_RE.match(dep):
                     violations.append(f"{APP}: forbidden dependency `{dep}` in {path}")
     workspace_data = tomllib.loads((base / "Cargo.toml").read_text()).get("workspace", {})
     workspace = workspace_data.get("dependencies", {})
@@ -225,6 +229,10 @@ def self_test() -> int:
         (APP, "nsh-js", None),
         (APP, "nsh-js", "js_alias"),
         (APP, "nsh-platform-gpui", None),
+        (APP, "reqwest", None),
+        (APP, "ureq", None),
+        (APP, "hyper", None),
+        (APP, "isahc", None),
     ]
     failures = []
     with tempfile.TemporaryDirectory(prefix="omo-boundaries-") as temp:
@@ -279,6 +287,20 @@ for package in sorted(CORE):
     if offenders:
         print(f"{package}: forbidden transitive UI dependencies: {', '.join(sorted(set(offenders)))}", file=sys.stderr)
         raise SystemExit(1)
+
+result_direct = subprocess.run(
+    ["cargo", "tree", "-p", APP, "-e", "normal", "--depth", "1", "--all-features", "--locked"],
+    cwd=root, text=True, capture_output=True,
+)
+if result_direct.returncode:
+    print(result_direct.stderr, file=sys.stderr)
+    raise SystemExit(result_direct.returncode)
+direct_names = re.findall(r"(?m)^\s*[├└│─ ]*([A-Za-z0-9_-]+) v", result_direct.stdout)
+direct_offenders = [name for name in direct_names if APP_DIRECT_FORBIDDEN_RE.match(name)]
+if direct_offenders:
+    joined = ", ".join(sorted(set(direct_offenders)))
+    print(f"{APP}: forbidden direct HTTP client dependencies: {joined}", file=sys.stderr)
+    raise SystemExit(1)
 
 result = subprocess.run(
     ["cargo", "tree", "-p", APP, "-e", "normal", "--locked"],

@@ -27,6 +27,11 @@ pub enum FailKind {
     Cancelled(CancelLevel),
     Export(String),
     Timeout,
+    NoCompleteRun,
+    RunIncomplete,
+    GridMismatch,
+    VariableMissing,
+    SourceChanged,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize, Deserialize)]

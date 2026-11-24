@@ -1,5 +1,8 @@
 //! Bounded, evenly sampled plot of the complete immutable Arrow result.
 
+use std::collections::HashSet;
+
+use nsh_base::checkbox;
 use nsh_base::plot::{Curve, grid, line, plot};
 use nsh_core::element::{RowAccessor, Rows};
 use nsh_core::prelude::*;
@@ -29,6 +32,15 @@ pub(crate) fn panel(
     let sample_count = signal(0usize);
     let series_count = computed(move || rows.get().keys().count().min(MAX_PLOT_SERIES));
     let request_ticket = signal(0u64);
+    let hidden = signal(HashSet::<String>::new());
+    let legend = computed(move || {
+        rows.get()
+            .keys()
+            .take(MAX_PLOT_SERIES)
+            .enumerate()
+            .map(|(index, key)| (index, key.to_owned()))
+            .collect::<Vec<_>>()
+    });
 
     effect(move || {
         let input = plot_input.get().or_else(|| {
@@ -46,6 +58,7 @@ pub(crate) fn panel(
                 let reference = input.reference;
                 let ticket = request_ticket.get_untracked().saturating_add(1);
                 request_ticket.set(ticket);
+                hidden.set(HashSet::new());
                 rows.set(Rows::default());
                 sample_count.set(0);
                 status.set(format!(
@@ -168,7 +181,12 @@ pub(crate) fn panel(
                             line()
                                 .y(move || {
                                     let keys = rows_for_series.get().keys().map(str::to_owned).collect::<Vec<_>>();
-                                    let key = keys.get(index).cloned().unwrap_or_else(|| {
+                                    let hidden_keys = hidden.get();
+                                    let key = keys
+                                        .get(index)
+                                        .filter(|key| !hidden_keys.contains(key.as_str()))
+                                        .cloned()
+                                        .unwrap_or_else(|| {
                                         let mut missing = format!("__omobench_missing_series_{index}");
                                         while keys.contains(&missing) {
                                             missing.push('_');
@@ -182,12 +200,46 @@ pub(crate) fn panel(
                                 .stroke_width(px(1.6))
                         })),
                 )
+                .child(
+                    view()
+                        .app_class("max-h-[120px] flex-row flex-wrap gap-x-4 gap-y-1")
+                        .child(each(
+                            move || legend.get(),
+                            |(index, key)| (*index, key.clone()),
+                            move |item, _| {
+                                let key = move || item.get().1;
+                                let color = move || SERIES_COLORS[item.get().0 % MAX_PLOT_SERIES];
+                                checkbox()
+                                    .app_class("flex-row items-center gap-2 text-xs")
+                                    .indicator_class("size-4 shrink-0 rounded border border-[#a9b3ac] checked:border-[#24584c] checked:bg-[#24584c]")
+                                    .checked(move || !hidden.get().contains(&key()))
+                                    .on_change(move |on: &bool| {
+                                        let name = item.get_untracked().1;
+                                        hidden.update(|set| {
+                                            if *on {
+                                                set.remove(&name);
+                                            } else {
+                                                set.insert(name);
+                                            }
+                                        });
+                                    })
+                                    .child(
+                                        view()
+                                            .app_class("size-3 shrink-0 rounded-sm")
+                                            .bg(move || rgb(color())),
+                                    )
+                                    .child(text(move || key()))
+                            },
+                        )),
+                )
                 .child(text(move || {
-                    let keys = rows.get().keys().take(MAX_PLOT_SERIES).map(str::to_owned).collect::<Vec<_>>();
-                    if keys.is_empty() {
+                    if legend.get().is_empty() {
                         "No numeric columns are present in this result.".to_owned()
                     } else {
-                        format!("Numeric series: {}", keys.join(" · "))
+                        format!(
+                            "{} series (cap {MAX_PLOT_SERIES} series × {MAX_PLOT_POINTS} points).",
+                            legend.get().len()
+                        )
                     }
                 }).app_class("text-xs text-[#77837b] dark:text-[#9ba69e]")),
         )

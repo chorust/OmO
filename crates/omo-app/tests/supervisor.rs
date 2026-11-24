@@ -61,18 +61,32 @@ fn stale_generation_frames_and_referenced_files_are_discarded() {
                 "schema_hash":"b".repeat(64),
                 "truncated":false,
                 "limits":{"rows":10,"bytes":100}
-            }
+            },
+            "matches_ref": {
+                "id":"old-matches",
+                "generation":1,
+                "path":dir.path().join("old-matches.arrow"),
+                "rows":1,
+                "schema_hash":"c".repeat(64),
+                "truncated":false,
+                "limits":{"rows":10,"bytes":100}
+            },
+            "parquet_path": dir.path().join("old.parquet")
         }),
     );
+    fs::write(dir.path().join("old-matches.arrow"), b"stale matches").unwrap();
+    fs::write(dir.path().join("old.parquet"), b"stale parquet").unwrap();
 
     assert!(matches!(
         core.accept_event(stale_result),
         EventDisposition::DiscardedStale {
-            result_files_deleted: 2
+            result_files_deleted: 4
         }
     ));
     assert!(!result_path.exists());
     assert!(!plot_path.exists());
+    assert!(!dir.path().join("old-matches.arrow").exists());
+    assert!(!dir.path().join("old.parquet").exists());
     assert_eq!(
         core.accept_event(current_worker.emit("heartbeat", json!({}))),
         EventDisposition::Accepted
@@ -171,7 +185,7 @@ struct ScriptedWorker {
 impl WorkerProcess for ScriptedWorker {
     fn send(&mut self, request: Envelope<Value>) -> Result<(), String> {
         match (self.mode, request.kind.as_str()) {
-            (ScriptedMode::CrashOnQuery, "query") => {
+            (ScriptedMode::CrashOnQuery, "query" | "series") => {
                 self.exit_next_poll = true;
             }
             (ScriptedMode::AckCancelThenExit, "interrupt") => {
@@ -252,7 +266,13 @@ fn supervisor_emits_worker_crashed_failure_once_for_active_job() {
     .unwrap();
     let generation = supervisor.generation();
     supervisor
-        .send_request(Envelope::new(generation, 15, 99, "query", json!({"sql": "SELECT 1"})))
+        .send_request(Envelope::new(
+            generation,
+            15,
+            99,
+            "query",
+            json!({"sql": "SELECT 1"}),
+        ))
         .unwrap();
 
     let deadline = Instant::now() + Duration::from_secs(3);
@@ -275,7 +295,11 @@ fn supervisor_emits_worker_crashed_failure_once_for_active_job() {
         thread::sleep(Duration::from_millis(10));
     }
 
-    assert_eq!(failures.len(), 1, "expected exactly one crash failure event");
+    assert_eq!(
+        failures.len(),
+        1,
+        "expected exactly one crash failure event"
+    );
     let failed = &failures[0].0;
     assert_eq!(failed.worker_generation, generation);
     assert_eq!(failed.job_id, 15);
@@ -298,7 +322,13 @@ fn supervisor_cancel_ack_does_not_duplicate_failure_if_worker_then_exits() {
     .unwrap();
     let generation = supervisor.generation();
     supervisor
-        .send_request(Envelope::new(generation, 21, 77, "query", json!({"sql": "SELECT 1"})))
+        .send_request(Envelope::new(
+            generation,
+            21,
+            77,
+            "query",
+            json!({"sql": "SELECT 1"}),
+        ))
         .unwrap();
     supervisor.cancel(21, 77).unwrap();
 
@@ -388,4 +418,86 @@ fn supervisor_result_then_exit_does_not_emit_spurious_crash_failure() {
     );
     assert!(supervisor.generation() > generation);
     supervisor.shutdown();
+}
+
+#[test]
+fn series_crash_emits_worker_crashed_and_interrupt_cancel_emits_cancelled_interrupt() {
+    let dir = tempfile::tempdir().unwrap();
+    let mut supervisor = EngineSupervisor::start(
+        ScriptedFactory {
+            mode: ScriptedMode::CrashOnQuery,
+        },
+        json!({}),
+        dir.path(),
+    )
+    .unwrap();
+    let generation = supervisor.generation();
+    supervisor
+        .send_request(Envelope::new(
+            generation,
+            41,
+            101,
+            "series",
+            json!({"result_id": "s1"}),
+        ))
+        .unwrap();
+
+    let deadline = Instant::now() + Duration::from_secs(3);
+    let mut crash_failure = None;
+    while Instant::now() < deadline {
+        if let Some(event) = supervisor.try_recv().unwrap()
+            && event.0.kind == "failed"
+            && event.0.request_id == 101
+        {
+            crash_failure = Some(event);
+            break;
+        }
+        thread::sleep(Duration::from_millis(10));
+    }
+    let crash_failure = crash_failure.expect("series crash must emit failed");
+    assert_eq!(
+        parse_fail_kind(&crash_failure.0.body),
+        Some(FailKind::WorkerCrashed)
+    );
+    assert!(supervisor.generation() > generation);
+    supervisor.shutdown();
+
+    let mut cancel_sup = EngineSupervisor::start(
+        ScriptedFactory {
+            mode: ScriptedMode::AckCancelThenExit,
+        },
+        json!({}),
+        dir.path(),
+    )
+    .unwrap();
+    let cancel_gen = cancel_sup.generation();
+    cancel_sup
+        .send_request(Envelope::new(
+            cancel_gen,
+            42,
+            102,
+            "series",
+            json!({"result_id": "s2"}),
+        ))
+        .unwrap();
+    cancel_sup.cancel(42, 102).unwrap();
+
+    let deadline = Instant::now() + Duration::from_secs(3);
+    let mut cancel_failure = None;
+    while Instant::now() < deadline {
+        if let Some(event) = cancel_sup.try_recv().unwrap()
+            && event.0.kind == "failed"
+            && event.0.request_id == 102
+        {
+            cancel_failure = Some(event);
+            break;
+        }
+        thread::sleep(Duration::from_millis(10));
+    }
+    let cancel_failure = cancel_failure.expect("series cancel must emit failed");
+    assert_eq!(
+        parse_fail_kind(&cancel_failure.0.body),
+        Some(FailKind::Cancelled(CancelLevel::Interrupt))
+    );
+    cancel_sup.shutdown();
 }

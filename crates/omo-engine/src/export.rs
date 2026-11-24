@@ -2,12 +2,7 @@
 use crate::{conn::BootstrappedConn, query::sql_requires_remote};
 pub use omo_protocol::export::{SIDECAR_SCHEMA, STAGING_OWNER_MARKER, sidecar_path};
 use sha2::{Digest, Sha256};
-use std::{
-    fs, io,
-    io::Read,
-    path::Path,
-    time::{SystemTime, UNIX_EPOCH},
-};
+use std::{fs, io, io::Read, path::Path};
 use thiserror::Error;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -151,6 +146,29 @@ pub fn export_sql_with_rows(
     overwrite_confirmed: bool,
     row_count: Option<u64>,
 ) -> Result<String, ExportError> {
+    export_sql_with_progress(
+        conn,
+        sql,
+        target,
+        format,
+        job_snapshot,
+        overwrite_confirmed,
+        row_count,
+        |_| {},
+    )
+}
+
+#[allow(clippy::too_many_arguments)]
+pub fn export_sql_with_progress(
+    conn: &BootstrappedConn,
+    sql: &str,
+    target: &Path,
+    format: &str,
+    job_snapshot: serde_json::Value,
+    overwrite_confirmed: bool,
+    row_count: Option<u64>,
+    mut on_stage: impl FnMut(&'static str),
+) -> Result<String, ExportError> {
     let format = match format {
         "csv" => "CSV",
         "parquet" => "PARQUET",
@@ -164,6 +182,7 @@ pub fn export_sql_with_rows(
     if (target.exists() || sidecar_path(target).exists()) && !overwrite_confirmed {
         return Err(ExportError::OverwriteConfirmationRequired);
     }
+    on_stage("writing");
     let staging = tempfile::Builder::new()
         .prefix(&format!(".{name}.omo-tmp-"))
         .tempdir_in(parent)?;
@@ -196,21 +215,41 @@ pub fn export_sql_with_rows(
         .and_then(|name| name.to_str())
         .ok_or(ExportError::InvalidPath)?;
     let created_at = now_utc_rfc3339();
-    let sidecar = serde_json::json!({
-        "schema": SIDECAR_SCHEMA,
-        "job":job_snapshot,
-        "bootstrap_report":report,
-        "duckomo":{"version":report.duckomo_version,"channel":report.channel.as_str(),"sha256":report.artifact_sha256},
-        "duckdb_version":report.duckdb_version,
-        "data":{"file":file_name,"sha256":hash,"format":format,"rows":row_count},
-        "attribution":"Open-Meteo (CC BY 4.0), https://open-meteo.com/",
-        "created_at": created_at
-    });
+    let sidecar = if let Some(m1) = job_snapshot.get("m1_sidecar") {
+        serde_json::json!({
+            "schema": omo_protocol::export::SIDECAR_SCHEMA_V2,
+            "job": job_snapshot,
+            "bootstrap_report": report,
+            "duckomo": {"version": report.duckomo_version, "channel": report.channel.as_str(), "sha256": report.artifact_sha256},
+            "duckdb_version": report.duckdb_version,
+            "data": {"file": file_name, "sha256": hash, "format": format, "rows": row_count},
+            "stations": m1.get("stations").cloned().unwrap_or(serde_json::Value::Null),
+            "catalog": m1.get("catalog").cloned().unwrap_or(serde_json::Value::Null),
+            "run": m1.get("run").cloned().unwrap_or(serde_json::Value::Null),
+            "window": m1.get("window").cloned().unwrap_or(serde_json::Value::Null),
+            "plan": m1.get("plan").cloned().unwrap_or(serde_json::Value::Null),
+            "query": m1.get("query").cloned().unwrap_or(serde_json::Value::Null),
+            "attribution": m1.get("attribution").cloned().unwrap_or_else(|| serde_json::json!(["Weather data by Open-Meteo.com (CC BY 4.0)"])),
+            "created_at": created_at
+        })
+    } else {
+        serde_json::json!({
+            "schema": SIDECAR_SCHEMA,
+            "job": job_snapshot,
+            "bootstrap_report": report,
+            "duckomo": {"version": report.duckomo_version, "channel": report.channel.as_str(), "sha256": report.artifact_sha256},
+            "duckdb_version": report.duckdb_version,
+            "data": {"file": file_name, "sha256": hash, "format": format, "rows": row_count},
+            "attribution": "Open-Meteo (CC BY 4.0), https://open-meteo.com/",
+            "created_at": created_at
+        })
+    };
     fs::write(
         staging.path().join("sidecar"),
         serde_json::to_vec_pretty(&sidecar).map_err(|e| ExportError::Query(e.to_string()))?,
     )?;
     fs::File::open(staging.path())?.sync_all()?;
+    on_stage("committing");
     // Persist the staging directory so failures after the first commit step remain recoverable.
     let staging = staging.keep();
     commit_staged(target, &staging, overwrite_confirmed, |_| Ok(()))?;
@@ -218,39 +257,12 @@ pub fn export_sql_with_rows(
 }
 
 fn now_utc_rfc3339() -> String {
-    let secs = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .unwrap_or_default()
-        .as_secs();
-    format_utc_rfc3339(secs)
-}
-
-/// Format Unix epoch seconds as an RFC 3339 UTC timestamp (`YYYY-MM-DDTHH:MM:SSZ`).
-fn format_utc_rfc3339(secs_since_epoch: u64) -> String {
-    let days = (secs_since_epoch / 86_400) as i64;
-    let rem = secs_since_epoch % 86_400;
-    let hour = rem / 3_600;
-    let minute = (rem % 3_600) / 60;
-    let second = rem % 60;
-
-    // Howard Hinnant's civil_from_days algorithm (days since 1970-01-01).
-    let z = days + 719_468;
-    let era = if z >= 0 { z } else { z - 146_096 } / 146_097;
-    let doe = (z - era * 146_097) as u64;
-    let yoe = (doe - doe / 1_460 + doe / 36_524 - doe / 146_096) / 365;
-    let y = yoe as i64 + era * 400;
-    let doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
-    let mp = (5 * doy + 2) / 153;
-    let day = doy - (153 * mp + 2) / 5 + 1;
-    let month = if mp < 10 { mp + 3 } else { mp - 9 };
-    let year = if month <= 2 { y + 1 } else { y };
-
-    format!("{year:04}-{month:02}-{day:02}T{hour:02}:{minute:02}:{second:02}Z")
+    omo_protocol::utc::now_utc_rfc3339()
 }
 
 #[cfg(test)]
 mod utc_tests {
-    use super::format_utc_rfc3339;
+    use omo_protocol::utc::format_utc_rfc3339;
 
     #[test]
     fn format_utc_rfc3339_handles_epoch_leap_and_year_boundaries() {

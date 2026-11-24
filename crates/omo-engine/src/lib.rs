@@ -1,9 +1,11 @@
 //! DuckDB engine, verified bootstrap, query limits, and Arrow IPC results.
 
 pub mod bootstrap;
+pub mod catalog;
 pub mod config;
 pub mod conn;
 pub mod export;
+pub mod grid;
 pub mod limits;
 pub mod lock;
 pub mod plot;

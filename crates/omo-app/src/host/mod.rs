@@ -5,5 +5,7 @@ pub mod ipc_pages;
 pub mod main_thread_probe;
 pub mod preview_queue;
 pub mod process;
+pub mod project_io;
 pub mod runtime;
+pub mod series_host;
 pub mod supervisor;

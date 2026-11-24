@@ -18,18 +18,90 @@ use thiserror::Error;
 
 use crate::heartbeat;
 
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct BackendError {
+    pub kind: Option<FailKind>,
+    pub message: String,
+}
+
+impl BackendError {
+    pub fn new(message: impl Into<String>) -> Self {
+        Self {
+            kind: None,
+            message: message.into(),
+        }
+    }
+
+    pub fn typed(kind: FailKind, message: impl Into<String>) -> Self {
+        Self {
+            kind: Some(kind),
+            message: message.into(),
+        }
+    }
+}
+
+impl std::fmt::Display for BackendError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&self.message)
+    }
+}
+
+impl std::error::Error for BackendError {}
+
+impl From<String> for BackendError {
+    fn from(message: String) -> Self {
+        Self::new(message)
+    }
+}
+
+impl From<&str> for BackendError {
+    fn from(message: &str) -> Self {
+        Self::new(message)
+    }
+}
+
+/// Handle passed to a running backend task so it can report stage transitions
+/// (`planning`, `reading`, `writing`, `committing`) immediately on the protocol stream.
+#[derive(Clone)]
+pub struct StageReporter {
+    stage: Arc<Mutex<&'static str>>,
+    emit: Arc<dyn Fn(&'static str) + Send + Sync>,
+}
+
+impl StageReporter {
+    pub fn set_stage(&self, stage: &'static str) {
+        if let Ok(mut guard) = self.stage.lock() {
+            *guard = stage;
+        }
+        (self.emit)(stage);
+    }
+}
+
 pub trait WorkerBackend: Send + 'static {
     fn set_generation(&mut self, _generation: u64) {}
+    fn set_stage_reporter(&mut self, _reporter: Option<StageReporter>) {}
     fn cancellation(&self) -> Option<Box<dyn Fn() + Send + Sync>> {
         None
     }
     fn bootstrap(&mut self, config: &Value, diagnostics: &mut dyn Write) -> Result<Value, String>;
     fn probe_task(&mut self) -> Result<(), String>;
-    fn query(&mut self, body: &Value) -> Result<Value, String>;
-    fn series_plan(&mut self, _body: &Value) -> Result<Value, String> {
+    fn query(&mut self, body: &Value) -> Result<Value, BackendError>;
+    fn series_plan(&mut self, _body: &Value) -> Result<Value, BackendError> {
         Err("series_plan is unavailable".into())
     }
-    fn export(&mut self, _body: &Value) -> Result<Value, String> {
+    fn catalog_check(&mut self, _body: &Value) -> Result<Value, BackendError> {
+        Err("catalog_check is unavailable".into())
+    }
+    fn resolve_run(&mut self, _body: &Value) -> Result<Value, BackendError> {
+        Err("resolve_run is unavailable".into())
+    }
+    fn series(&mut self, _body: &Value) -> Result<Value, BackendError> {
+        Err("series is unavailable".into())
+    }
+    fn sql_session(&mut self, _body: &Value) -> Result<Value, BackendError> {
+        Err("sql_session is unavailable".into())
+    }
+    fn export(&mut self, _body: &Value) -> Result<Value, BackendError> {
         Err("export is unavailable".into())
     }
     fn interrupt(&mut self, request_id: u64) -> Result<(), String>;
@@ -114,7 +186,7 @@ where
             }
         }
     });
-    let (done_tx, done_rx) = mpsc::channel::<(B, Result<Value, String>)>();
+    let (done_tx, done_rx) = mpsc::channel::<(B, Result<Value, BackendError>)>();
     let mut backend = Some(backend);
     let mut active: Option<ActiveRequest> = None;
     let mut ready = false;
@@ -127,21 +199,36 @@ where
                     Ok(result_ref) if request.kind == "export" => {
                         send_event(stdout, &request, "export_committed", result_ref)?
                     }
+                    Ok(payload)
+                        if matches!(
+                            request.kind.as_str(),
+                            "catalog_check" | "resolve_run" | "series" | "sql_session"
+                        ) =>
+                    {
+                        let mut body = match payload {
+                            Value::Object(map) => Value::Object(map),
+                            other => json!({ "payload": other }),
+                        };
+                        if let Some(obj) = body.as_object_mut() {
+                            obj.insert("request_id".into(), json!(request.request_id));
+                        }
+                        send_event(stdout, &request, "result", body)?
+                    }
                     Ok(query_result) => send_event(
                         stdout,
                         &request,
                         "result",
                         query_result_event_body(request.request_id, query_result),
                     )?,
-                    Err(message) if active_request.interrupted => send_failed(
+                    Err(error) if active_request.interrupted => send_failed(
                         stdout,
                         &request,
                         FailKind::Cancelled(CancelLevel::Interrupt),
-                        &message,
+                        &error.message,
                     )?,
-                    Err(message) => {
-                        let fail_kind = classify_task_failure(&request.kind, &message);
-                        send_failed(stdout, &request, fail_kind, &message)?;
+                    Err(error) => {
+                        let fail_kind = classify_task_failure(&request.kind, &error);
+                        send_failed(stdout, &request, fail_kind, &error.message)?;
                     }
                 }
             }
@@ -213,7 +300,10 @@ where
                     }
                 }
             }
-            "query" | "export" | "series_plan" if ready && active.is_none() => {
+            "query" | "export" | "series_plan" | "catalog_check" | "resolve_run" | "series"
+            | "sql_session"
+                if ready && active.is_none() =>
+            {
                 let mut engine = backend.take().expect("idle backend");
                 if let Err(message) = engine.probe_task() {
                     send_failed(
@@ -227,7 +317,7 @@ where
                 let cancellation = engine.cancellation();
                 let mut body = request.body.clone();
                 if let Some(object) = body.as_object_mut() {
-                    if matches!(request.kind.as_str(), "query" | "series_plan")
+                    if matches!(request.kind.as_str(), "query" | "series_plan" | "series")
                         && !object.contains_key("result_id")
                     {
                         object.insert(
@@ -241,21 +331,33 @@ where
                 }
                 let tx = done_tx.clone();
                 let task_kind = request.kind.clone();
-                let progress = ProgressEmitter::start(
+                let initial_stage = match task_kind.as_str() {
+                    "series" => "planning",
+                    "export" => "writing",
+                    _ => "reading",
+                };
+                let (progress, reporter) = ProgressEmitter::start(
                     Arc::clone(stdout),
                     request.clone(),
+                    initial_stage,
                     request
                         .body
                         .get("progress_hz")
                         .and_then(Value::as_u64)
                         .map_or(DEFAULT_PROGRESS_HZ, |hz| hz.min(MAX_PROGRESS_HZ)),
                 );
+                engine.set_stage_reporter(Some(reporter));
                 std::thread::spawn(move || {
                     let result = match task_kind.as_str() {
                         "export" => engine.export(&body),
                         "series_plan" => engine.series_plan(&body),
+                        "catalog_check" => engine.catalog_check(&body),
+                        "resolve_run" => engine.resolve_run(&body),
+                        "series" => engine.series(&body),
+                        "sql_session" => engine.sql_session(&body),
                         _ => engine.query(&body),
                     };
+                    engine.set_stage_reporter(None);
                     progress.stop();
                     let _ = tx.send((engine, result));
                 });
@@ -290,9 +392,12 @@ where
             "ensure_spatial" if ready && active.is_none() => {
                 match backend.as_mut().expect("idle backend").ensure_spatial() {
                     Ok(report) => send_event(stdout, &request, "result", report)?,
-                    Err(message) => {
-                        send_failed(stdout, &request, FailKind::Capability(message.clone()), &message)?
-                    }
+                    Err(message) => send_failed(
+                        stdout,
+                        &request,
+                        FailKind::Capability(message.clone()),
+                        &message,
+                    )?,
                 }
             }
             "shutdown" => {
@@ -305,13 +410,19 @@ where
                 }
                 return Ok(WorkerExit::Shutdown);
             }
-            "query" | "export" | "series_plan" if !ready => send_failed(
-                stdout,
-                &request,
-                FailKind::Bootstrap("worker is not bootstrapped".into()),
-                "worker is not bootstrapped",
-            )?,
-            "query" | "export" | "series_plan" | "ensure_spatial" => send_failed(
+            "query" | "export" | "series_plan" | "catalog_check" | "resolve_run" | "series"
+            | "sql_session"
+                if !ready =>
+            {
+                send_failed(
+                    stdout,
+                    &request,
+                    FailKind::Bootstrap("worker is not bootstrapped".into()),
+                    "worker is not bootstrapped",
+                )?
+            }
+            "query" | "export" | "series_plan" | "catalog_check" | "resolve_run" | "series"
+            | "sql_session" | "ensure_spatial" => send_failed(
                 stdout,
                 &request,
                 FailKind::Query("busy: worker already has an active request".into()),
@@ -351,7 +462,11 @@ fn query_result_event_body(request_id: u64, payload: Value) -> Value {
     body
 }
 
-fn classify_task_failure(request_kind: &str, message: &str) -> FailKind {
+fn classify_task_failure(request_kind: &str, error: &BackendError) -> FailKind {
+    if let Some(kind) = &error.kind {
+        return kind.clone();
+    }
+    let message = error.message.as_str();
     if (message.starts_with("capability `") && message.contains("is unavailable"))
         || message.contains("during ensure_spatial")
     {
@@ -409,25 +524,65 @@ struct ProgressEmitter {
 }
 
 impl ProgressEmitter {
-    fn start<W>(stdout: Arc<Mutex<W>>, request: Envelope<MessageBody>, hz: u64) -> Self
+    fn start<W>(
+        stdout: Arc<Mutex<W>>,
+        request: Envelope<MessageBody>,
+        initial_stage: &'static str,
+        hz: u64,
+    ) -> (Self, StageReporter)
     where
         W: Write + Send + 'static,
     {
         let stop = Arc::new(AtomicBool::new(false));
+        let stage = Arc::new(Mutex::new(initial_stage));
+        let sequence = Arc::new(AtomicU64::new(0));
+        let started = Instant::now();
+
+        let emit_stdout = Arc::clone(&stdout);
+        let emit_request = request.clone();
+        let emit_seq = Arc::clone(&sequence);
+        let emit_fn: Arc<dyn Fn(&'static str) + Send + Sync> = Arc::new(move |stage_name| {
+            let seq = emit_seq.fetch_add(1, Ordering::Relaxed).saturating_add(1);
+            let event = Envelope::new(
+                emit_request.worker_generation,
+                emit_request.job_id,
+                emit_request.request_id,
+                "progress",
+                json!({
+                    "request_id": emit_request.request_id,
+                    "stage": stage_name,
+                    "elapsed_ms": started.elapsed().as_millis() as u64,
+                    "sequence": seq,
+                }),
+            );
+            if let Ok(bytes) = serde_json::to_vec(&event)
+                && let Ok(mut writer) = emit_stdout.lock()
+            {
+                let _ = write_frame(&mut *writer, &bytes);
+            }
+        });
+        let reporter = StageReporter {
+            stage: Arc::clone(&stage),
+            emit: Arc::clone(&emit_fn),
+        };
+
         if hz == 0 {
-            return Self { stop, thread: None };
+            return (Self { stop, thread: None }, reporter);
         }
         let thread_stop = Arc::clone(&stop);
+        let thread_stage = Arc::clone(&stage);
         let thread = thread::spawn(move || {
             let period = Duration::from_nanos(1_000_000_000 / hz);
-            let started = Instant::now();
-            let mut sequence = 0u64;
             loop {
                 thread::park_timeout(period);
                 if thread_stop.load(Ordering::Acquire) {
                     break;
                 }
-                sequence = sequence.saturating_add(1);
+                let current_stage = thread_stage
+                    .lock()
+                    .map(|guard| *guard)
+                    .unwrap_or(initial_stage);
+                let seq = sequence.fetch_add(1, Ordering::Relaxed).saturating_add(1);
                 let event = Envelope::new(
                     request.worker_generation,
                     request.job_id,
@@ -435,9 +590,9 @@ impl ProgressEmitter {
                     "progress",
                     json!({
                         "request_id": request.request_id,
-                        "stage": "reading",
+                        "stage": current_stage,
                         "elapsed_ms": started.elapsed().as_millis() as u64,
-                        "sequence": sequence,
+                        "sequence": seq,
                     }),
                 );
                 let Ok(bytes) = serde_json::to_vec(&event) else {
@@ -451,10 +606,13 @@ impl ProgressEmitter {
                 }
             }
         });
-        Self {
-            stop,
-            thread: Some(thread),
-        }
+        (
+            Self {
+                stop,
+                thread: Some(thread),
+            },
+            reporter,
+        )
     }
 
     fn stop(mut self) {
@@ -485,7 +643,7 @@ mod tests {
     };
     use serde_json::{Value, json};
 
-    use super::{WorkerBackend, WorkerExit, query_result_event_body, serve};
+    use super::{BackendError, WorkerBackend, WorkerExit, query_result_event_body, serve};
 
     struct TestBackend {
         cancelled: Arc<AtomicBool>,
@@ -517,7 +675,7 @@ mod tests {
             Ok(())
         }
 
-        fn query(&mut self, body: &Value) -> Result<Value, String> {
+        fn query(&mut self, body: &Value) -> Result<Value, BackendError> {
             if body.get("capability_error").and_then(Value::as_bool) == Some(true) {
                 return Err("capability `httpfs` is unavailable: offline".into());
             }
@@ -533,7 +691,7 @@ mod tests {
             Ok(json!({"result_ref": {"id": body["result_id"], "rows": 1}}))
         }
 
-        fn series_plan(&mut self, body: &Value) -> Result<Value, String> {
+        fn series_plan(&mut self, body: &Value) -> Result<Value, BackendError> {
             match body.get("plan").and_then(Value::as_str) {
                 Some(plan @ ("A" | "B")) => Ok(json!({
                     "result_ref": {"id": body["result_id"], "rows": 27},
@@ -543,7 +701,7 @@ mod tests {
             }
         }
 
-        fn export(&mut self, _body: &Value) -> Result<Value, String> {
+        fn export(&mut self, _body: &Value) -> Result<Value, BackendError> {
             Err("overwrite confirmation is required".into())
         }
 
@@ -727,11 +885,17 @@ mod tests {
 
         let bad_plan = by_req(4);
         assert_eq!(bad_plan.kind, "failed");
-        assert!(matches!(parse_fail_kind(&bad_plan.body), Some(FailKind::Query(_))));
+        assert!(matches!(
+            parse_fail_kind(&bad_plan.body),
+            Some(FailKind::Query(_))
+        ));
 
         let export_fail = by_req(5);
         assert_eq!(export_fail.kind, "failed");
-        assert!(matches!(parse_fail_kind(&export_fail.body), Some(FailKind::Export(_))));
+        assert!(matches!(
+            parse_fail_kind(&export_fail.body),
+            Some(FailKind::Export(_))
+        ));
 
         let cap_fail = by_req(6);
         assert_eq!(cap_fail.kind, "failed");

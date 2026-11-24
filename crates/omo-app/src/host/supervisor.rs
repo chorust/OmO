@@ -86,11 +86,16 @@ impl SupervisorCore {
                 EventDisposition::Accepted
             }
             omo_protocol::generation::GenerationDisposition::Stale => {
-                let result_files_deleted = ["result_ref", "plot_ref"]
+                let mut result_files_deleted = ["result_ref", "plot_ref", "matches_ref"]
                     .into_iter()
                     .filter_map(|key| envelope.body.get(key)?.get("path")?.as_str())
                     .filter(|path| self.remove_result_if_owned(Path::new(path)))
                     .count();
+                if let Some(parquet) = envelope.body.get("parquet_path").and_then(Value::as_str) {
+                    if self.remove_result_if_owned(Path::new(parquet)) {
+                        result_files_deleted += 1;
+                    }
+                }
                 EventDisposition::DiscardedStale {
                     result_files_deleted,
                 }
@@ -126,8 +131,8 @@ impl SupervisorCore {
         let Ok(canonical_path) = std::fs::canonicalize(path) else {
             return false;
         };
-        if !canonical_path.starts_with(&canonical_root)
-            || canonical_path.extension().is_none_or(|ext| ext != "arrow")
+        let ext = canonical_path.extension().and_then(|ext| ext.to_str());
+        if !canonical_path.starts_with(&canonical_root) || !matches!(ext, Some("arrow" | "parquet"))
         {
             return false;
         }
@@ -576,7 +581,17 @@ async fn supervisor_loop<F: WorkerFactory>(
 }
 
 fn is_tracked_request(kind: &str) -> bool {
-    matches!(kind, "query" | "export" | "series_plan" | "ensure_spatial")
+    matches!(
+        kind,
+        "query"
+            | "export"
+            | "series_plan"
+            | "ensure_spatial"
+            | "catalog_check"
+            | "resolve_run"
+            | "series"
+            | "sql_session"
+    )
 }
 
 #[allow(clippy::too_many_arguments)]

@@ -4,7 +4,7 @@
 
 Omobench（仓库 `chorust/OmO`，别名 `duckomo-workbench`）是一个基于纯 Rust 原生界面（[NSH](https://crates.io/crates/nsh-core)）、[DuckDB](https://github.com/duckdb/duckdb) 与 [duckomo](https://github.com/chorust/duckomo) 构建的桌面与无头气象数据工作台，用于直接查询、浏览、绘图并带溯源信息导出 [Open-Meteo OM](https://github.com/open-meteo/om-file-format) 网格与站点时间序列数据。
 
-[Features](#features) · [Install](#install) · [Usage](#usage) · [Architecture](#architecture) · [Dev](#dev) · [Docs](#docs) · [Acknowledgements](#acknowledgements)
+[Features](#features) · [Screenshots](#screenshots) · [Install](#install) · [Usage](#usage) · [Architecture](#architecture) · [Dev](#dev) · [Docs](#docs) · [Acknowledgements](#acknowledgements)
 
 ## Features
 
@@ -16,7 +16,24 @@ Omobench（仓库 `chorust/OmO`，别名 `duckomo-workbench`）是一个基于�
 - **原子导出与溯源**：支持将当前有效 generation 的结果导出为 `.csv` 或 `.parquet`，附带 JSON 溯源 sidecar，以 sidecar 原子重命名作为唯一提交点，并在启动时扫描恢复未完成导出。
 - **无头核心与严格依赖边界**：核心 crate（`omo-engine`、`omo-protocol`、`omo-worker`、`omo-project`）不依赖任何 UI 框架，`omo-app` 发布构建不链接 DuckDB，由 CI 中的 `scripts/check-boundaries.sh` 强制校验。
 
-> **当前阶段（M0 · `v0.1.0-m0`）说明**：当前发布对应 **M0 骨架引擎与原生壳层**。工程持久化、UI 内完整站点 CSV 导入、`catalog/products.json` 产品目录填充（当前为 `omo-catalog/0` 占位）、静态区域地图（M2）、声明式报告（L1）及 Dynamical Icechunk 数据源（M3）规划在后续里程碑实现，详见 [Roadmap](.specify/memory/roadmap.md)。此外，`v0.1.0-m0` 提供四个平台的预编译二进制，其中 `artifacts/duckomo.lock.json` 当前锁定 `linux_amd64`、`linux_arm64` 与 `osx_arm64`（`macos-x86_64` 当前在 CI 中为仅构建验证）。
+> **当前阶段（M1 · `v0.1.0-m1`）说明**：当前发布对应 **M1 站点 × 预报时序工作台**（ECMWF IFS HRES 目录、站点 CSV 导入、Plan G / Plan B 时序查询与多站绘图、SQL 视图、`omo-export-sidecar/2` 溯源导出与 `.omoproj` 工程持久化）。静态区域地图（M2）、声明式报告（L1）及 Dynamical Icechunk 数据源（M3）规划在后续里程碑实现，详见 [Roadmap](.specify/memory/roadmap.md)。此外，`v0.1.0-m1` 提供四个平台的预编译二进制，其中 `artifacts/duckomo.lock.json` 当前锁定 `linux_amd64`、`linux_arm64` 与 `osx_arm64`（`macos-x86_64` 当前在 CI 中为仅构建验证）。
+
+## Screenshots
+
+以下截图采集自参考主机（Ubuntu 24.04 ARM64，NSH `0.5.1` 原生界面，DuckDB `v2.0.0` + `duckomo v0.4.0`）：
+
+![ECMWF IFS HRES 站点预报时序工作流（100 站点 Plan G 完成与状态标记）](docs/m1/evidence/V1-04-series-completed-badge.png)
+*M1 Series 面板：ECMWF IFS HRES 2 m 气温目录就绪状态、100/100 站点 Plan G 最近格点采样结果、`Received, not saved` 明确状态提示与底部 Tasks / Bootstrap 报告。*
+
+| 站点 CSV 导入与列映射预览 | SQL 编辑器 |
+| :---: | :---: |
+| ![站点 CSV 导入与列映射预览](docs/m1/evidence/V1-02-import-mapping-proposal.png) | ![SQL 编辑器](docs/m1/evidence/V6-01-sql-editor.png) |
+| *自动推断分隔符与字段映射（`id`/`lat`/`lon`/`name`），支持 UTF-8 中文站点名预览。* | *内置 DuckDB SQL 预览编辑器（`Mod + Enter` 执行）与草稿状态指示。* |
+
+| 百万行结果分页表格 | 多序列折线绘图与悬停查看 |
+| :---: | :---: |
+| ![百万行结果分页表格](docs/m0/evidence/n2-spark-aarch64-x11-20261117/fixture-first-page.png) | ![多序列折线绘图与悬停查看](docs/m0/evidence/n3-spark-aarch64-wayland-20261117/plot-render-hover.png) |
+| *基于 mmap Arrow IPC 的大结果集分页表格与列排序（1,000,000 × 20 样本）。* | *20 序列 × 10,000 点折线渲染与十字准线悬停查看（Wayland 原生窗口）。* |
 
 ## Install
 
@@ -24,17 +41,17 @@ Omobench（仓库 `chorust/OmO`，别名 `duckomo-workbench`）是一个基于�
 
 从 [GitHub Releases](https://github.com/chorust/OmO/releases) 下载与当前平台匹配的归档包，每个压缩包均包含配对的 `omo-app` 与 `omo-worker` 两个可执行文件：
 
-| 平台 | Release 资产（`v0.1.0-m0`） | Duckomo 锁定支持 |
+| 平台 | Release 资产（`v0.1.0-m1`） | Duckomo 锁定支持 |
 | :--- | :--- | :--- |
-| Linux x86_64 | `omobench-v0.1.0-m0-linux-x86_64.tar.gz` | `linux_amd64`（已锁定并经 CI 验证） |
-| Linux ARM64 | `omobench-v0.1.0-m0-linux-aarch64.tar.gz` | `linux_arm64`（已锁定并经 CI 验证） |
-| macOS Apple Silicon | `omobench-v0.1.0-m0-macos-aarch64.tar.gz` | `osx_arm64`（已锁定并经 CI 验证） |
-| macOS Intel | `omobench-v0.1.0-m0-macos-x86_64.tar.gz` | 仅构建验证（`duckomo.lock.json` 暂未包含 `osx_amd64`） |
+| Linux x86_64 | `omobench-v0.1.0-m1-linux-x86_64.tar.gz` | `linux_amd64`（已锁定并经 CI 验证） |
+| Linux ARM64 | `omobench-v0.1.0-m1-linux-aarch64.tar.gz` | `linux_arm64`（已锁定并经 CI 验证） |
+| macOS Apple Silicon | `omobench-v0.1.0-m1-macos-aarch64.tar.gz` | `osx_arm64`（已锁定并经 CI 验证） |
+| macOS Intel | `omobench-v0.1.0-m1-macos-x86_64.tar.gz` | 仅构建验证（`duckomo.lock.json` 暂未包含 `osx_amd64`） |
 
 下载并解压到同一目录（`omo-app` 默认在同级目录查找 `omo-worker`）：
 
 ```bash
-VERSION=v0.1.0-m0
+VERSION=v0.1.0-m1
 ASSET=linux-x86_64   # 可选: linux-x86_64 | linux-aarch64 | macos-aarch64 | macos-x86_64
 
 mkdir -p omobench && cd omobench
@@ -103,6 +120,22 @@ OMOBENCH_BOOTSTRAP_CONFIG=/abs/path/to/bootstrap.json ./omo-app
 1. 在 **SQL editor** 编写查询并运行预览；修改 SQL 后，当前结果表会显式提示属于旧 revision，避免混淆。
 2. 在 **Results** 浏览分页结果并点击列头触发服务端排序重拉；在 **Plot** 查看数值序列折线与悬停数值。
 3. 在 **Tasks** 查看 worker 状态、generation 与引导报告，随时取消正在运行的预览，或将当前有效 generation 的结果导出为 `.csv` / `.parquet`（自动伴随生成溯源 sidecar）。
+
+### M1：站点 × 预报时间序列工作流
+
+`omo-app` 的 **Series** 面板覆盖完整 M1 流程（规格见 [M1 Spec](specs/002-m1-station-time-series/spec.md)）：
+
+1. **导入站点 CSV**：选择文件或输入绝对路径；自动识别分隔符并给出 `id / lat / lon / name / elevation` 列映射建议，可逐字段调整；有行级问题（带行号）时禁止确认。确认后写入规范化站点快照（含 SHA-256）。
+2. **选择目录条目并确认就绪**：默认 `ecmwf_ifs.temperature_2m`（ECMWF IFS HRES · O1280 · 2 m 气温，数据产品 `data_run/ecmwf_ifs`）。面板显示最新完整 run（UTC）、各 cycle 时效、时间步摘要与署名文本；离线时显示 `NotReady(RemoteUnavailable)` ，此时 “Run series” 会被拒绝。
+3. **运行 series**：默认窗口 0–168 h、最大距离 7200 m。00Z/12Z run 返回 0–168 h（113 个时次）；**06Z/18Z run 仅到 144 h，界面明确标注 “0–144 h of requested 0–168 h”**。结果标记为 “Received, not saved”，并列出未匹配站点及原因。取消为三级取消，worker 崩溃后保留上一份结果并标记过期。
+4. **探索**：站点复选列表（支持搜索、全选/清除）、提前量窗口滑块（收窄只对已收到的结果重新查询，不会重新请求；超出已收到范围时自动钳制并提示）、按站点命名的多曲线图与图例开关（上限 20 条序列 × 10,000 点）。
+5. **SQL**：`stations` 与 `station_series` 两个视图在每次 worker 就绪和每次新结果后自动重建；示例见 [quickstart V6](specs/002-m1-station-time-series/quickstart.md)。
+6. **导出**：CSV / Parquet，附 `omo-export-sidecar/2` 溯源（站点哈希、目录条目与版本、run、窗口、方案、查询、署名）；仅在 sidecar 提交后才显示 “saved”。
+7. **工程文件**：`.omoproj`（`omo-project/1`）支持原子保存/打开、标题栏脏标记 “●”、2 s 防抖与 30 s 周期草稿、崩溃后启动恢复提示、拒绝更新的 schema 主版本。快捷键：`Ctrl/Cmd+N`、`Ctrl/Cmd+Shift+O`、`Ctrl/Cmd+S`、`Ctrl/Cmd+Shift+S`。
+
+数据署名：Weather data by Open-Meteo.com（CC BY 4.0）；Copyright © ECMWF（CC BY 4.0）。M1 在 O1280 上采用逐站点并行单点读取（Plan G，`max_workers: 20`），见 [研究记录](specs/002-m1-station-time-series/research.md) 与 [S1 证据](docs/m1/evidence/S1-spark-aarch64-20261123.md)。
+
+M1 验证脚本：`scripts/ci-verify-series.py`（网络烟测，网络失败报告 `skipped(network)`，绝不计为通过）、`scripts/export-pinned-series.py` + `scripts/compare-o1280-oracle.py`（SC-003 真值对照）。验收矩阵见 [docs/m1/acceptance.md](docs/m1/acceptance.md)。
 
 ### 无头引导探测（`omo-probe`）
 
@@ -203,8 +236,8 @@ flowchart LR
 
 | 阶段 | 状态 | 核心范围 |
 | :--- | :--- | :--- |
-| **001 · M0 Skeleton Engine** | 当前已发布 `v0.1.0-m0` | 骨架引擎、锁定引导、受监管 worker、NSH 原生壳层、站点序列方案决策与 CI/Release 验证 |
-| **002 · M1 Station Time Series** | 规划中 | 真实目录接入（默认 ECMWF IFS HRES · 2 m 气温 · 未来 0–7 天）、站点 CSV 导入、单/多站时间序列工作流与工程持久化 |
+| **001 · M0 Skeleton Engine** | 已发布 `v0.1.0-m0` | 骨架引擎、锁定引导、受监管 worker、NSH 原生壳层、站点序列方案决策与 CI/Release 验证 |
+| **002 · M1 Station Time Series** | 当前已发布 `v0.1.0-m1`（见 [验收矩阵](docs/m1/acceptance.md)） | 真实目录接入（默认 ECMWF IFS HRES · 2 m 气温 · 未来 0–7 天）、站点 CSV 导入、单/多站时间序列工作流与工程持久化 |
 | **003 · M2 Static Regional Map** | 待定细化 | 静态区域地图任务、版本绑定、PNG + sidecar 导出 |
 | **004 · L1 Declarative Reports** | 待定细化 | 版本化 `ReportSpec`（`omo-report/1`）、只读快照隔离渲染 |
 | **005 · M3 Dynamical Icechunk** | 待定细化 | 统一 `Source` 抽象、STAC 发现与 Icechunk 接入，复用同一 `station_series` 输出 |
@@ -254,6 +287,7 @@ CI 矩阵覆盖 `ubuntu-24.04`（`linux_amd64`）、`ubuntu-24.04-arm`（`linux_
 | 内容 | 文档 |
 | :--- | :--- |
 | M0 规范与验证 Quickstart | [M0 Spec](specs/001-m0-skeleton-engine/spec.md) · [Quickstart](specs/001-m0-skeleton-engine/quickstart.md) |
+| M1 规范、契约与验收 | [M1 Spec](specs/002-m1-station-time-series/spec.md) · [Quickstart](specs/002-m1-station-time-series/quickstart.md) · [Acceptance Matrix](docs/m1/acceptance.md) |
 | M0 验收矩阵与实测证据 | [Acceptance Matrix](docs/m0/acceptance.md) · [Linux 前置依赖](docs/m0/linux-prereqs.md) |
 | 关键架构决策记录 | [Duckomo 渠道决策](docs/m0/decisions/channel.md) · [站点序列方案](docs/m0/decisions/series-plan.md) · [R4 Spatial 预装](docs/m0/decisions/r4.md) · [NSH 壳层决策](docs/m0/decisions/shell.md) · [引擎来源](docs/m0/decisions/engine-source.md) |
 | 扩展版本与哈希锁定 | [duckomo.lock.json](artifacts/duckomo.lock.json) |

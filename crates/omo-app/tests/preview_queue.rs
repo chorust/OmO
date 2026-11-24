@@ -12,6 +12,9 @@ fn key(revision: u64) -> PreviewKey {
         query_hash: format!("q{revision}"),
         stations_hash: None,
         catalog_version: "catalog-0".into(),
+        run_ref: "latest_complete".into(),
+        window: omo_project::preview_key::PreviewWindow::default(),
+        max_distance_m: 7200,
         worker_generation: 1,
     }
 }
@@ -102,4 +105,41 @@ fn failed_preview_retains_last_good_result_and_marks_it_stale() {
     let retained = queue.last_good("doc").unwrap();
     assert_eq!(retained.value, json!({"ok":true}));
     assert_eq!(queue.stale_error("doc"), Some("query failed"));
+}
+
+#[test]
+fn superseded_window_change_drops_late_result_and_marks_previous_stale() {
+    let mut queue = PreviewQueue::default();
+    let k1 = key(1);
+    queue.submit(PreviewRequest::new(k1.clone(), 10));
+    assert_eq!(
+        queue.complete(10, PreviewOutcome::Success(json!({"window":"0-168"}))),
+        Completion::Accepted
+    );
+
+    let mut k2 = key(2);
+    k2.window = omo_project::preview_key::PreviewWindow {
+        start_h: 0,
+        end_h: 72,
+    };
+    assert_eq!(
+        queue.submit(PreviewRequest::new(k2.clone(), 11)),
+        QueueAction::Start(11)
+    );
+    let mut k3 = key(3);
+    k3.window = omo_project::preview_key::PreviewWindow {
+        start_h: 0,
+        end_h: 48,
+    };
+    assert_eq!(
+        queue.submit(PreviewRequest::new(k3, 12)),
+        QueueAction::Interrupt { request_id: 11 }
+    );
+    // Result for superseded window k2 arrives late -> dropped, previous good k1 stays retained.
+    assert_eq!(
+        queue.complete(11, PreviewOutcome::Success(json!({"window":"0-72"}))),
+        Completion::DiscardedSuperseded
+    );
+    assert_eq!(queue.last_good("doc").unwrap().key, k1);
+    assert_ne!(queue.last_good("doc").unwrap().key, k2);
 }

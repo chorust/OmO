@@ -130,3 +130,32 @@ fn kill_injection_at_each_commit_step_has_the_contract_recovery_verdict() {
         }
     }
 }
+
+#[test]
+fn sidecar_v2_is_accepted_when_valid_and_incomplete_when_interrupted() {
+    let dir = tempdir().unwrap();
+    let target = dir.path().join("series.csv");
+    let data =
+        b"station_id,variable,valid_time,value\nA1,temperature_2m,2026-11-23T00:00:00Z,5.0\n";
+    fs::write(&target, data).unwrap();
+    let hash = format!("{:x}", Sha256::digest(data));
+    fs::write(
+        sidecar_path(&target),
+        serde_json::to_vec(
+            &json!({"schema": omo_protocol::export::SIDECAR_SCHEMA_V2, "data": {"sha256": hash}}),
+        )
+        .unwrap(),
+    )
+    .unwrap();
+    assert!(is_saved(&target).unwrap());
+
+    let incomplete_target = dir.path().join("interrupted.csv");
+    fs::write(&incomplete_target, data).unwrap();
+    let staging = dir.path().join(".interrupted.csv.omo-tmp-v2");
+    fs::create_dir(&staging).unwrap();
+    fs::write(staging.join(".omo-owner"), STAGING_OWNER_MARKER).unwrap();
+    let entries = scan_export_dir(dir.path()).unwrap();
+    assert_eq!(entries.len(), 1);
+    assert_eq!(entries[0].target, incomplete_target);
+    assert_eq!(entries[0].verdict, ExportVerdict::Incomplete);
+}

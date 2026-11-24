@@ -38,7 +38,7 @@ use crate::host::{
     runtime::{self, EngineHandle, RuntimeEvent},
 };
 
-use super::{dialogs, plot_view, sql_view, table_view, tasks_view};
+use super::{dialogs, plot_view, project_ctl, series_panel, sql_view, table_view, tasks_view};
 
 const INITIAL_SQL: &str = "-- Edit this query, then run a preview.\nSELECT 1 AS value";
 const INITIAL_SQL_ENV: &str = "OMOBENCH_INITIAL_SQL";
@@ -108,10 +108,10 @@ fn Workspace() -> impl IntoElement {
     } else {
         String::from("Starting engine worker…")
     });
+    let task_stage = signal(String::from("idle"));
+    let last_scan_metrics = signal(None::<Value>);
     let file_status = signal(String::from("No file action yet."));
     let manual_export_path = signal(String::new());
-    let source_status = signal(String::from("No station CSV selected."));
-    let source_path = signal(String::new());
     let result = signal(None::<ResultRef>);
     let plot_input = signal(None::<plot_view::PlotInput>);
     let stale_result = signal(None::<String>);
@@ -122,10 +122,19 @@ fn Workspace() -> impl IntoElement {
     let bootstrap_report = signal(None::<Value>);
     let pending_previews = Rc::new(RefCell::new(HashMap::<u64, PendingPreview>::new()));
     let cancelled_previews = Rc::new(RefCell::new(HashSet::<u64>::new()));
-    let export_requests = Rc::new(RefCell::new(HashMap::<u64, PathBuf>::new()));
+    let export_requests = Rc::new(RefCell::new(HashMap::<u64, (PathBuf, String)>::new()));
     let (engine, event_receiver) = runtime::start_from_env();
     let layout = signal(default_layout());
     let dock_ref = component_ref::<DockArea>();
+    let series = series_panel::SeriesController::new(
+        engine.clone(),
+        request_count,
+        worker_ready,
+        worker_generation,
+        result,
+        plot_input,
+        stale_result,
+    );
 
     if let Some(fixture_path) = fixture_path {
         let fixture_result = result;
@@ -219,6 +228,7 @@ fn Workspace() -> impl IntoElement {
         let stale_result = stale_result;
         let engine = engine.clone();
         let task_status = task_status;
+        let series_for_preview = series.clone();
         move || {
             let request_id = request_count.get_untracked().saturating_add(1);
             request_count.set(request_id);
@@ -231,13 +241,21 @@ fn Workspace() -> impl IntoElement {
             );
             let current_revision = revision.get_untracked();
             let generation = worker_generation.get_untracked();
+            let (stations_hash, catalog_version, run_ref, window, max_distance_m) =
+                series_for_preview.preview_binding();
             let key = PreviewKey {
                 doc_id: DOC_ID.into(),
                 revision: current_revision,
                 view_id: "sql-main".into(),
                 query_hash: format!("{:x}", Sha256::digest(query.as_bytes())),
-                stations_hash: None,
-                catalog_version: "omo-catalog/0".into(),
+                stations_hash,
+                catalog_version,
+                run_ref,
+                window: omo_project::preview_key::PreviewWindow {
+                    start_h: window[0],
+                    end_h: window[1],
+                },
+                max_distance_m,
                 worker_generation: generation,
             };
             let pending = PendingPreview {
@@ -315,6 +333,7 @@ fn Workspace() -> impl IntoElement {
         let task_status = task_status;
         let file_status = file_status;
         let dispatch_next = dispatch_next_preview.clone();
+        let series = series.clone();
         spawn(async move {
             loop {
                 loop {
@@ -345,6 +364,35 @@ fn Workspace() -> impl IntoElement {
                         Ok(RuntimeEvent::Worker(event)) => {
                             let previous_generation = worker_generation.get_untracked();
                             worker_generation.set(event.0.worker_generation);
+                            match event.0.kind.as_str() {
+                                "progress" => {
+                                    if let Some(stage) =
+                                        event.0.body.get("stage").and_then(Value::as_str)
+                                    {
+                                        task_stage.set(stage.to_owned());
+                                    }
+                                }
+                                "result" => {
+                                    task_stage.set("idle".into());
+                                    if let Some(metrics) = event.0.body.get("scan_metrics") {
+                                        last_scan_metrics.set(Some(metrics.clone()));
+                                    }
+                                }
+                                "export_committed" | "failed" => {
+                                    task_stage.set("idle".into());
+                                }
+                                _ => {}
+                            }
+                            if matches!(event.0.kind.as_str(), "result" | "failed" | "progress")
+                                && series.handle_event(
+                                    event.0.kind.as_str(),
+                                    event.0.request_id,
+                                    event.0.worker_generation,
+                                    &event.0.body,
+                                )
+                            {
+                                continue;
+                            }
                             match event.0.kind.as_str() {
                                 "ready" => {
                                     if previous_generation != 0
@@ -395,6 +443,7 @@ fn Workspace() -> impl IntoElement {
                                     }
                                     worker_ready.set(true);
                                     worker_state.set("READY".into());
+                                    series.on_worker_ready();
                                     bootstrap_report
                                         .set(event.0.body.get("bootstrap_report").cloned());
                                     task_status.set(format!(
@@ -562,6 +611,12 @@ fn Workspace() -> impl IntoElement {
                                 }
                                 "progress" => {
                                     let request_id = event.0.request_id;
+                                    let stage = event
+                                        .0
+                                        .body
+                                        .get("stage")
+                                        .and_then(Value::as_str)
+                                        .unwrap_or("reading");
                                     let sequence = event
                                         .0
                                         .body
@@ -569,7 +624,7 @@ fn Workspace() -> impl IntoElement {
                                         .and_then(Value::as_u64)
                                         .unwrap_or(0);
                                     task_status.set(format!(
-                                        "Preview {request_id} progress event {sequence}."
+                                        "Request {request_id} · {stage} (event {sequence})."
                                     ));
                                 }
                                 "failed" => {
@@ -597,7 +652,7 @@ fn Workspace() -> impl IntoElement {
                                         worker_ready.set(false);
                                         worker_state.set("RESTARTING".into());
                                     }
-                                    if let Some(path) =
+                                    if let Some((path, _)) =
                                         export_requests.borrow_mut().remove(&request_id)
                                     {
                                         file_status.set(format!(
@@ -644,9 +699,10 @@ fn Workspace() -> impl IntoElement {
                                 }
                                 "export_committed" => {
                                     let request_id = event.0.request_id;
-                                    let path = export_requests
-                                        .borrow_mut()
-                                        .remove(&request_id)
+                                    let removed = export_requests.borrow_mut().remove(&request_id);
+                                    let path = removed
+                                        .as_ref()
+                                        .map(|(path, _)| path.clone())
                                         .or_else(|| {
                                             event
                                                 .0
@@ -656,6 +712,9 @@ fn Workspace() -> impl IntoElement {
                                                 .map(PathBuf::from)
                                         });
                                     if let Some(path) = path {
+                                        if let Some((_, result_id)) = removed {
+                                            series.mark_export_committed(&result_id, path.clone());
+                                        }
                                         file_status
                                             .set(format!("Export saved: {}", path.display()));
                                     }
@@ -700,28 +759,8 @@ fn Workspace() -> impl IntoElement {
     });
 
     let open_station_csv: Rc<dyn Fn()> = Rc::new({
-        let source_path = source_path;
-        let source_status = source_status;
-        let file_status = file_status;
-        move || {
-            let selected_path = source_path;
-            let selection_status = source_status;
-            let dialog_status = file_status;
-            dialogs::choose_stations_csv(
-                move |path: PathBuf| {
-                    let path = path.to_string_lossy().into_owned();
-                    selected_path.set(path.clone());
-                    selection_status
-                        .set("CSV selected locally; engine loading is not connected yet.".into());
-                    dialog_status.set(format!("Selected station file: {path}"));
-                },
-                move |error| {
-                    selection_status.set(format!(
-                        "File chooser unavailable ({error}). Enter a path below."
-                    ));
-                },
-            );
-        }
+        let series = series.clone();
+        move || series.open_csv()
     });
 
     let submit_export: Rc<dyn Fn(PathBuf, bool)> = Rc::new({
@@ -735,6 +774,7 @@ fn Workspace() -> impl IntoElement {
         let request_count = request_count;
         let export_requests = Rc::clone(&export_requests);
         let engine = engine.clone();
+        let series = series.clone();
         move |path, overwrite_confirmed| {
             let Some(reference) = result.get_untracked() else {
                 file_status.set("Run a query before exporting a result.".into());
@@ -765,23 +805,34 @@ fn Workspace() -> impl IntoElement {
             let request_id = request_count.get_untracked().saturating_add(1);
             request_count.set(request_id);
             let path_text = path.to_string_lossy().into_owned();
+            let exported_sql = sorted_query(&sql.get_untracked(), sort_state.get_untracked());
+            let m1_sidecar = series.m1_sidecar(Some(&exported_sql), &reference.id);
+            let (stations_hash, catalog_version, run_ref, window, max_distance_m) =
+                series.preview_binding();
+            let mut job_snapshot = json!({
+                "job_id": JOB_ID,
+                "revision": revision.get_untracked(),
+                "sql": exported_sql,
+                "stations_hash": stations_hash,
+                "catalog_version": catalog_version,
+                "run_ref": run_ref,
+                "window": window,
+                "max_distance_m": max_distance_m
+            });
+            if let Some(m1) = m1_sidecar {
+                job_snapshot["m1_sidecar"] = m1;
+            }
             let body = json!({
                 "result_id": reference.id,
                 "target": path_text,
                 "format": format,
                 "row_count": reference.rows,
                 "overwrite_confirmed": overwrite_confirmed,
-                "job_snapshot": {
-                    "job_id": JOB_ID,
-                    "revision": revision.get_untracked(),
-                    "sql": sorted_query(&sql.get_untracked(), sort_state.get_untracked()),
-                    "stations_hash": null,
-                    "catalog_version": "omo-catalog/0"
-                }
+                "job_snapshot": job_snapshot
             });
             export_requests
                 .borrow_mut()
-                .insert(request_id, path.clone());
+                .insert(request_id, (path.clone(), reference.id.clone()));
             match engine.send_request(JOB_ID, request_id, "export", body) {
                 Ok(()) => file_status.set(format!("Exporting {}…", path.display())),
                 Err(error) => {
@@ -862,6 +913,15 @@ fn Workspace() -> impl IntoElement {
 
     let show_left = dock_ref;
     let show_bottom = dock_ref;
+    let project = project_ctl::ProjectController::new(series.clone(), sql, on_edit.clone());
+    project.install_window();
+    project.start_draft_scheduler();
+    project.offer_recovery();
+    let project_status = project.status;
+    let menu_new = project.clone();
+    let menu_open_project = project.clone();
+    let menu_save = project.clone();
+    let menu_save_as = project.clone();
     let menu_run = run_preview.clone();
     let menu_cancel = cancel_task.clone();
     let menu_open = open_station_csv.clone();
@@ -878,6 +938,19 @@ fn Workspace() -> impl IntoElement {
         MenuItem::submenu(
             "File",
             [
+                MenuItem::new("New project")
+                    .shortcut("mod+n")
+                    .on_select(move || menu_new.new_project()),
+                MenuItem::new("Open project…")
+                    .shortcut("mod+shift+o")
+                    .on_select(move || menu_open_project.open()),
+                MenuItem::new("Save project")
+                    .shortcut("mod+s")
+                    .on_select(move || menu_save.save(None)),
+                MenuItem::new("Save project as…")
+                    .shortcut("mod+shift+s")
+                    .on_select(move || menu_save_as.save_as(None)),
+                MenuItem::separator(),
                 MenuItem::new("Open station CSV…")
                     .shortcut("mod+o")
                     .on_select(move || menu_open()),
@@ -911,6 +984,16 @@ fn Workspace() -> impl IntoElement {
     ]);
 
     let open_for_panel = open_station_csv.clone();
+    let apply_sql: Rc<dyn Fn(String)> = Rc::new({
+        let on_edit = on_edit.clone();
+        let run_preview = run_preview.clone();
+        move |next| {
+            on_edit(next);
+            run_preview();
+        }
+    });
+    let series_for_panel = series.clone();
+    let series_for_source = series.clone();
     let run_for_panel = run_preview.clone();
     let retry_for_panel = run_preview.clone();
     let cancel_for_panel = cancel_task.clone();
@@ -967,9 +1050,12 @@ fn Workspace() -> impl IntoElement {
                             let panel_id = panel.id.to_string();
                             match panel_id.as_str() {
                                 "sources" => source_panel(
-                                    source_path,
-                                    source_status,
+                                    series_for_source.clone(),
                                     open_for_panel.clone(),
+                                ).into_element(),
+                                "series" => series_panel::panel(
+                                    series_for_panel.clone(),
+                                    apply_sql.clone(),
                                 ).into_element(),
                                 "query" => sql_view::panel(
                                     sql,
@@ -984,6 +1070,8 @@ fn Workspace() -> impl IntoElement {
                                 "chart" => plot_view::panel(chart_rows, result, plot_input).into_element(),
                                 "tasks" => tasks_view::panel(
                                     task_status,
+                                    task_stage,
+                                    last_scan_metrics,
                                     request_count,
                                     worker_state,
                                     worker_generation,
@@ -1002,6 +1090,7 @@ fn Workspace() -> impl IntoElement {
                         .render_tab(|tab: &DockTab| {
                             let label = match tab.panel.as_str() {
                                 "sources" => "Sources",
+                                "series" => "Series",
                                 "query" => "SQL editor",
                                 "results" => "Results",
                                 "chart" => "Plot",
@@ -1030,7 +1119,8 @@ fn Workspace() -> impl IntoElement {
             view()
                 .app_class("h-8 shrink-0 flex-row items-center justify-between border-t border-[#d9d5ca] bg-[#f9f8f3] px-4 dark:border-[#343b36] dark:bg-[#151a17]")
                 .child(text(move || status_for_footer.get()).app_class("text-[10px] text-[#77837b] dark:text-[#9ba69e]"))
-                .child(text(move || file_status.get()).app_class("max-w-[55%] truncate text-[10px] text-[#77837b] dark:text-[#9ba69e]")),
+                .child(text(move || project_status.get()).app_class("max-w-[30%] truncate text-[10px] text-[#77837b] dark:text-[#9ba69e]"))
+                .child(text(move || file_status.get()).app_class("max-w-[45%] truncate text-[10px] text-[#77837b] dark:text-[#9ba69e]")),
         )
 }
 
@@ -1045,6 +1135,7 @@ fn default_layout() -> DockAreaLayout {
 
     DockAreaLayout::new(
         DockLayout::tabs()
+            .panel("series")
             .panel("query")
             .panel("results")
             .panel("chart"),
@@ -1054,7 +1145,7 @@ fn default_layout() -> DockAreaLayout {
 }
 
 fn panel_options() -> Vec<DockPanelOptions> {
-    ["sources", "query", "results", "chart", "tasks"]
+    ["sources", "series", "query", "results", "chart", "tasks"]
         .into_iter()
         .map(|id| {
             let mut options = DockPanelOptions::new(id);
@@ -1089,11 +1180,12 @@ mod tests {
 }
 
 fn source_panel(
-    source_path: Signal<String>,
-    source_status: Signal<String>,
+    series: series_panel::SeriesController,
     open_csv: Rc<dyn Fn()>,
 ) -> impl IntoElement {
     let open = open_csv.clone();
+    let source_path = series.source_path;
+    let source_status = series.status;
     view()
         .app_class("flex-col size-full gap-4 bg-[#fbfaf6] p-4 text-[#24312c] dark:bg-[#171c19] dark:text-[#e6e9e2]")
         .child(text("PROJECT").app_class("text-[10px] font-semibold tracking-widest text-[#7d877f] dark:text-[#9ba69e]"))
@@ -1118,17 +1210,10 @@ fn source_panel(
                 .app_class("h-9 rounded-md border border-[#d6d1c5] bg-white px-2 text-xs dark:border-[#404740] dark:bg-[#202722]"),
         )
         .child({
-            let path = source_path;
-            let status = source_status;
+            let series = series.clone();
             button()
                 .app_class("h-8 self-start rounded-md bg-[#e7e9df] px-3 text-xs font-semibold text-[#43584d] hover:bg-[#dde2d6] dark:bg-[#2d3931] dark:text-[#c3d0c5]")
-                .on_press(move || {
-                    if path.get_untracked().trim().is_empty() {
-                        status.set("Enter a CSV path or choose a file first.".into());
-                    } else {
-                        status.set("Path saved in this window only; CSV ingestion is not connected yet.".into());
-                    }
-                })
+                .on_press(move || series.load_path(source_path.get_untracked()))
                 .child(text("Use path"))
         })
         .child(text(move || source_status.get())

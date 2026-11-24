@@ -1,0 +1,1004 @@
+{
+  "bootstrap": {
+    "artifact_sha256": "2189a68bebc26f2eb7fa7b7b0f1fb2e5db9bd4cea543d5941ec165f05046a83e",
+    "channel": "github-release-unsigned",
+    "duckdb_version": "v2.0.0",
+    "duckomo_version": "v0.4.0",
+    "extension_settings": [
+      [
+        "active_grammar_extensions",
+        "[]"
+      ],
+      [
+        "allow_community_extensions",
+        "false"
+      ],
+      [
+        "allow_extension_repositories",
+        "forbidden"
+      ],
+      [
+        "allow_extensions_metadata_mismatch",
+        "false"
+      ],
+      [
+        "allow_parser_override_extension",
+        "DEFAULT"
+      ],
+      [
+        "allow_unsigned_extensions",
+        "false"
+      ],
+      [
+        "autoinstall_extension_repository",
+        ""
+      ],
+      [
+        "autoinstall_known_extensions",
+        "false"
+      ],
+      [
+        "autoload_known_extensions",
+        "false"
+      ],
+      [
+        "custom_extension_repository",
+        ""
+      ],
+      [
+        "extension_directories",
+        "[]"
+      ],
+      [
+        "extension_repository_directory",
+        "/home/blizhan/repo/github/OmO/target/omo-series-spike-extensions/omo-extension-repositories"
+      ]
+    ],
+    "golden": {
+      "actual": "bc7cf6db243073d9baee64cdda6900cae9547a33bde00f61b8da10a7ce30254f",
+      "expected": "bc7cf6db243073d9baee64cdda6900cae9547a33bde00f61b8da10a7ce30254f",
+      "fixture": "fixtures/om/chmi-aladin-cz-hsurf.om",
+      "ok": true,
+      "query_id": "golden-v1",
+      "rows": 64
+    },
+    "httpfs": {
+      "status": "loaded"
+    },
+    "platform": "linux_arm64",
+    "probe": {
+      "channel": "github-release-unsigned",
+      "duckdb_version": "v2.0.0",
+      "duckomo_version": "v0.4.0",
+      "functions_present": [
+        "read_om",
+        "read_om_series",
+        "om_grid_info",
+        "duckomo_last_scan_metrics"
+      ],
+      "platform": "linux_arm64"
+    },
+    "r4": {
+      "community_close": "disabled_at_open",
+      "repository_close": "forbidden_before_duckomo",
+      "spatial_after_lock": "not_run",
+      "spatial_preinstall": "not_requested",
+      "unsigned_close": "ok"
+    },
+    "spatial": {
+      "status": "not_requested"
+    },
+    "timings_ms": {
+      "duckomo": 1,
+      "golden": 6,
+      "httpfs": 9,
+      "lock": 10,
+      "open": 40,
+      "probes": 32
+    }
+  },
+  "crosscheck": {
+    "matched": 57,
+    "mismatches": [],
+    "sampled": 57,
+    "status": "passed"
+  },
+  "dimensions": {
+    "columns": [
+      {
+        "name": "value",
+        "type": "FLOAT"
+      },
+      {
+        "name": "lat",
+        "type": "DOUBLE"
+      },
+      {
+        "name": "lon",
+        "type": "DOUBLE"
+      },
+      {
+        "name": "valid_time",
+        "type": "TIMESTAMP"
+      }
+    ],
+    "sql": "DESCRIBE SELECT * FROM read_om('https://openmeteo.s3.amazonaws.com/data_run/ecmwf_ifs/2026/11/23/0000Z/temperature_2m.om', domain := 'ecmwf_ifs') LIMIT 0",
+    "status": "ok"
+  },
+  "object_https": "https://openmeteo.s3.amazonaws.com/data_run/ecmwf_ifs/2026/11/23/0000Z/temperature_2m.om",
+  "repeats": [
+    {
+      "elapsed_ms": 59558,
+      "repeat": 0,
+      "summary": {
+        "exact_coordinate_rows": 14500,
+        "mode": "parallel-box",
+        "returned_rows": 14500,
+        "selected_points": 100,
+        "sum_bytes_fetched": 195491,
+        "sum_read_requests": 1700,
+        "workers": 20
+      }
+    }
+  ],
+  "run": {
+    "cycle": "00",
+    "horizon_h": 360,
+    "meta_etag": null,
+    "object_url": "s3://openmeteo/data_run/ecmwf_ifs/2026/11/23/0000Z/temperature_2m.om",
+    "reference_time_utc": "2026-11-23T00:00:00Z",
+    "valid_times": [
+      "2026-11-23T00:00:00Z",
+      "2026-11-23T01:00:00Z",
+      "2026-11-23T02:00:00Z",
+      "2026-11-23T03:00:00Z",
+      "2026-11-23T04:00:00Z",
+      "2026-11-23T05:00:00Z",
+      "2026-11-23T06:00:00Z",
+      "2026-11-23T07:00:00Z",
+      "2026-11-23T08:00:00Z",
+      "2026-11-23T09:00:00Z",
+      "2026-11-23T10:00:00Z",
+      "2026-11-23T11:00:00Z",
+      "2026-11-23T12:00:00Z",
+      "2026-11-23T13:00:00Z",
+      "2026-11-23T14:00:00Z",
+      "2026-11-23T15:00:00Z",
+      "2026-11-23T16:00:00Z",
+      "2026-11-23T17:00:00Z",
+      "2026-11-23T18:00:00Z",
+      "2026-11-23T19:00:00Z",
+      "2026-11-23T20:00:00Z",
+      "2026-11-23T21:00:00Z",
+      "2026-11-23T22:00:00Z",
+      "2026-11-23T23:00:00Z",
+      "2026-11-24T00:00:00Z",
+      "2026-11-24T01:00:00Z",
+      "2026-11-24T02:00:00Z",
+      "2026-11-24T03:00:00Z",
+      "2026-11-24T04:00:00Z",
+      "2026-11-24T05:00:00Z",
+      "2026-11-24T06:00:00Z",
+      "2026-11-24T07:00:00Z",
+      "2026-11-24T08:00:00Z",
+      "2026-11-24T09:00:00Z",
+      "2026-11-24T10:00:00Z",
+      "2026-11-24T11:00:00Z",
+      "2026-11-24T12:00:00Z",
+      "2026-11-24T13:00:00Z",
+      "2026-11-24T14:00:00Z",
+      "2026-11-24T15:00:00Z",
+      "2026-11-24T16:00:00Z",
+      "2026-11-24T17:00:00Z",
+      "2026-11-24T18:00:00Z",
+      "2026-11-24T19:00:00Z",
+      "2026-11-24T20:00:00Z",
+      "2026-11-24T21:00:00Z",
+      "2026-11-24T22:00:00Z",
+      "2026-11-24T23:00:00Z",
+      "2026-11-25T00:00:00Z",
+      "2026-11-25T01:00:00Z",
+      "2026-11-25T02:00:00Z",
+      "2026-11-25T03:00:00Z",
+      "2026-11-25T04:00:00Z",
+      "2026-11-25T05:00:00Z",
+      "2026-11-25T06:00:00Z",
+      "2026-11-25T07:00:00Z",
+      "2026-11-25T08:00:00Z",
+      "2026-11-25T09:00:00Z",
+      "2026-11-25T10:00:00Z",
+      "2026-11-25T11:00:00Z",
+      "2026-11-25T12:00:00Z",
+      "2026-11-25T13:00:00Z",
+      "2026-11-25T14:00:00Z",
+      "2026-11-25T15:00:00Z",
+      "2026-11-25T16:00:00Z",
+      "2026-11-25T17:00:00Z",
+      "2026-11-25T18:00:00Z",
+      "2026-11-25T19:00:00Z",
+      "2026-11-25T20:00:00Z",
+      "2026-11-25T21:00:00Z",
+      "2026-11-25T22:00:00Z",
+      "2026-11-25T23:00:00Z",
+      "2026-11-26T00:00:00Z",
+      "2026-11-26T01:00:00Z",
+      "2026-11-26T02:00:00Z",
+      "2026-11-26T03:00:00Z",
+      "2026-11-26T04:00:00Z",
+      "2026-11-26T05:00:00Z",
+      "2026-11-26T06:00:00Z",
+      "2026-11-26T07:00:00Z",
+      "2026-11-26T08:00:00Z",
+      "2026-11-26T09:00:00Z",
+      "2026-11-26T10:00:00Z",
+      "2026-11-26T11:00:00Z",
+      "2026-11-26T12:00:00Z",
+      "2026-11-26T13:00:00Z",
+      "2026-11-26T14:00:00Z",
+      "2026-11-26T15:00:00Z",
+      "2026-11-26T16:00:00Z",
+      "2026-11-26T17:00:00Z",
+      "2026-11-26T18:00:00Z",
+      "2026-11-26T21:00:00Z",
+      "2026-11-27T00:00:00Z",
+      "2026-11-27T03:00:00Z",
+      "2026-11-27T06:00:00Z",
+      "2026-11-27T09:00:00Z",
+      "2026-11-27T12:00:00Z",
+      "2026-11-27T15:00:00Z",
+      "2026-11-27T18:00:00Z",
+      "2026-11-27T21:00:00Z",
+      "2026-11-28T00:00:00Z",
+      "2026-11-28T03:00:00Z",
+      "2026-11-28T06:00:00Z",
+      "2026-11-28T09:00:00Z",
+      "2026-11-28T12:00:00Z",
+      "2026-11-28T15:00:00Z",
+      "2026-11-28T18:00:00Z",
+      "2026-11-28T21:00:00Z",
+      "2026-11-29T00:00:00Z",
+      "2026-11-29T06:00:00Z",
+      "2026-11-29T12:00:00Z",
+      "2026-11-29T18:00:00Z",
+      "2026-11-30T00:00:00Z",
+      "2026-11-30T06:00:00Z",
+      "2026-11-30T12:00:00Z",
+      "2026-11-30T18:00:00Z",
+      "2026-12-01T00:00:00Z",
+      "2026-12-01T06:00:00Z",
+      "2026-12-01T12:00:00Z",
+      "2026-12-01T18:00:00Z",
+      "2026-12-02T00:00:00Z",
+      "2026-12-02T06:00:00Z",
+      "2026-12-02T12:00:00Z",
+      "2026-12-02T18:00:00Z",
+      "2026-12-03T00:00:00Z",
+      "2026-12-03T06:00:00Z",
+      "2026-12-03T12:00:00Z",
+      "2026-12-03T18:00:00Z",
+      "2026-12-04T00:00:00Z",
+      "2026-12-04T06:00:00Z",
+      "2026-12-04T12:00:00Z",
+      "2026-12-04T18:00:00Z",
+      "2026-12-05T00:00:00Z",
+      "2026-12-05T06:00:00Z",
+      "2026-12-05T12:00:00Z",
+      "2026-12-05T18:00:00Z",
+      "2026-12-06T00:00:00Z",
+      "2026-12-06T06:00:00Z",
+      "2026-12-06T12:00:00Z",
+      "2026-12-06T18:00:00Z",
+      "2026-12-07T00:00:00Z",
+      "2026-12-07T06:00:00Z",
+      "2026-12-07T12:00:00Z",
+      "2026-12-07T18:00:00Z",
+      "2026-12-08T00:00:00Z"
+    ]
+  },
+  "schema": "omo-series-spike-plan-g/1",
+  "select": "parallel-box",
+  "selected_points": [
+    {
+      "distance_m": 4716.764388277556,
+      "flat_index": 6557104,
+      "grid_lat": -80.03514862060547,
+      "grid_lon": -170.13699340820312,
+      "station_id": "1"
+    },
+    {
+      "distance_m": 1930.1532693452684,
+      "flat_index": 6544632,
+      "grid_lat": -78.6291732788086,
+      "grid_lon": -166.98794555664062,
+      "station_id": "2"
+    },
+    {
+      "distance_m": 5161.912842526956,
+      "flat_index": 6531303,
+      "grid_lat": -77.29349517822266,
+      "grid_lon": -163.94593811035156,
+      "station_id": "3"
+    },
+    {
+      "distance_m": 538.8881739147306,
+      "flat_index": 6515714,
+      "grid_lat": -75.88751983642578,
+      "grid_lon": -160.68292236328125,
+      "station_id": "4"
+    },
+    {
+      "distance_m": 4276.063013812847,
+      "flat_index": 6498526,
+      "grid_lat": -74.4815444946289,
+      "grid_lon": -157.59999084472656,
+      "station_id": "5"
+    },
+    {
+      "distance_m": 1650.606340995953,
+      "flat_index": 6480717,
+      "grid_lat": -73.14586639404297,
+      "grid_lon": -154.54917907714844,
+      "station_id": "6"
+    },
+    {
+      "distance_m": 4636.050952099674,
+      "flat_index": 6460412,
+      "grid_lat": -71.7398910522461,
+      "grid_lon": -151.36363220214844,
+      "station_id": "7"
+    },
+    {
+      "distance_m": 3861.8021590645167,
+      "flat_index": 6439642,
+      "grid_lat": -70.40422058105469,
+      "grid_lon": -148.1978759765625,
+      "station_id": "8"
+    },
+    {
+      "distance_m": 4157.362815255679,
+      "flat_index": 6417429,
+      "grid_lat": -69.06854248046875,
+      "grid_lon": -145.1324462890625,
+      "station_id": "9"
+    },
+    {
+      "distance_m": 4821.608423306766,
+      "flat_index": 6392488,
+      "grid_lat": -67.66256713867188,
+      "grid_lon": -141.98757934570312,
+      "station_id": "10"
+    },
+    {
+      "distance_m": 5043.582597533537,
+      "flat_index": 6367313,
+      "grid_lat": -66.32688903808594,
+      "grid_lon": -139.09092712402344,
+      "station_id": "11"
+    },
+    {
+      "distance_m": 1640.4867031613492,
+      "flat_index": 6339255,
+      "grid_lat": -64.92091369628906,
+      "grid_lon": -135.87257385253906,
+      "station_id": "12"
+    },
+    {
+      "distance_m": 4397.188766936422,
+      "flat_index": 6311119,
+      "grid_lat": -63.585235595703125,
+      "grid_lon": -132.868408203125,
+      "station_id": "13"
+    },
+    {
+      "distance_m": 5323.974284559823,
+      "flat_index": 6279944,
+      "grid_lat": -62.17926025390625,
+      "grid_lon": -129.60000610351562,
+      "station_id": "14"
+    },
+    {
+      "distance_m": 5277.066124503401,
+      "flat_index": 6248847,
+      "grid_lat": -60.84358596801758,
+      "grid_lon": -126.5155029296875,
+      "station_id": "15"
+    },
+    {
+      "distance_m": 4897.078519441362,
+      "flat_index": 6214554,
+      "grid_lat": -59.4376106262207,
+      "grid_lon": -123.4168701171875,
+      "station_id": "16"
+    },
+    {
+      "distance_m": 4216.6885106650225,
+      "flat_index": 6180495,
+      "grid_lat": -58.101932525634766,
+      "grid_lon": -120.45852661132812,
+      "station_id": "17"
+    },
+    {
+      "distance_m": 1563.3680850780129,
+      "flat_index": 6143085,
+      "grid_lat": -56.69595718383789,
+      "grid_lon": -117.30125427246094,
+      "station_id": "18"
+    },
+    {
+      "distance_m": 4719.7301992586845,
+      "flat_index": 6106065,
+      "grid_lat": -55.36028289794922,
+      "grid_lon": -114.26557922363281,
+      "station_id": "19"
+    },
+    {
+      "distance_m": 2940.122468695087,
+      "flat_index": 6065538,
+      "grid_lat": -53.954307556152344,
+      "grid_lon": -111.06382751464844,
+      "station_id": "20"
+    },
+    {
+      "distance_m": 3070.6746836931934,
+      "flat_index": 6025557,
+      "grid_lat": -52.618629455566406,
+      "grid_lon": -107.9664306640625,
+      "station_id": "21"
+    },
+    {
+      "distance_m": 2006.197886976479,
+      "flat_index": 5981912,
+      "grid_lat": -51.21265411376953,
+      "grid_lon": -104.89207458496094,
+      "station_id": "22"
+    },
+    {
+      "distance_m": 4753.05933103569,
+      "flat_index": 5938970,
+      "grid_lat": -49.876976013183594,
+      "grid_lon": -101.7391357421875,
+      "station_id": "23"
+    },
+    {
+      "distance_m": 5787.582981762962,
+      "flat_index": 5892207,
+      "grid_lat": -48.47100067138672,
+      "grid_lon": -98.77310180664062,
+      "station_id": "24"
+    },
+    {
+      "distance_m": 2835.92623163471,
+      "flat_index": 5846304,
+      "grid_lat": -47.13532638549805,
+      "grid_lon": -95.57003784179688,
+      "station_id": "25"
+    },
+    {
+      "distance_m": 4860.771546990324,
+      "flat_index": 5796424,
+      "grid_lat": -45.72935104370117,
+      "grid_lon": -92.55520629882812,
+      "station_id": "26"
+    },
+    {
+      "distance_m": 4157.820495396809,
+      "flat_index": 5747559,
+      "grid_lat": -44.393672943115234,
+      "grid_lon": -89.44869995117188,
+      "station_id": "27"
+    },
+    {
+      "distance_m": 4381.424882612859,
+      "flat_index": 5694563,
+      "grid_lat": -42.98769760131836,
+      "grid_lon": -86.25558471679688,
+      "station_id": "28"
+    },
+    {
+      "distance_m": 3352.3131607998607,
+      "flat_index": 5642736,
+      "grid_lat": -41.65201950073242,
+      "grid_lon": -83.23699951171875,
+      "station_id": "29"
+    },
+    {
+      "distance_m": 4344.301367144554,
+      "flat_index": 5586622,
+      "grid_lat": -40.24604415893555,
+      "grid_lon": -80.14044189453125,
+      "station_id": "30"
+    },
+    {
+      "distance_m": 4527.576132634134,
+      "flat_index": 5531835,
+      "grid_lat": -38.910369873046875,
+      "grid_lon": -76.94940185546875,
+      "station_id": "31"
+    },
+    {
+      "distance_m": 4630.6461201607135,
+      "flat_index": 5472603,
+      "grid_lat": -37.50439453125,
+      "grid_lon": -73.94140625,
+      "station_id": "32"
+    },
+    {
+      "distance_m": 2961.836591357329,
+      "flat_index": 5414854,
+      "grid_lat": -36.16871643066406,
+      "grid_lon": -70.8311767578125,
+      "station_id": "33"
+    },
+    {
+      "distance_m": 4031.3837128061873,
+      "flat_index": 5352506,
+      "grid_lat": -34.76274108886719,
+      "grid_lon": -67.6708984375,
+      "station_id": "34"
+    },
+    {
+      "distance_m": 3373.070843320232,
+      "flat_index": 5291795,
+      "grid_lat": -33.427066802978516,
+      "grid_lon": -64.63534545898438,
+      "station_id": "35"
+    },
+    {
+      "distance_m": 5038.255919900774,
+      "flat_index": 5229642,
+      "grid_lat": -32.09138870239258,
+      "grid_lon": -61.521759033203125,
+      "station_id": "36"
+    },
+    {
+      "distance_m": 2683.7989942788863,
+      "flat_index": 5162658,
+      "grid_lat": -30.685413360595703,
+      "grid_lon": -58.372650146484375,
+      "station_id": "37"
+    },
+    {
+      "distance_m": 4804.083666883887,
+      "flat_index": 5094075,
+      "grid_lat": -29.279438018798828,
+      "grid_lon": -55.264984130859375,
+      "station_id": "38"
+    },
+    {
+      "distance_m": 4604.493975300955,
+      "flat_index": 5027442,
+      "grid_lat": -27.943761825561523,
+      "grid_lon": -52.1533203125,
+      "station_id": "39"
+    },
+    {
+      "distance_m": 4003.660405076889,
+      "flat_index": 4955741,
+      "grid_lat": -26.53778648376465,
+      "grid_lon": -49.11798095703125,
+      "station_id": "40"
+    },
+    {
+      "distance_m": 2834.4962409156506,
+      "flat_index": 4886147,
+      "grid_lat": -25.20210838317871,
+      "grid_lon": -45.971923828125,
+      "station_id": "41"
+    },
+    {
+      "distance_m": 3832.243418103346,
+      "flat_index": 4811329,
+      "grid_lat": -23.796133041381836,
+      "grid_lon": -42.906982421875,
+      "station_id": "42"
+    },
+    {
+      "distance_m": 2448.486805730488,
+      "flat_index": 4738773,
+      "grid_lat": -22.46045684814453,
+      "grid_lon": -39.823822021484375,
+      "station_id": "43"
+    },
+    {
+      "distance_m": 4554.075679663928,
+      "flat_index": 4664775,
+      "grid_lat": -21.124780654907227,
+      "grid_lon": -36.67681884765625,
+      "station_id": "44"
+    },
+    {
+      "distance_m": 1632.0055719726947,
+      "flat_index": 4585321,
+      "grid_lat": -19.71880531311035,
+      "grid_lon": -33.61553955078125,
+      "station_id": "45"
+    },
+    {
+      "distance_m": 4138.262592806714,
+      "flat_index": 4504269,
+      "grid_lat": -18.312829971313477,
+      "grid_lon": -30.498046875,
+      "station_id": "46"
+    },
+    {
+      "distance_m": 4275.666693667406,
+      "flat_index": 4425790,
+      "grid_lat": -16.977153778076172,
+      "grid_lon": -27.440093994140625,
+      "station_id": "47"
+    },
+    {
+      "distance_m": 4220.261072176771,
+      "flat_index": 4345869,
+      "grid_lat": -15.641475677490234,
+      "grid_lon": -24.322021484375,
+      "station_id": "48"
+    },
+    {
+      "distance_m": 1259.4635035250526,
+      "flat_index": 4260181,
+      "grid_lat": -14.23550033569336,
+      "grid_lon": -21.210723876953125,
+      "station_id": "49"
+    },
+    {
+      "distance_m": 5006.451484550108,
+      "flat_index": 4177299,
+      "grid_lat": -12.899824142456055,
+      "grid_lon": -18.065399169921875,
+      "station_id": "50"
+    },
+    {
+      "distance_m": 1609.0969440565716,
+      "flat_index": 4088493,
+      "grid_lat": -11.49384880065918,
+      "grid_lon": -15.01336669921875,
+      "station_id": "51"
+    },
+    {
+      "distance_m": 3890.6956376171065,
+      "flat_index": 4002649,
+      "grid_lat": -10.158171653747559,
+      "grid_lon": -11.92108154296875,
+      "station_id": "52"
+    },
+    {
+      "distance_m": 3703.1288572824724,
+      "flat_index": 3910727,
+      "grid_lat": -8.752196311950684,
+      "grid_lon": -8.767242431640625,
+      "station_id": "53"
+    },
+    {
+      "distance_m": 4051.0406489929387,
+      "flat_index": 3821921,
+      "grid_lat": -7.416520118713379,
+      "grid_lon": -5.725189208984375,
+      "station_id": "54"
+    },
+    {
+      "distance_m": 3186.041683087776,
+      "flat_index": 3726881,
+      "grid_lat": -6.010544300079346,
+      "grid_lon": -2.627197265625,
+      "station_id": "55"
+    },
+    {
+      "distance_m": 3361.188511686975,
+      "flat_index": 3630243,
+      "grid_lat": -4.674868106842041,
+      "grid_lon": 0.517241358757019,
+      "station_id": "56"
+    },
+    {
+      "distance_m": 4065.9481308601407,
+      "flat_index": 3532006,
+      "grid_lat": -3.268892765045166,
+      "grid_lon": 3.634895086288452,
+      "station_id": "57"
+    },
+    {
+      "distance_m": 4243.885885770431,
+      "flat_index": 3437202,
+      "grid_lat": -1.9332162141799927,
+      "grid_lon": 6.730309963226318,
+      "station_id": "58"
+    },
+    {
+      "distance_m": 1474.2360796125017,
+      "flat_index": 3335847,
+      "grid_lat": -0.5272407531738281,
+      "grid_lon": 9.79639720916748,
+      "station_id": "59"
+    },
+    {
+      "distance_m": 4360.617749472378,
+      "flat_index": 3238654,
+      "grid_lat": 0.80843585729599,
+      "grid_lon": 12.867241859436035,
+      "station_id": "60"
+    },
+    {
+      "distance_m": 2524.5947548176487,
+      "flat_index": 3137695,
+      "grid_lat": 2.2144112586975098,
+      "grid_lon": 16.01755714416504,
+      "station_id": "61"
+    },
+    {
+      "distance_m": 2410.6249787950887,
+      "flat_index": 3043266,
+      "grid_lat": 3.5500876903533936,
+      "grid_lon": 19.10858917236328,
+      "station_id": "62"
+    },
+    {
+      "distance_m": 4129.464540645932,
+      "flat_index": 2945423,
+      "grid_lat": 4.956063270568848,
+      "grid_lon": 22.166391372680664,
+      "station_id": "63"
+    },
+    {
+      "distance_m": 2117.547085363551,
+      "flat_index": 2853956,
+      "grid_lat": 6.2917399406433105,
+      "grid_lon": 25.305438995361328,
+      "station_id": "64"
+    },
+    {
+      "distance_m": 2720.1157492648804,
+      "flat_index": 2759231,
+      "grid_lat": 7.6977152824401855,
+      "grid_lon": 28.417022705078125,
+      "station_id": "65"
+    },
+    {
+      "distance_m": 3886.5120060880568,
+      "flat_index": 2670725,
+      "grid_lat": 9.033391952514648,
+      "grid_lon": 31.53114128112793,
+      "station_id": "66"
+    },
+    {
+      "distance_m": 3186.7081431022525,
+      "flat_index": 2579117,
+      "grid_lat": 10.439367294311523,
+      "grid_lon": 34.62147903442383,
+      "station_id": "67"
+    },
+    {
+      "distance_m": 1884.6641258985617,
+      "flat_index": 2493572,
+      "grid_lat": 11.775043487548828,
+      "grid_lon": 37.70814514160156,
+      "station_id": "68"
+    },
+    {
+      "distance_m": 3589.1913603775233,
+      "flat_index": 2405081,
+      "grid_lat": 13.181018829345703,
+      "grid_lon": 40.77484130859375,
+      "station_id": "69"
+    },
+    {
+      "distance_m": 2162.8255771238387,
+      "flat_index": 2322498,
+      "grid_lat": 14.516695976257324,
+      "grid_lon": 43.91465759277344,
+      "station_id": "70"
+    },
+    {
+      "distance_m": 5112.007989317693,
+      "flat_index": 2237125,
+      "grid_lat": 15.9226713180542,
+      "grid_lon": 47.041587829589844,
+      "station_id": "71"
+    },
+    {
+      "distance_m": 3698.693432899239,
+      "flat_index": 2157502,
+      "grid_lat": 17.258346557617188,
+      "grid_lon": 50.06737518310547,
+      "station_id": "72"
+    },
+    {
+      "distance_m": 4177.677525861018,
+      "flat_index": 2075246,
+      "grid_lat": 18.664321899414062,
+      "grid_lon": 53.169776916503906,
+      "station_id": "73"
+    },
+    {
+      "distance_m": 4325.280237128703,
+      "flat_index": 1998586,
+      "grid_lat": 19.999998092651367,
+      "grid_lon": 56.340003967285156,
+      "station_id": "74"
+    },
+    {
+      "distance_m": 3458.0675828736235,
+      "flat_index": 1919447,
+      "grid_lat": 21.405973434448242,
+      "grid_lon": 59.41836929321289,
+      "station_id": "75"
+    },
+    {
+      "distance_m": 3590.3502921834,
+      "flat_index": 1845747,
+      "grid_lat": 22.74165153503418,
+      "grid_lon": 62.46617889404297,
+      "station_id": "76"
+    },
+    {
+      "distance_m": 3270.342173320583,
+      "flat_index": 1769726,
+      "grid_lat": 24.147626876831055,
+      "grid_lon": 65.61105346679688,
+      "station_id": "77"
+    },
+    {
+      "distance_m": 2157.786271168448,
+      "flat_index": 1698988,
+      "grid_lat": 25.48330307006836,
+      "grid_lon": 68.72017669677734,
+      "station_id": "78"
+    },
+    {
+      "distance_m": 5159.467329385737,
+      "flat_index": 1626084,
+      "grid_lat": 26.889278411865234,
+      "grid_lon": 71.8403549194336,
+      "station_id": "79"
+    },
+    {
+      "distance_m": 1578.6897652190762,
+      "flat_index": 1558307,
+      "grid_lat": 28.22495460510254,
+      "grid_lon": 74.9150619506836,
+      "station_id": "80"
+    },
+    {
+      "distance_m": 3504.272181288357,
+      "flat_index": 1488520,
+      "grid_lat": 29.630929946899414,
+      "grid_lon": 78.00695037841797,
+      "station_id": "81"
+    },
+    {
+      "distance_m": 4714.845283780667,
+      "flat_index": 1423705,
+      "grid_lat": 30.96660614013672,
+      "grid_lon": 81.1492919921875,
+      "station_id": "82"
+    },
+    {
+      "distance_m": 3771.673918391147,
+      "flat_index": 1357035,
+      "grid_lat": 32.372581481933594,
+      "grid_lon": 84.21116638183594,
+      "station_id": "83"
+    },
+    {
+      "distance_m": 1563.4656756910206,
+      "flat_index": 1295181,
+      "grid_lat": 33.70825958251953,
+      "grid_lon": 87.3167724609375,
+      "station_id": "84"
+    },
+    {
+      "distance_m": 6363.616322856004,
+      "flat_index": 1231628,
+      "grid_lat": 35.114234924316406,
+      "grid_lon": 90.34394836425781,
+      "station_id": "85"
+    },
+    {
+      "distance_m": 2218.4838556622517,
+      "flat_index": 1172736,
+      "grid_lat": 36.44990921020508,
+      "grid_lon": 93.5248031616211,
+      "station_id": "86"
+    },
+    {
+      "distance_m": 4479.6545195907565,
+      "flat_index": 1115286,
+      "grid_lat": 37.785587310791016,
+      "grid_lon": 96.62651062011719,
+      "station_id": "87"
+    },
+    {
+      "distance_m": 3785.6003333256876,
+      "flat_index": 1056369,
+      "grid_lat": 39.19156265258789,
+      "grid_lon": 99.65612030029297,
+      "station_id": "88"
+    },
+    {
+      "distance_m": 4911.511917348405,
+      "flat_index": 1001881,
+      "grid_lat": 40.52724075317383,
+      "grid_lon": 102.8389892578125,
+      "station_id": "89"
+    },
+    {
+      "distance_m": 4918.876894703375,
+      "flat_index": 946082,
+      "grid_lat": 41.9332160949707,
+      "grid_lon": 105.95930480957031,
+      "station_id": "90"
+    },
+    {
+      "distance_m": 4292.367226370281,
+      "flat_index": 894554,
+      "grid_lat": 43.268890380859375,
+      "grid_lon": 108.9686050415039,
+      "station_id": "91"
+    },
+    {
+      "distance_m": 4044.7593220211756,
+      "flat_index": 841872,
+      "grid_lat": 44.67486572265625,
+      "grid_lon": 112.04930877685547,
+      "station_id": "92"
+    },
+    {
+      "distance_m": 4730.600646499114,
+      "flat_index": 790789,
+      "grid_lat": 46.080841064453125,
+      "grid_lon": 115.18283081054688,
+      "station_id": "93"
+    },
+    {
+      "distance_m": 2219.0968230500707,
+      "flat_index": 743742,
+      "grid_lat": 47.41651916503906,
+      "grid_lon": 118.32787322998047,
+      "station_id": "94"
+    },
+    {
+      "distance_m": 3770.4200287031235,
+      "flat_index": 698137,
+      "grid_lat": 48.752193450927734,
+      "grid_lon": 121.37055969238281,
+      "station_id": "95"
+    },
+    {
+      "distance_m": 1594.0855404830397,
+      "flat_index": 651690,
+      "grid_lat": 50.15816879272461,
+      "grid_lon": 124.51838684082031,
+      "station_id": "96"
+    },
+    {
+      "distance_m": 5243.806926243607,
+      "flat_index": 609047,
+      "grid_lat": 51.49384689331055,
+      "grid_lon": 127.66304779052734,
+      "station_id": "97"
+    },
+    {
+      "distance_m": 4865.214736327363,
+      "flat_index": 565717,
+      "grid_lat": 52.89982223510742,
+      "grid_lon": 130.7706756591797,
+      "station_id": "98"
+    },
+    {
+      "distance_m": 4737.10456503648,
+      "flat_index": 526035,
+      "grid_lat": 54.23550033569336,
+      "grid_lon": 133.85964965820312,
+      "station_id": "99"
+    },
+    {
+      "distance_m": 1656.9150538707945,
+      "flat_index": 485822,
+      "grid_lat": 55.641475677490234,
+      "grid_lon": 136.91683959960938,
+      "station_id": "100"
+    }
+  ],
+  "station_count": 100,
+  "status": "passed"
+}

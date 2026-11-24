@@ -4,7 +4,7 @@
 
 Omobench (repository `chorust/OmO`, alias `duckomo-workbench`) is a pure-Rust native desktop and headless workbench built on [NSH](https://crates.io/crates/nsh-core), [DuckDB](https://github.com/duckdb/duckdb), and [duckomo](https://github.com/chorust/duckomo) for querying, inspecting, charting, and exporting [Open-Meteo OM](https://github.com/open-meteo/om-file-format) gridded weather and station time-series data with provenance.
 
-[Features](#features) · [Install](#install) · [Usage](#usage) · [Architecture](#architecture) · [Dev](#dev) · [Docs](#docs) · [Acknowledgements](#acknowledgements)
+[Features](#features) · [Screenshots](#screenshots) · [Install](#install) · [Usage](#usage) · [Architecture](#architecture) · [Dev](#dev) · [Docs](#docs) · [Acknowledgements](#acknowledgements)
 
 ## Features
 
@@ -16,7 +16,24 @@ Omobench (repository `chorust/OmO`, alias `duckomo-workbench`) is a pure-Rust na
 - **Atomic export with provenance**: Exports active-generation results to `.csv` or `.parquet` alongside a JSON provenance sidecar. The atomic sidecar rename is the single commit point, and startup recovery scans for incomplete exports.
 - **Headless core & enforced boundaries**: Core crates (`omo-engine`, `omo-protocol`, `omo-worker`, `omo-project`) carry zero UI framework dependencies, and the release `omo-app` build does not link DuckDB — enforced in CI via `scripts/check-boundaries.sh`.
 
-> **Current stage (M0 · `v0.1.0-m0`)**: This release delivers the **M0 skeleton engine and native shell**. Project persistence, full UI station CSV ingestion, populated product catalogs (`catalog/products.json` is currently an `omo-catalog/0` placeholder), static regional maps (M2), declarative reports (L1), and Dynamical Icechunk ingestion (M3) are planned for subsequent milestones — see [Roadmap](.specify/memory/roadmap.md). Prebuilt `v0.1.0-m0` archives cover four platforms, while `artifacts/duckomo.lock.json` currently locks `linux_amd64`, `linux_arm64`, and `osx_arm64` (`macos-x86_64` is build-only in CI).
+> **Current stage (M1 · `v0.1.0-m1`)**: This release delivers the **M1 Stations × Forecast Series workbench** (ECMWF IFS HRES product catalog, station CSV import, Plan G / Plan B series queries and multi-station charting, SQL views, `omo-export-sidecar/2` provenance export, and `.omoproj` project persistence). Static regional maps (M2), declarative reports (L1), and Dynamical Icechunk ingestion (M3) are planned for subsequent milestones — see [Roadmap](.specify/memory/roadmap.md). Prebuilt `v0.1.0-m1` archives cover four platforms, while `artifacts/duckomo.lock.json` currently locks `linux_amd64`, `linux_arm64`, and `osx_arm64` (`macos-x86_64` is build-only in CI).
+
+## Screenshots
+
+Captured on the reference host (Ubuntu 24.04 ARM64, pure-Rust NSH `0.5.1` shell, DuckDB `v2.0.0` + `duckomo v0.4.0`):
+
+![ECMWF IFS HRES station forecast time-series workflow](docs/m1/evidence/V1-04-series-completed-badge.png)
+*M1 Series panel: ECMWF IFS HRES 2 m air temperature catalog readiness, 100/100 stations matched via Plan G, explicit `Received, not saved` status badge, and live Tasks / Bootstrap report.*
+
+| Station CSV Import & Column Mapping | SQL Editor |
+| :---: | :---: |
+| ![Station CSV import and mapping preview](docs/m1/evidence/V1-02-import-mapping-proposal.png) | ![SQL editor](docs/m1/evidence/V6-01-sql-editor.png) |
+| *Automatic delimiter sniffing and column mapping (`id`/`lat`/`lon`/`name`) with UTF-8 preview rows.* | *Built-in DuckDB SQL preview editor (`Mod + Enter` to run) with draft state indicator.* |
+
+| Paged Large-Result Table | Multi-Series Line Plot & Hover |
+| :---: | :---: |
+| ![Paged results table](docs/m0/evidence/n2-spark-aarch64-x11-20261117/fixture-first-page.png) | ![Multi-series plot with hover](docs/m0/evidence/n3-spark-aarch64-wayland-20261117/plot-render-hover.png) |
+| *Memory-mapped Arrow IPC window paging and column sorting (1,000,000 × 20 benchmark fixture).* | *20 series × 10,000 sampled points with crosshair hover inspection (native Wayland window).* |
 
 ## Install
 
@@ -24,17 +41,17 @@ Omobench (repository `chorust/OmO`, alias `duckomo-workbench`) is a pure-Rust na
 
 Download the archive matching your platform from [GitHub Releases](https://github.com/chorust/OmO/releases). Each archive contains a matched pair of `omo-app` and `omo-worker` binaries:
 
-| Platform | Release archive (`v0.1.0-m0`) | Locked Duckomo support |
+| Platform | Release archive (`v0.1.0-m1`) | Locked Duckomo support |
 | :--- | :--- | :--- |
-| Linux x86_64 | `omobench-v0.1.0-m0-linux-x86_64.tar.gz` | `linux_amd64` (locked & CI-verified) |
-| Linux ARM64 | `omobench-v0.1.0-m0-linux-aarch64.tar.gz` | `linux_arm64` (locked & CI-verified) |
-| macOS Apple Silicon | `omobench-v0.1.0-m0-macos-aarch64.tar.gz` | `osx_arm64` (locked & CI-verified) |
-| macOS Intel | `omobench-v0.1.0-m0-macos-x86_64.tar.gz` | Build-only (`osx_amd64` not in `duckomo.lock.json`) |
+| Linux x86_64 | `omobench-v0.1.0-m1-linux-x86_64.tar.gz` | `linux_amd64` (locked & CI-verified) |
+| Linux ARM64 | `omobench-v0.1.0-m1-linux-aarch64.tar.gz` | `linux_arm64` (locked & CI-verified) |
+| macOS Apple Silicon | `omobench-v0.1.0-m1-macos-aarch64.tar.gz` | `osx_arm64` (locked & CI-verified) |
+| macOS Intel | `omobench-v0.1.0-m1-macos-x86_64.tar.gz` | Build-only (`osx_amd64` not in `duckomo.lock.json`) |
 
 Download and unpack both binaries into the same directory (`omo-app` locates its sibling `omo-worker` automatically):
 
 ```bash
-VERSION=v0.1.0-m0
+VERSION=v0.1.0-m1
 ASSET=linux-x86_64   # one of: linux-x86_64 | linux-aarch64 | macos-aarch64 | macos-x86_64
 
 mkdir -p omobench && cd omobench
@@ -103,6 +120,22 @@ Interactive workflow:
 1. Write SQL in **SQL editor** and run a preview; editing SQL marks the existing table as belonging to an earlier revision so received data is never confused with current edits.
 2. Browse paged rows and click column headers in **Results** to trigger server-side sort re-fetches; inspect multi-series charts and hover values in **Plot**.
 3. Monitor worker status, generation, and bootstrap reports in **Tasks**, cancel active queries, or export current-generation results to `.csv` / `.parquet` with atomic provenance sidecars.
+
+### M1: stations × forecast series workflow
+
+The **Series** panel of `omo-app` covers the whole M1 flow (see the [M1 Spec](specs/002-m1-station-time-series/spec.md)):
+
+1. **Import a station CSV**: choose a file or enter an absolute path. The delimiter is detected and an `id / lat / lon / name / elevation` mapping is proposed; every field can be changed. Row issues (with line numbers) block confirmation. Confirming writes a canonical station snapshot with its SHA-256.
+2. **Pick a catalog entry and check readiness**: the default is `ecmwf_ifs.temperature_2m` (ECMWF IFS HRES · O1280 · 2 m temperature, data product `data_run/ecmwf_ifs`). The panel shows the latest complete run (UTC), per-cycle horizons, a time-step summary, and the attribution text. Offline it shows `NotReady(RemoteUnavailable)` and "Run series" is refused.
+3. **Run the series**: default window 0–168 h, maximum distance 7200 m. A 00Z/12Z run returns 0–168 h (113 valid times). **A 06Z/18Z run only reaches 144 h, and the UI says "0–144 h of requested 0–168 h".** The result is badged "Received, not saved", with unmatched stations and reasons listed. Cancellation has three levels; after a worker crash the last result is kept and marked stale.
+4. **Explore**: a searchable station checklist (select all / clear), a lead-time window slider (narrowing re-queries the received result and never resubmits; going beyond the received range is clamped with a note), per-station labelled curves with a legend toggle (at most 20 series × 10,000 points).
+5. **SQL**: the `stations` and `station_series` views are rebuilt after every worker `ready` and every new result; see [quickstart V6](specs/002-m1-station-time-series/quickstart.md) for an example.
+6. **Export**: CSV or Parquet with an `omo-export-sidecar/2` provenance sidecar (stations hash, catalog entry and version, run, window, plan, query, attribution). "saved" shows only after the sidecar commit.
+7. **Project files**: `.omoproj` (`omo-project/1`) supports atomic save and open, a dirty "●" in the title, a 2 s debounced and a 30 s periodic draft, a crash-recovery prompt at startup, and refusal of newer schema majors. Shortcuts: `Ctrl/Cmd+N`, `Ctrl/Cmd+Shift+O`, `Ctrl/Cmd+S`, `Ctrl/Cmd+Shift+S`.
+
+Data attribution: Weather data by Open-Meteo.com (CC BY 4.0); Copyright © ECMWF (CC BY 4.0). On O1280, M1 reads one point per station in parallel (Plan G, `max_workers: 20`); see the [research record](specs/002-m1-station-time-series/research.md) and the [S1 evidence](docs/m1/evidence/S1-spark-aarch64-20261123.md).
+
+M1 verification scripts: `scripts/ci-verify-series.py` (network smoke test; a network failure reports `skipped(network)` and never counts as a pass), `scripts/export-pinned-series.py` + `scripts/compare-o1280-oracle.py` (SC-003 oracle comparison). The acceptance matrix is in [docs/m1/acceptance.md](docs/m1/acceptance.md).
 
 ### Headless bootstrap probe (`omo-probe`)
 
@@ -204,7 +237,7 @@ flowchart LR
 | Milestone | Status | Scope |
 | :--- | :--- | :--- |
 | **001 · M0 Skeleton Engine** | Released (`v0.1.0-m0`) | Skeleton engine, locked bootstrap, supervised worker, NSH native shell, station-series plan decision, CI & release verification |
-| **002 · M1 Station Time Series** | Planned | Product catalog integration (default: ECMWF IFS HRES · 2 m temperature · 0–7 day horizon), UI station CSV ingestion, station time-series workflows, and project persistence |
+| **002 · M1 Station Time Series** | Released (`v0.1.0-m1`, see the [acceptance matrix](docs/m1/acceptance.md)) | Product catalog integration (default: ECMWF IFS HRES · 2 m temperature · 0–7 day horizon), UI station CSV ingestion, station time-series workflows, and project persistence |
 | **003 · M2 Static Regional Map** | Needs refinement | Revision-bound regional map jobs, PNG + sidecar export |
 | **004 · L1 Declarative Reports** | Needs refinement | Versioned `ReportSpec` (`omo-report/1`), allow-listed Rust renderer on frozen read-only snapshots |
 | **005 · M3 Dynamical Icechunk** | Needs refinement | Unified `Source` abstraction, STAC discovery, and Icechunk backend emitting the same `station_series` schema |
@@ -254,6 +287,7 @@ CI covers `ubuntu-24.04` (`linux_amd64`), `ubuntu-24.04-arm` (`linux_arm64`), `m
 | Topic | Document |
 | :--- | :--- |
 | M0 specification & validation quickstart | [M0 Spec](specs/001-m0-skeleton-engine/spec.md) · [Quickstart](specs/001-m0-skeleton-engine/quickstart.md) |
+| M1 specification, contracts & acceptance | [M1 Spec](specs/002-m1-station-time-series/spec.md) · [Quickstart](specs/002-m1-station-time-series/quickstart.md) · [Acceptance Matrix](docs/m1/acceptance.md) |
 | Acceptance matrix & measurements | [Acceptance Matrix](docs/m0/acceptance.md) · [Linux Prerequisites](docs/m0/linux-prereqs.md) |
 | Architecture decision records | [Channel Decision](docs/m0/decisions/channel.md) · [Series Plan](docs/m0/decisions/series-plan.md) · [R4 Spatial](docs/m0/decisions/r4.md) · [NSH Shell](docs/m0/decisions/shell.md) · [Engine Source](docs/m0/decisions/engine-source.md) |
 | Locked extension hashes & keys | [duckomo.lock.json](artifacts/duckomo.lock.json) |

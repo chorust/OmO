@@ -58,7 +58,11 @@ fn stale_generation_is_classified_for_discard() {
 
 #[test]
 fn failed_event_body_matches_literal_wire_contract() {
-    let cancelled = failed_body(3, &FailKind::Cancelled(CancelLevel::Interrupt), "interrupted");
+    let cancelled = failed_body(
+        3,
+        &FailKind::Cancelled(CancelLevel::Interrupt),
+        "interrupted",
+    );
     assert_eq!(
         cancelled,
         json!({

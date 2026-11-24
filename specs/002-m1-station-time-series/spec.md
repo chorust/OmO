@@ -505,8 +505,8 @@ station against the raw series.
   nearest sampling cannot be validated during planning, planning stops and asks the user. It
   does not silently substitute another product such as `ecmwf_ifs025`.
 - **Matching distance**: The default maximum station-to-point distance is the largest possible
-  nearest-point distance on the product grid. For O1280 it is derived from the grid definition
-  during planning; it is on the order of a few kilometres. It is recorded per request. On a
+  nearest-point distance on the product grid. For O1280 it is 7,200 m: the 7.12 km half-cell
+  diagonal bound computed in research R-01, rounded up. It is recorded per request. On a
   global grid every valid coordinate matches. "No match" arises only from invalid coordinates,
   a user-tightened distance, or missing source data.
 - **Catalog contents**: The catalog may contain additional products or variables. Only the

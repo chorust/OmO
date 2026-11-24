@@ -140,7 +140,7 @@ pub fn run(
                 variable: SERIES_VARIABLE.to_owned(),
                 valid_time_utc,
                 value,
-                grid_lat: grid_lat,
+                grid_lat,
                 grid_lon: grid_lon.map(normalize_longitude),
                 distance_m,
                 source_object,
@@ -209,7 +209,7 @@ fn region_sql(station: &Station) -> String {
 fn timestamp_sql(seconds_since_epoch: i64) -> Result<String, SeriesError> {
     if seconds_since_epoch % 86_400 == 0 {
         let days = seconds_since_epoch.div_euclid(86_400);
-        let civil = civil_from_days(days);
+        let civil = omo_protocol::utc::civil_from_days(days);
         return Ok(format!(
             "{:04}-{:02}-{:02} 00:00:00",
             civil.0, civil.1, civil.2
@@ -222,7 +222,7 @@ fn timestamp_sql(seconds_since_epoch: i64) -> Result<String, SeriesError> {
     }
     let days = seconds_since_epoch.div_euclid(86_400);
     let seconds_in_day = seconds_since_epoch.rem_euclid(86_400);
-    let (year, month, day) = civil_from_days(days);
+    let (year, month, day) = omo_protocol::utc::civil_from_days(days);
     let hour = seconds_in_day / 3_600;
     let minute = (seconds_in_day % 3_600) / 60;
     let second = seconds_in_day % 60;
@@ -231,20 +231,206 @@ fn timestamp_sql(seconds_since_epoch: i64) -> Result<String, SeriesError> {
     ))
 }
 
-// Howard Hinnant's civil-from-days transform, using days relative to 1970-01-01.
-fn civil_from_days(days_since_epoch: i64) -> (i64, i64, i64) {
-    let z = days_since_epoch + 719_468;
-    let era = if z >= 0 { z } else { z - 146_096 } / 146_097;
-    let day_of_era = z - era * 146_097;
-    let year_of_era =
-        (day_of_era - day_of_era / 1_460 + day_of_era / 36_524 - day_of_era / 146_096) / 365;
-    let mut year = year_of_era + era * 400;
-    let day_of_year = day_of_era - (365 * year_of_era + year_of_era / 4 - year_of_era / 100);
-    let month_prime = (5 * day_of_year + 2) / 153;
-    let day = day_of_year - (153 * month_prime + 2) / 5 + 1;
-    let month = month_prime + if month_prime < 10 { 3 } else { -9 };
-    year += i64::from(month <= 2);
-    (year, month, day)
+/// Plan B on an eligible regular-grid remote OM domain using `read_om_regions(method := 'nearest')`.
+#[allow(clippy::too_many_arguments)]
+pub fn run_remote_domain(
+    conn: &mut BootstrappedConn,
+    stations: &[crate::series::plan_g::SeriesStation],
+    variable: &str,
+    domain: &str,
+    object_url: &str,
+    object_version: &str,
+    max_distance_m: f64,
+    time_index: &[(usize, String)],
+) -> Result<(crate::series::plan_g::PlanGOutput, crate::series::plan_g::PlanGScanStats), SeriesError> {
+    use crate::series::plan_g::{MatchStatus, NoMatchReason, PlanGOutput, PlanGScanStats, StationMatch};
+
+    conn.ensure_spatial().map_err(|error| SeriesError::DuckDb {
+        stage: "ensure_spatial",
+        reason: error.to_string(),
+    })?;
+    let mut matches = Vec::with_capacity(stations.len());
+    let mut valid_stations = Vec::new();
+    for station in stations {
+        if !station.latitude.is_finite()
+            || !station.longitude.is_finite()
+            || !(-90.0..=90.0).contains(&station.latitude)
+        {
+            matches.push(StationMatch {
+                station_id: station.station_id.clone(),
+                status: MatchStatus::NoMatch,
+                flat_index: None,
+                grid_lat: None,
+                grid_lon: None,
+                distance_m: None,
+                reason: Some(NoMatchReason::InvalidCoordinate),
+            });
+            continue;
+        }
+        valid_stations.push(Station {
+            station_id: station.station_id.clone(),
+            latitude: station.latitude,
+            longitude: station.longitude,
+        });
+    }
+    if valid_stations.is_empty() {
+        return Ok((
+            PlanGOutput {
+                rows: Vec::new(),
+                matches,
+            },
+            PlanGScanStats::default(),
+        ));
+    }
+
+    let https = crate::catalog::open_meteo_https(object_url);
+    let regions = valid_stations
+        .iter()
+        .map(region_sql)
+        .collect::<Vec<_>>()
+        .join(", ");
+    let sql = format!(
+        "SELECT result.region_id, strftime(result.valid_time, '%Y-%m-%dT%H:%M:%S') || 'Z', \
+                result.value::DOUBLE, result.sampling.source_lat, result.sampling.source_lon, \
+                result.sampling.distance_m, result.sampling.status \
+         FROM read_om_regions({}, domain := {}, regions := [{}], region_crs := 'grid_lonlat', \
+                method := 'nearest', out_of_bounds := 'null', include_source := true) AS result \
+         ORDER BY result.region_id, result.valid_time",
+        quote_sql_literal(&https),
+        quote_sql_literal(domain),
+        regions,
+    );
+    let db = conn.connection().map_err(|error| SeriesError::DuckDb {
+        stage: "plan_b_remote_conn",
+        reason: error.to_string(),
+    })?;
+    let mut statement = db.prepare(&sql).map_err(|error| SeriesError::DuckDb {
+        stage: "plan_b_remote_prepare",
+        reason: error.to_string(),
+    })?;
+    let query_rows = statement
+        .query_map([], |row| {
+            Ok((
+                row.get::<_, String>(0)?,
+                row.get::<_, String>(1)?,
+                row.get::<_, Option<f64>>(2)?,
+                row.get::<_, Option<f64>>(3)?,
+                row.get::<_, Option<f64>>(4)?,
+                row.get::<_, Option<f64>>(5)?,
+                row.get::<_, String>(6)?,
+            ))
+        })
+        .map_err(|error| SeriesError::DuckDb {
+            stage: "plan_b_remote_execute",
+            reason: error.to_string(),
+        })?;
+
+    let allowed_times: std::collections::BTreeSet<&str> =
+        time_index.iter().map(|(_, ts)| ts.as_str()).collect();
+    let mut rows = Vec::new();
+    let mut matched_by_id: BTreeMap<String, StationMatch> = BTreeMap::new();
+    for item in query_rows {
+        let (station_id, valid_time, value, source_lat, source_lon, distance_m, status) =
+            item.map_err(|error| SeriesError::DuckDb {
+                stage: "plan_b_remote_row",
+                reason: error.to_string(),
+            })?;
+        if !allowed_times.is_empty() && !allowed_times.contains(valid_time.as_str()) {
+            continue;
+        }
+        let dist = distance_m.unwrap_or(f64::INFINITY);
+        if status != "ok" || !dist.is_finite() {
+            matched_by_id
+                .entry(station_id.clone())
+                .or_insert(StationMatch {
+                    station_id,
+                    status: MatchStatus::NoMatch,
+                    flat_index: None,
+                    grid_lat: source_lat,
+                    grid_lon: source_lon,
+                    distance_m,
+                    reason: Some(NoMatchReason::MissingSourceData),
+                });
+            continue;
+        }
+        if dist > max_distance_m {
+            matched_by_id
+                .entry(station_id.clone())
+                .or_insert(StationMatch {
+                    station_id,
+                    status: MatchStatus::NoMatch,
+                    flat_index: None,
+                    grid_lat: source_lat,
+                    grid_lon: source_lon,
+                    distance_m: Some(dist),
+                    reason: Some(NoMatchReason::BeyondMaxDistance),
+                });
+            continue;
+        }
+        matched_by_id
+            .entry(station_id.clone())
+            .or_insert(StationMatch {
+                station_id: station_id.clone(),
+                status: MatchStatus::Matched,
+                flat_index: None,
+                grid_lat: source_lat,
+                grid_lon: source_lon,
+                distance_m: Some(dist),
+                reason: None,
+            });
+        rows.push(StationSeriesRow {
+            station_id,
+            variable: variable.to_owned(),
+            valid_time_utc: valid_time,
+            value,
+            grid_lat: source_lat,
+            grid_lon: source_lon,
+            distance_m: Some(dist),
+            source_object: Some(object_url.to_owned()),
+            object_version: Some(object_version.to_owned()),
+        });
+    }
+    for station in &valid_stations {
+        if let Some(found) = matched_by_id.remove(&station.station_id) {
+            matches.push(found);
+        } else {
+            matches.push(StationMatch {
+                station_id: station.station_id.clone(),
+                status: MatchStatus::NoMatch,
+                flat_index: None,
+                grid_lat: None,
+                grid_lon: None,
+                distance_m: None,
+                reason: Some(NoMatchReason::MissingSourceData),
+            });
+        }
+    }
+    let (deduped, _) = deduplicate_rows(rows)?;
+    let scan_stats = match read_latest_scan_measurement(db) {
+        Ok(measurement) => PlanGScanStats {
+            bytes_fetched: measurement
+                .raw_metrics
+                .pointer("/legacy_v2/bytes_fetched")
+                .and_then(serde_json::Value::as_u64)
+                .or(measurement.physical_read_bytes)
+                .or(measurement.data_bytes)
+                .unwrap_or(0),
+            read_requests: measurement
+                .raw_metrics
+                .pointer("/legacy_v2/read_requests")
+                .and_then(serde_json::Value::as_u64)
+                .unwrap_or(0),
+            data_bytes: measurement.data_bytes.unwrap_or(0),
+        },
+        Err(_) => PlanGScanStats::default(),
+    };
+    Ok((
+        PlanGOutput {
+            rows: deduped,
+            matches,
+        },
+        scan_stats,
+    ))
 }
 
 fn combine_measurements(measurements: Vec<ScanMeasurement>) -> ScanMeasurement {

@@ -59,3 +59,6 @@ jobs:
       - name: Verify locked Duckomo bootstrap and live worker
         if: matrix.duckomo_platform != ''
         run: python3 scripts/ci-verify-duckomo.py --repeat 3
+      - name: Verify M1 series smoke test (network; skipped(network) is never a pass)
+        if: matrix.duckomo_platform != ''
+        run: python3 scripts/ci-verify-series.py

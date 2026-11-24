@@ -7,7 +7,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use omo_protocol::export::{SIDECAR_SCHEMA, STAGING_OWNER_MARKER, sidecar_path};
+use omo_protocol::export::{STAGING_OWNER_MARKER, is_supported_sidecar_schema, sidecar_path};
 use sha2::{Digest, Sha256};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -114,5 +114,8 @@ fn is_known_sidecar(path: &Path) -> io::Result<bool> {
     let Ok(value) = serde_json::from_slice::<serde_json::Value>(&bytes) else {
         return Ok(false);
     };
-    Ok(value.get("schema").and_then(|v| v.as_str()) == Some(SIDECAR_SCHEMA))
+    let Some(schema) = value.get("schema").and_then(|v| v.as_str()) else {
+        return Ok(false);
+    };
+    Ok(is_supported_sidecar_schema(schema))
 }

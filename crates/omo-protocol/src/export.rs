@@ -5,8 +5,15 @@ use std::path::{Path, PathBuf};
 /// Marker written to `.omo-owner` inside every export staging directory.
 pub const STAGING_OWNER_MARKER: &[u8] = b"omo-export-staging/1\n";
 
-/// Schema identifier stored in `<target>.omo.json` export provenance sidecars.
+/// Schema identifier stored in `<target>.omo.json` export provenance sidecars (M0).
 pub const SIDECAR_SCHEMA: &str = "omo-export-sidecar/1";
+/// M1 export provenance sidecar schema.
+pub const SIDECAR_SCHEMA_V2: &str = "omo-export-sidecar/2";
+
+/// Return true if `schema` is a supported export sidecar schema (`/1` or `/2`).
+pub fn is_supported_sidecar_schema(schema: &str) -> bool {
+    schema == SIDECAR_SCHEMA || schema == SIDECAR_SCHEMA_V2
+}
 
 /// Filename suffix appended to an export target to name its provenance sidecar.
 pub const SIDECAR_SUFFIX: &str = ".omo.json";

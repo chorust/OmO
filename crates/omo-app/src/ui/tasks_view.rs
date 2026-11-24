@@ -6,8 +6,11 @@ use nsh_base::{button, input};
 use nsh_core::prelude::*;
 use serde_json::Value;
 
+#[allow(clippy::too_many_arguments)]
 pub(crate) fn panel(
     status: Signal<String>,
+    task_stage: Signal<String>,
+    last_scan_metrics: Signal<Option<Value>>,
     request_count: Signal<u64>,
     worker_state: Signal<String>,
     worker_generation: Signal<u64>,
@@ -38,6 +41,10 @@ pub(crate) fn panel(
                             .child(text("Preview queue").app_class("text-sm font-semibold"))
                             .child(text(move || format!("{} requests", request_count.get())).app_class("text-xs text-[#7d877f] dark:text-[#9ba69e]")))
                         .child(text(move || status.get()).app_class("text-xs leading-5 text-[#64736a] dark:text-[#a4ada6]"))
+                        .child(text(move || format!("Stage: {}", task_stage.get()))
+                            .app_class("text-xs font-medium text-[#40594d] dark:text-[#bfd0c3]"))
+                        .child(text(move || scan_metrics_text(last_scan_metrics.get()))
+                            .app_class("text-xs text-[#64736a] dark:text-[#a4ada6]"))
                         .child(text(move || format!("Worker generation {}", worker_generation.get()))
                             .app_class("text-xs text-[#7d877f] dark:text-[#9ba69e]"))
                         .child(text("Retry submits the current SQL revision as the latest preview. Cancel interrupts the active preview.")
@@ -86,6 +93,36 @@ pub(crate) fn panel(
                                 .child(text("Retry")))),
                 ),
         )
+}
+
+fn scan_metrics_text(metrics: Option<Value>) -> String {
+    let Some(metrics) = metrics else {
+        return "Last scan metrics: none yet".into();
+    };
+    let bytes = metrics
+        .get("bytes_read")
+        .or_else(|| metrics.get("bytes_fetched"))
+        .or_else(|| metrics.get("data_bytes"))
+        .and_then(Value::as_u64);
+    let duration_ms = metrics.get("duration_ms").and_then(Value::as_u64);
+    let requests = metrics.get("read_requests").and_then(Value::as_u64);
+    let bytes_text = match bytes {
+        Some(b) if b >= 1_048_576 => format!("{:.2} MiB ({b} B)", b as f64 / 1_048_576.0),
+        Some(b) if b >= 1_024 => format!("{:.1} KiB ({b} B)", b as f64 / 1_024.0),
+        Some(b) => format!("{b} B"),
+        None => "n/a".into(),
+    };
+    let duration_text = match duration_ms {
+        Some(ms) if ms >= 1_000 => format!("{:.2} s ({ms} ms)", ms as f64 / 1_000.0),
+        Some(ms) => format!("{ms} ms"),
+        None => "n/a".into(),
+    };
+    match requests {
+        Some(req) if req > 0 => {
+            format!("Last scan: {bytes_text} · {duration_text} · {req} requests")
+        }
+        _ => format!("Last scan: {bytes_text} · {duration_text}"),
+    }
 }
 
 fn full_report(report: Option<Value>) -> String {

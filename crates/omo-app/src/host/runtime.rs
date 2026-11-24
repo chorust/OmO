@@ -412,7 +412,12 @@ fn dispatch_preview(
         return;
     };
     if let Err(error) = supervisor.send_request(request.clone()) {
-        publish_worker_failure(events, &request, FailKind::WorkerCrashed, &error.to_string());
+        publish_worker_failure(
+            events,
+            &request,
+            FailKind::WorkerCrashed,
+            &error.to_string(),
+        );
     }
 }
 
