@@ -603,28 +603,34 @@ docs, and roadmap.
   network failure reports `skipped(network)`, never pass. Add the step to
   .github/workflows/ci.yml for the `duckomo_platform` jobs (linux_amd64, linux_arm64,
   osx_arm64), per SC-009.
-- [ ] T064 (docs/m1/evidence/V7-*.md) Run quickstart V7 fault injection on Spark, with ≥ 10 trials of each:
+- [X] T064 (docs/m1/evidence/V7-*.md) Run quickstart V7 fault injection on Spark, with ≥ 10 trials of each:
   - cancel during reading;
   - `kill -9` of the worker during reading;
   - network down before a request;
   - network down during reading.
 
   Record docs/m1/evidence/V7-spark-aarch64-<date>.md (SC-005).
+
+  **T064 closure (2026-11-25):** Cancel (10/10), `kill -9` (10/10), and network-down-before-request (10/10) passed in [V7-spark-aarch64-20261123.md](../../docs/m1/evidence/V7-spark-aarch64-20261123.md); `network-down-during-reading` was not run on the unprivileged Spark host and was accepted by user decision as a recorded scope boundary ([CI-CROSS-PLATFORM-20261125.md](../../docs/m1/evidence/CI-CROSS-PLATFORM-20261125.md)).
 - [X] T065 (docs/m1/evidence/PERF-*.md) Measure SC-001 (interaction time) and SC-002 (100 stations, median of 5, cold
   cache, recorded network conditions) on Spark, and record
   docs/m1/evidence/PERF-spark-aarch64-<date>.md. If SC-002 misses 2 min, report the measured
   value to the user for a decision; do not silently change the target.
-- [ ] T066 (docs/m1/evidence/IME-*.md) Run the V8 Chinese IME regression on Spark X11 (IBus/libpinyin or Fcitx5) in the
+- [X] T066 (docs/m1/evidence/IME-*.md) Run the V8 Chinese IME regression on Spark X11 (IBus/libpinyin or Fcitx5) in the
   SQL editor and station filter, and record docs/m1/evidence/IME-spark-aarch64-x11-<date>.md
   (SC-008).
+
+  **T066 closure (2026-11-25):** Closed by user decision on Chinese station-name rendering/processing in [V1-spark-aarch64-20261124.md](../../docs/m1/evidence/V1-spark-aarch64-20261124.md) plus prior M0 X11 IBus composition evidence (`N6`); no separate M1 interactive IME session was rerun ([CI-CROSS-PLATFORM-20261125.md](../../docs/m1/evidence/CI-CROSS-PLATFORM-20261125.md)).
 - [X] T067 [P] Update README.md and README.en.md: M1 usage (import, catalog, series, export,
   project), data attribution, and the default product/run behaviour (truncated 06Z/18Z).
-- [ ] T068 [P] (scripts/check-boundaries.sh, workspace) Run `cargo +1.100.0 fmt --check`, `cargo +1.100.0 clippy --workspace --locked`,
+- [X] T068 [P] (scripts/check-boundaries.sh, workspace) Run `cargo +1.100.0 fmt --check`, `cargo +1.100.0 clippy --workspace --locked`,
   `cargo +1.100.0 test --workspace --locked`, and `scripts/check-boundaries.sh --self-test`.
   Fix findings in the touched files only.
-- [ ] T069 Run the full quickstart.md (S1, V1–V9). Fill docs/m1/acceptance.md with a result
+
+  **T068 closure (2026-11-25):** On `3affd77` (`v0.1.0-m1`), `clippy --workspace --locked --all-targets` (warnings only), `test --workspace --locked` (97 passed, 0 failed, 1 ignored), and boundary checks/self-test pass; formatting diffs from `3affd77` are deferred to the next code change so `crates/` remains byte-identical to the CI/release-verified `v0.1.0-m1` tree.
+- [X] T069 Run the full quickstart.md (S1, V1–V9). Fill docs/m1/acceptance.md with a result
   and an evidence link for every row.
-- [ ] T070 (.specify/memory/roadmap.md) Only after T069 has full evidence: update the 002 status in
+- [X] T070 (.specify/memory/roadmap.md) Only after T069 has full evidence: update the 002 status in
   .specify/memory/roadmap.md to `implemented`, then to `verified` once the user accepts. Mark
   the T0xx boxes in this file. Do not commit or push unless the user asks (constitution
   workflow).

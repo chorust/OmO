@@ -1,4 +1,23 @@
 <!--
+SYNC IMPACT REPORT (1.0.6, 2026-11-25)
+=====================================
+Version change: 1.0.5 → 1.0.6
+Bump rationale: PATCH — close M1 (002) as `verified` on Spark + GitHub CI/release evidence per
+user decision, recording V9/SC-009 pass and accepted non-blocking scope gaps.
+
+Changes this revision:
+  - Status: 002 specced → implemented → verified. `v0.1.0-m1` is released (run 45349560323),
+    and `ci-verify-series.py` passed live network smoke on linux_amd64, linux_arm64, and
+    osx_arm64 in CI run 45348466177 (docs/m1/evidence/CI-CROSS-PLATFORM-20261125.md).
+  - Recorded user-accepted M1 scope gaps in docs/m1/acceptance.md (V4 GUI export click-through,
+    V7 mid-read network drop, V8 separate interactive X11 IME rerun, plain scrolling station
+    checklist).
+
+Specs affected: 002
+Open questions added/resolved: none.
+-->
+
+<!--
 SYNC IMPACT REPORT (1.0.5, 2026-11-23)
 =====================================
 Version change: 1.0.4 → 1.0.5
@@ -162,8 +181,15 @@ Status legend (lifecycle): **undecided** · **needs-info** · **planned** ·
 
 ### Product milestones
 
-### 002 — M1 Stations × Forecast Series  [status: specced]
+### 002 — M1 Stations × Forecast Series  [status: verified]
 
+- **Status note (2026-11-25):** `v0.1.0-m1` is released. Plan G (O1280 nearest-point sampling on
+  up to 20 reader connections) passed S1, the 57-station SC-003 oracle (max |Δ| 0.0), SC-002
+  performance (median 77.99 s headless, 66.13 s GUI), automated X11 GUI verification (V1, V3,
+  V5, V6), and cross-platform live series CI smoke (`linux_amd64`, `linux_arm64`, `osx_arm64` in
+  CI run `45348466177`). Accepted scope boundaries (V4 GUI dialog click-through, V7 mid-read
+  network drop, V8 separate X11 IME rerun, plain 300-row scrolling checklist) are recorded in
+  `docs/m1/acceptance.md` and `docs/m1/evidence/CI-CROSS-PLATFORM-20261125.md`.
 - **Description:** Station CSV import (snapshot + SHA-256 + mapping confirmation), catalog
   with readiness probes, `station_series` via the M0-chosen plan, table/plot/SQL views, export
   + sidecar, project save/restore, revision-bound previews, task queue. Pure-Rust NSH, no
@@ -307,4 +333,4 @@ Historical blockers found while writing this roadmap (2026-11-16, read-only chec
 
 ---
 
-**Version**: 1.0.5 | **Ratified**: 2026-11-16 | **Last Amended**: 2026-11-23
+**Version**: 1.0.6 | **Ratified**: 2026-11-16 | **Last Amended**: 2026-11-25
