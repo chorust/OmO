@@ -1,4 +1,20 @@
 <!--
+SYNC IMPACT REPORT (1.0.9, 2026-11-27)
+=====================================
+Version change: 1.0.8 → 1.0.9
+Bump rationale: PATCH — close M2 (003) as `verified` on Spark + GitHub CI/release evidence
+under Constitution 1.3.0, recording V8/SC-009 pass and preserving accepted scope notes.
+
+Changes this revision:
+  - Status: 003 implemented → verified. `v0.1.0-m2` is released (run 45933008722), and
+    `ci-verify-map.py` passed live network smoke on linux_amd64, linux_arm64, and osx_arm64 in
+    CI runs 45928536196 and 45933007001 (docs/m2/evidence/CI-CROSS-PLATFORM-20261127.md).
+
+Specs affected: 003
+Open questions added/resolved: none.
+-->
+
+<!--
 SYNC IMPACT REPORT (1.0.8, 2026-11-26)
 =====================================
 Version change: 1.0.7 → 1.0.8
@@ -247,8 +263,18 @@ Status legend (lifecycle): **undecided** · **needs-info** · **planned** ·
   default run is the latest completely published run of any cycle; 06Z/18Z runs give a
   0–144 h result labelled as truncated.
 
-### 003 — M2 Regional Tile Map & Layer Stack  [status: implemented]
+### 003 — M2 Regional Tile Map & Layer Stack  [status: verified]
 
+- **Status note (2026-11-27):** `v0.1.0-m2` is released (run `45933008722`). Regional O1280 and
+  regular lon/lat tile rendering, cached pan/zoom (`SC-002` p95 `42.08 ms`, 0 remote requests),
+  57-station/edge-point readout parity (`SC-003` max |Δ| 0.0), offline Natural Earth `OCB1`
+  coastlines and `.pmtiles` v3 archives (`SC-005`), 70/70 fault-injection trials (`SC-007`),
+  `.omoproj` round-trip durability (`SC-008`), and live cross-platform `ci-verify-map.py` smoke
+  (`linux_amd64`, `linux_arm64`, `osx_arm64` in CI runs `45928536196` and `45933007001`,
+  producing identical `188232`-byte composite PNGs) all passed. Recorded scope notes (`S0` NSH
+  `=0.5.1` retention, `S1`/`SC-001` user-relaxed `< 30 s` median budget, `SC-004` 447-point
+  patch + single 404 fallback, and pre-review `V1`–`V6` screenshot capture timing) are preserved
+  in `docs/m2/acceptance.md` and `docs/m2/evidence/CI-CROSS-PLATFORM-20261127.md`.
 - **Description:** A Web Mercator (`EPSG:3857`) `256×256` `z/x/y` slippy tile map backed by a
   worker-cached single-timestep numeric field (`data_spatial` primary, automatic slow-path
   fallback with notice to `data_run` for runs older than ~7 days), auto-fitting user station
@@ -384,4 +410,4 @@ Historical blockers found while writing this roadmap (2026-11-16, read-only chec
 
 ---
 
-**Version**: 1.0.8 | **Ratified**: 2026-11-16 | **Last Amended**: 2026-11-26
+**Version**: 1.0.9 | **Ratified**: 2026-11-16 | **Last Amended**: 2026-11-27
