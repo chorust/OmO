@@ -117,8 +117,8 @@ fn decompressed_size_and_hash_are_both_checked_before_load_callback() {
 
 #[test]
 fn repository_lockfile_passes_strict_lookup_for_all_six_targets() {
-    let lock_path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("../../artifacts/duckomo.lock.json");
+    let lock_path =
+        std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../artifacts/duckomo.lock.json");
     let bytes = std::fs::read(&lock_path).expect("read artifacts/duckomo.lock.json");
     let lock = ArtifactLock::from_json(&bytes).expect("parse artifacts/duckomo.lock.json");
     assert_eq!(lock.entries.len(), 6);
@@ -133,4 +133,50 @@ fn repository_lockfile_passes_strict_lookup_for_all_six_targets() {
             );
         }
     }
+}
+
+fn bootstrap_json(extra: serde_json::Value) -> serde_json::Value {
+    let mut value = json!({
+        "data_dir": "/tmp/d",
+        "ext_cache_dir": "/tmp/e",
+        "artifact_path": "/tmp/a/duckomo.duckdb_extension.gz",
+        "fixture_path": "/tmp/f/fixtures/om/test.om",
+        "artifact": serde_json::to_value(entry()).unwrap(),
+        "platform": "linux_arm64"
+    });
+    value
+        .as_object_mut()
+        .unwrap()
+        .extend(extra.as_object().unwrap().clone());
+    value
+}
+
+#[test]
+fn remote_read_tuning_defaults_are_4_mib_and_64_kib_before_the_lock() {
+    use omo_engine::config::{
+        BootstrapConfig, DEFAULT_REMOTE_MAX_REQUEST, DEFAULT_REMOTE_MERGE_GAP,
+    };
+    let config: BootstrapConfig = serde_json::from_value(bootstrap_json(json!({}))).unwrap();
+    assert_eq!(config.remote_max_request(), 4_194_304);
+    assert_eq!(config.remote_merge_gap(), 65_536);
+    assert_eq!(DEFAULT_REMOTE_MAX_REQUEST, 4 * 1024 * 1024);
+    assert_eq!(DEFAULT_REMOTE_MERGE_GAP, 64 * 1024);
+
+    let tuned: BootstrapConfig = serde_json::from_value(bootstrap_json(json!({
+        "duckomo_remote_max_request": 1_048_576,
+        "duckomo_remote_merge_gap": 4096
+    })))
+    .unwrap();
+    assert_eq!(tuned.remote_max_request(), 1_048_576);
+    assert_eq!(tuned.remote_merge_gap(), 4096);
+}
+
+#[test]
+fn settings_cannot_change_after_lock_configuration() {
+    // Documents the `S1-M2` finding with a stock DuckDB option: tuning must happen pre-lock.
+    let conn = duckdb::Connection::open_in_memory().unwrap();
+    conn.execute_batch("SET threads = 2; SET lock_configuration = true;")
+        .unwrap();
+    let error = conn.execute_batch("SET threads = 3;").unwrap_err();
+    assert!(error.to_string().contains("locked"), "{error}");
 }

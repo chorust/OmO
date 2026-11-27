@@ -2,6 +2,7 @@
 """Minimal omo-worker protocol v1 client shared by the M1 verification scripts."""
 from __future__ import annotations
 
+import csv
 import json
 import os
 import platform
@@ -127,3 +128,16 @@ def stage_artifact(root: Path, workdir: Path, channel: str = "github-release-uns
         raise SystemExit("locked artifact size/hash mismatch")
     dest.write_bytes(data)
     return dest
+
+
+def station_bbox(path: Path, pad_deg: float) -> dict:
+    """Compute a padded single-span MapBbox around a station CSV (lat/lon columns)."""
+    with path.open(encoding="utf-8-sig", newline="") as handle:
+        rows = list(csv.DictReader(handle))
+    lats = [float(row["lat"]) for row in rows]
+    lons = [float(row["lon"]) for row in rows]
+    return {
+        "lat_min": min(lats) - pad_deg,
+        "lat_max": max(lats) + pad_deg,
+        "lon_spans": [[min(lons) - pad_deg, max(lons) + pad_deg]],
+    }

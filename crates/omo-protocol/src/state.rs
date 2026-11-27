@@ -32,6 +32,17 @@ pub enum FailKind {
     GridMismatch,
     VariableMissing,
     SourceChanged,
+    /// The requested valid time is not published by the resolved run (M2).
+    ValidTimeUnavailable,
+    /// A map layer failed validation or decoding (M2).
+    InvalidLayer,
+}
+
+impl FailKind {
+    /// True when `omo-worker` rejected a request solely because another request is in flight.
+    pub fn is_worker_busy(&self) -> bool {
+        matches!(self, Self::Query(detail) if detail.starts_with("busy:"))
+    }
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize, Deserialize)]

@@ -185,7 +185,11 @@ struct ScriptedWorker {
 impl WorkerProcess for ScriptedWorker {
     fn send(&mut self, request: Envelope<Value>) -> Result<(), String> {
         match (self.mode, request.kind.as_str()) {
-            (ScriptedMode::CrashOnQuery, "query" | "series") => {
+            (
+                ScriptedMode::CrashOnQuery,
+                "query" | "series" | "map_load_field" | "map_render_tiles" | "map_inspect"
+                | "map_layer_probe",
+            ) => {
                 self.exit_next_poll = true;
             }
             (ScriptedMode::AckCancelThenExit, "interrupt") => {
@@ -500,4 +504,121 @@ fn series_crash_emits_worker_crashed_and_interrupt_cancel_emits_cancelled_interr
         Some(FailKind::Cancelled(CancelLevel::Interrupt))
     );
     cancel_sup.shutdown();
+}
+
+#[test]
+fn map_request_kinds_are_tracked_and_crash_as_worker_crashed() {
+    for (index, kind) in [
+        "map_load_field",
+        "map_render_tiles",
+        "map_inspect",
+        "map_layer_probe",
+    ]
+    .into_iter()
+    .enumerate()
+    {
+        let dir = tempfile::tempdir().unwrap();
+        let mut supervisor = EngineSupervisor::start(
+            ScriptedFactory {
+                mode: ScriptedMode::CrashOnQuery,
+            },
+            json!({}),
+            dir.path(),
+        )
+        .unwrap();
+        let generation = supervisor.generation();
+        let request_id = 300 + index as u64;
+        supervisor
+            .send_request(Envelope::new(generation, 77, request_id, kind, json!({})))
+            .unwrap();
+        let deadline = Instant::now() + Duration::from_secs(3);
+        let mut failure = None;
+        while Instant::now() < deadline {
+            if let Some(event) = supervisor.try_recv().unwrap()
+                && event.0.kind == "failed"
+                && event.0.request_id == request_id
+            {
+                failure = Some(event);
+                break;
+            }
+            thread::sleep(Duration::from_millis(10));
+        }
+        let failure = failure.unwrap_or_else(|| panic!("{kind} crash must emit failed"));
+        assert_eq!(
+            parse_fail_kind(&failure.0.body),
+            Some(FailKind::WorkerCrashed),
+            "{kind}"
+        );
+        assert!(supervisor.generation() > generation, "{kind}");
+        supervisor.shutdown();
+    }
+}
+
+#[test]
+fn stale_map_results_delete_rgba_png_and_f32bin_files() {
+    let dir = tempfile::tempdir().unwrap();
+    let gen_dir = dir.path().join("g1");
+    fs::create_dir_all(&gen_dir).unwrap();
+    let tile = gen_dir.join("tile_forecast_5_26_12.rgba");
+    let png = gen_dir.join("export_staging.png");
+    let field = gen_dir.join("field_f1.f32bin");
+    let keep = gen_dir.join("notes.txt");
+    for path in [&tile, &png, &field, &keep] {
+        fs::write(path, b"stale").unwrap();
+    }
+    let mut core = SupervisorCore::with_result_root(2, Instant::now(), dir.path());
+    let disposition = core.accept_event(WorkerEvent(Envelope::new(
+        1,
+        11,
+        22,
+        "result",
+        json!({
+            "tiles": [{"layer_id": "forecast", "rgba_path": tile}],
+            "readout_path": field,
+            "png_path": png,
+            "other_path": keep,
+        }),
+    )));
+    assert_eq!(
+        disposition,
+        EventDisposition::DiscardedStale {
+            result_files_deleted: 3
+        }
+    );
+    assert!(!tile.exists() && !png.exists() && !field.exists());
+    assert!(keep.exists(), "non-whitelisted files must survive");
+}
+
+#[test]
+fn crash_reaps_the_whole_stale_generation_directory_recursively() {
+    let dir = tempfile::tempdir().unwrap();
+    let old = dir.path().join("g1");
+    fs::create_dir_all(old.join("nested")).unwrap();
+    fs::write(old.join("tile_a.rgba"), b"a").unwrap();
+    fs::write(old.join("nested").join("field.f32bin"), b"b").unwrap();
+    fs::write(old.join("leftover.partial"), b"c").unwrap();
+    let next = dir.path().join("g2");
+    fs::create_dir_all(&next).unwrap();
+    fs::write(next.join("tile_b.rgba"), b"keep").unwrap();
+    let unrelated = dir.path().join("graphs");
+    fs::create_dir_all(&unrelated).unwrap();
+    fs::write(unrelated.join("x.rgba"), b"keep").unwrap();
+
+    let mut core = SupervisorCore::with_result_root(1, Instant::now(), dir.path());
+    core.worker_crashed(Instant::now());
+    assert_eq!(core.generation(), 2);
+    assert!(!old.exists(), "g1 must be reaped after the crash");
+    assert!(
+        next.join("tile_b.rgba").exists(),
+        "current generation untouched"
+    );
+    assert!(
+        unrelated.join("x.rgba").exists(),
+        "only g<digits> dirs are reaped"
+    );
+
+    // Application shutdown reaps the generation that is still current.
+    assert_eq!(core.reap_current_generation(), 1);
+    assert!(!next.exists());
+    assert!(unrelated.exists());
 }

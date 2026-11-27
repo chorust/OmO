@@ -163,7 +163,7 @@ impl SeriesController {
         id
     }
 
-    fn selected_catalog_entry(&self) -> Option<CatalogEntry> {
+    pub fn selected_catalog_entry(&self) -> Option<CatalogEntry> {
         let id = self.selected_entry.get_untracked();
         self.catalog
             .get_untracked()
@@ -520,6 +520,10 @@ impl SeriesController {
         }
     }
 
+    pub fn has_active_series(&self) -> bool {
+        self.active_series.get_untracked().is_some()
+    }
+
     pub fn cancel_series(&self) {
         match self.active_series.get_untracked() {
             Some(request_id) => match self.engine.cancel(JOB_ID, request_id) {
@@ -712,7 +716,13 @@ impl SeriesController {
             .map(|window| [window.start_h, window.end_h])
             .unwrap_or([0, 168]);
         let max_distance_m = self.parsed_max_distance().unwrap_or(7200);
-        (stations_hash, catalog_version, run_ref, window, max_distance_m)
+        (
+            stations_hash,
+            catalog_version,
+            run_ref,
+            window,
+            max_distance_m,
+        )
     }
 
     /// `m1_sidecar` for an export job snapshot (contracts/export-sidecar-v2.md).
@@ -880,9 +890,7 @@ impl SeriesController {
                     Vec::new()
                 }
             };
-            if this.worker_generation.get_untracked() != generation
-                || this.current_key() != key
-            {
+            if this.worker_generation.get_untracked() != generation || this.current_key() != key {
                 return;
             }
             let matched = matches.iter().filter(|m| m.status == "Matched").count();
@@ -994,11 +1002,8 @@ fn import_section(controller: &SeriesController) -> impl IntoElement {
             .and_then(|draft| draft.large_warning_message())
             .unwrap_or_default()
     });
-    let large_confirmed = computed(move || {
-        draft
-            .get()
-            .is_some_and(|draft| draft.large_file_confirmed)
-    });
+    let large_confirmed =
+        computed(move || draft.get().is_some_and(|draft| draft.large_file_confirmed));
     let has_large_warning = computed(move || {
         draft
             .get()
@@ -1013,7 +1018,10 @@ fn import_section(controller: &SeriesController) -> impl IntoElement {
         .app_class("flex-col gap-2 rounded-lg border border-[#dedacf] p-3 dark:border-[#343b36]")
         .child(text("STATION IMPORT").app_class(LABEL))
         .child(text(move || message.get()).app_class(HINT))
-        .child(text(move || large_warning.get()).app_class("text-xs text-[#7a5a1b] dark:text-[#e3c782]"))
+        .child(
+            text(move || large_warning.get())
+                .app_class("text-xs text-[#7a5a1b] dark:text-[#e3c782]"),
+        )
         .child(
             button()
                 .app_class(BTN)

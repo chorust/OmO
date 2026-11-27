@@ -1,4 +1,42 @@
 <!--
+SYNC IMPACT REPORT (1.0.8, 2026-11-26)
+=====================================
+Version change: 1.0.7 → 1.0.8
+Bump rationale: PATCH — mark 003 (M2 Regional Tile Map & Layer Stack) as `implemented` following
+completion of all 52 tasks, test suites, fault-injection trials, headless X11 GUI automation,
+latency/parity benchmarks, and acceptance matrix documentation.
+
+Changes this revision:
+  - Status: 003 specced → implemented (evidence recorded in `docs/m2/evidence/` and `docs/m2/acceptance.md`).
+
+Specs affected: 003
+Open questions added/resolved: none.
+-->
+
+<!--
+SYNC IMPACT REPORT (1.0.7, 2026-11-25)
+=====================================
+Version change: 1.0.6 → 1.0.7
+Bump rationale: MINOR — expand 003 from a static single-PNG map to an interactive Web Mercator
+(`EPSG:3857`) `z/x/y` tile map & multi-layer stack per user decisions, and move 003 from
+`planned` to `specced`.
+
+Changes this revision:
+  - Status: 003 planned → specced (`specs/003-m2-regional-tile-map/spec.md`).
+  - Refined 003 scope per user decisions (2026-11-25): `data_spatial` primary single-timestep
+    reads with automatic slow-path fallback + notice to `data_run`; auto-fit station bbox on
+    open with free pan/zoom; ordered `LayerStack` with built-in offline Natural Earth
+    coastlines/borders + local `.pmtiles` v3 archives (raster & deterministic geometry-only MVT);
+    point-inspection value-provenance seam (`native_numeric` / `display_only`, reserving
+    `palette_decoded` for post-M2 `radiust`-style color-to-value inversion); M2 planning
+    pre-gate (`S0-NSH-070`) to evaluate upgrading `nsh-*` from `=0.5.1` to `=0.7.0` under
+    Constitution Principle II.
+
+Specs affected: 003
+Open questions added/resolved: none added (interactive overlays inside M2 resolved into 003).
+-->
+
+<!--
 SYNC IMPACT REPORT (1.0.6, 2026-11-25)
 =====================================
 Version change: 1.0.5 → 1.0.6
@@ -209,15 +247,28 @@ Status legend (lifecycle): **undecided** · **needs-info** · **planned** ·
   default run is the latest completely published run of any cycle; 06Z/18Z runs give a
   0–144 h result labelled as truncated.
 
-### 003 — M2 Static Regional Map  [status: planned]
+### 003 — M2 Regional Tile Map & Layer Stack  [status: implemented]
 
-- **Description:** A bbox around the user's stations, one time step, one variable; rasterised
-  to PNG in the worker and shown in NSH `Image`; an export task with atomic commit.
-- **Outcome:** A map task with revision binding, stale retention on failure, and PNG + sidecar
-  export. (Design §7.5)
-- **Scope (in):** design §7.5.
-- **Scope (out):** a global field browser; interactive overlays (open inside M2).
+- **Description:** A Web Mercator (`EPSG:3857`) `256×256` `z/x/y` slippy tile map backed by a
+  worker-cached single-timestep numeric field (`data_spatial` primary, automatic slow-path
+  fallback with notice to `data_run` for runs older than ~7 days), auto-fitting user station
+  bounds on open with free pan/zoom, an ordered multi-layer stack (built-in offline Natural
+  Earth coastlines/borders + user-mounted local `.pmtiles` v3 raster and geometry-only MVT
+  archives + station overlay), cursor numeric value readout with value-provenance classification
+  (`native_numeric` / `display_only`, reserving `palette_decoded` for post-M2 `radiust`-style
+  color-to-value inversion), and composite PNG + sidecar atomic export.
+- **Outcome:** Smooth cached pan/zoom tile navigation, exact numeric point inspection, offline
+  basemap + `.pmtiles` layer hosting, revision binding with stale retention on failure, and
+  atomic composite PNG + sidecar export. (Refines design §7.5 per 2026-11-25 user decisions;
+  see `docs/m2/research-nsh-geospatial.md`.)
+- **Scope (in):** design §7.5 expanded to `EPSG:3857` `z/x/y` tile stack, `data_spatial` +
+  `data_run` fallback, built-in coastlines, local `.pmtiles`, and composite PNG export;
+  includes M2 pre-gate (`S0-NSH-070`) evaluating `nsh-* =0.5.1 → =0.7.0` under Constitution II.
+- **Scope (out):** color-to-value inversion (`palette_decoded`, post-M2); online third-party
+  XYZ tile servers; MapLibre Style JSON / MVT label collision / sprites; multi-timestep
+  animation loops.
 - **Depends on:** 002; `ensure_spatial` behaviour from the 001 R4 spike.
+- **Spec dir:** specs/003-m2-regional-tile-map/ (draft 2026-11-25)
 
 ### 004 — L1 Declarative Reports  [status: needs-info]
 
@@ -333,4 +384,4 @@ Historical blockers found while writing this roadmap (2026-11-16, read-only chec
 
 ---
 
-**Version**: 1.0.6 | **Ratified**: 2026-11-16 | **Last Amended**: 2026-11-25
+**Version**: 1.0.8 | **Ratified**: 2026-11-16 | **Last Amended**: 2026-11-26

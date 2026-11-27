@@ -334,7 +334,10 @@ pub fn build_m1_sidecar_json(
 ) -> Value {
     let run_year = series.and_then(|body| {
         let prefix = body.run.reference_time_utc.get(..4)?;
-        prefix.chars().all(|ch| ch.is_ascii_digit()).then_some(prefix)
+        prefix
+            .chars()
+            .all(|ch| ch.is_ascii_digit())
+            .then_some(prefix)
     });
     let attribution = entry
         .attribution
@@ -526,25 +529,25 @@ mod tests {
             plan: "G".into(),
             scan_metrics: json!({"version_token": "12345|2026-11-23T06:30:00Z"}),
         };
-        let sidecar = build_m1_sidecar_json(
-            Some("abc"),
-            10,
-            entry,
-            &catalog.version,
-            Some(&body),
-            None,
-        );
+        let sidecar =
+            build_m1_sidecar_json(Some("abc"), 10, entry, &catalog.version, Some(&body), None);
         assert_eq!(
-            sidecar.pointer("/run/object_version").and_then(Value::as_str),
+            sidecar
+                .pointer("/run/object_version")
+                .and_then(Value::as_str),
             Some("12345|2026-11-23T06:30:00Z")
         );
         let attribution = sidecar["attribution"].as_array().unwrap();
-        assert!(attribution
-            .iter()
-            .all(|line| !line.as_str().unwrap().contains("<run year>")));
-        assert!(attribution
-            .iter()
-            .any(|line| line.as_str().unwrap().contains("Copyright © 2026")));
+        assert!(
+            attribution
+                .iter()
+                .all(|line| !line.as_str().unwrap().contains("<run year>"))
+        );
+        assert!(
+            attribution
+                .iter()
+                .any(|line| line.as_str().unwrap().contains("Copyright © 2026"))
+        );
     }
 
     #[test]

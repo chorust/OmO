@@ -242,8 +242,16 @@ pub fn run_remote_domain(
     object_version: &str,
     max_distance_m: f64,
     time_index: &[(usize, String)],
-) -> Result<(crate::series::plan_g::PlanGOutput, crate::series::plan_g::PlanGScanStats), SeriesError> {
-    use crate::series::plan_g::{MatchStatus, NoMatchReason, PlanGOutput, PlanGScanStats, StationMatch};
+) -> Result<
+    (
+        crate::series::plan_g::PlanGOutput,
+        crate::series::plan_g::PlanGScanStats,
+    ),
+    SeriesError,
+> {
+    use crate::series::plan_g::{
+        MatchStatus, NoMatchReason, PlanGOutput, PlanGScanStats, StationMatch,
+    };
 
     conn.ensure_spatial().map_err(|error| SeriesError::DuckDb {
         stage: "ensure_spatial",
@@ -330,8 +338,8 @@ pub fn run_remote_domain(
     let mut rows = Vec::new();
     let mut matched_by_id: BTreeMap<String, StationMatch> = BTreeMap::new();
     for item in query_rows {
-        let (station_id, valid_time, value, source_lat, source_lon, distance_m, status) =
-            item.map_err(|error| SeriesError::DuckDb {
+        let (station_id, valid_time, value, source_lat, source_lon, distance_m, status) = item
+            .map_err(|error| SeriesError::DuckDb {
                 stage: "plan_b_remote_row",
                 reason: error.to_string(),
             })?;

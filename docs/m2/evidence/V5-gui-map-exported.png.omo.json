@@ -1,0 +1,91 @@
+{
+  "attribution": [
+    "Weather data by Open-Meteo.com (CC BY 4.0, https://open-meteo.com/en/licence)",
+    "Copyright © 2026 European Centre for Medium-Range Weather Forecasts (ECMWF). Source: www.ecmwf.int. Licence: CC BY 4.0. ECMWF does not accept any liability whatsoever for any error or omission in the data, their availability, or for any loss or damage arising from their use.",
+    "Basemap boundaries: Natural Earth 1:50m (Public Domain)",
+    "OMO test fixture (synthetic, public domain)",
+    "Modified: regional tile rasterisation and station overlay by omobench"
+  ],
+  "catalog": {
+    "entry_id": "ecmwf_ifs.temperature_2m",
+    "version": "2026-11-25.1"
+  },
+  "color_scale": {
+    "locked": false,
+    "max": 31.0,
+    "min": -38.04999923706055,
+    "palette": "turbo",
+    "unit": "°C"
+  },
+  "data": {
+    "bytes": 475799,
+    "file": "gui-map.png",
+    "format": "png",
+    "height": 619,
+    "sha256": "f0160d0cc9c1a55e58230e4a644ccfde16f639d74fcbccab6344f2ed39d41520",
+    "width": 1162
+  },
+  "engine": {
+    "channel": "github-release-unsigned",
+    "duckdb_version": "v2.0.0",
+    "duckomo_version": "v0.4.0"
+  },
+  "exported_at_utc": "2026-11-26T07:47:06Z",
+  "forecast": {
+    "cycle": "18",
+    "object_version": "98213480|2026-11-25T23:24:26Z",
+    "reference_time_utc": "2026-11-25T18:00:00Z",
+    "source_layout": "data_spatial",
+    "source_object": "s3://openmeteo/data_spatial/ecmwf_ifs/2026/11/25/1800Z/2026-11-25T1800.om",
+    "valid_time_utc": "2026-11-25T18:00:00Z"
+  },
+  "layers": [
+    {
+      "id": "coastlines",
+      "kind": "builtin_coastlines",
+      "opacity": 1.0,
+      "value_provenance": "display_only"
+    },
+    {
+      "attribution": "OMO test fixture (synthetic, public domain)",
+      "id": "pmtiles-1",
+      "kind": "local_pmtiles",
+      "opacity": 1.0,
+      "path": "/home/blizhan/repo/github/OmO/fixtures/pmtiles/sample-raster.pmtiles",
+      "sha256": "6f4c3b2f1f7aea488eb82076c169f0c2500b063334bee801e6c649802c310b99",
+      "tile_kind": "raster_png",
+      "value_provenance": "display_only"
+    },
+    {
+      "id": "forecast",
+      "kind": "forecast_field",
+      "opacity": 0.7799999713897705,
+      "value_provenance": "native_numeric"
+    },
+    {
+      "id": "stations",
+      "kind": "station_overlay",
+      "opacity": 1.0,
+      "value_provenance": "display_only"
+    }
+  ],
+  "schema": "omo-export-sidecar/3",
+  "stations": {
+    "count": 100,
+    "sha256": "6093bb56fa93a7b93bf8316f1eb8160ed78ac5f059656f06c46b190a9c9f376d"
+  },
+  "viewport": {
+    "bbox_wgs84": [
+      94.658,
+      17.811,
+      145.723,
+      35.568
+    ],
+    "center_lat": 27.042015000000003,
+    "center_lon": 120.17505500000004,
+    "crs": "EPSG:3857",
+    "map_height": 455,
+    "map_width": 1162,
+    "zoom": 5
+  }
+}

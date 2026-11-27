@@ -1,6 +1,8 @@
 //! The M0 NSH workbench and its bounded shell panels.
 
 mod dialogs;
+mod map_controls;
+mod map_view;
 mod plot_view;
 mod project_ctl;
 mod series_panel;

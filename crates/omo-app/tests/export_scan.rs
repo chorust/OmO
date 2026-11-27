@@ -159,3 +159,57 @@ fn sidecar_v2_is_accepted_when_valid_and_incomplete_when_interrupted() {
     assert_eq!(entries[0].target, incomplete_target);
     assert_eq!(entries[0].verdict, ExportVerdict::Incomplete);
 }
+
+/// A composite map PNG with an `omo-export-sidecar/3` is saved exactly like any other export,
+/// and an interrupted one classifies as `incomplete` / `incomplete` / `finished` (`SC-007`).
+#[test]
+fn map_png_with_sidecar_v3_is_saved_and_kill_steps_classify_like_m0() {
+    let png = b"\x89PNG\r\n\x1a\nnot a real image but hashed like one";
+    let hash = format!("{:x}", Sha256::digest(png));
+    let sidecar = |hash: &str| {
+        serde_json::to_vec(&json!({
+            "schema": omo_protocol::export::SIDECAR_SCHEMA_V3,
+            "data": {"file": "map.png", "format": "png", "sha256": hash}
+        }))
+        .unwrap()
+    };
+
+    let dir = tempdir().unwrap();
+    let target = dir.path().join("map.png");
+    fs::write(&target, png).unwrap();
+    fs::write(sidecar_path(&target), sidecar(&hash)).unwrap();
+    assert!(is_saved(&target).unwrap());
+    // A sidecar whose digest does not match the bytes never counts as saved.
+    fs::write(sidecar_path(&target), sidecar("00")).unwrap();
+    assert!(!is_saved(&target).unwrap());
+
+    for (suffix, killed_at, expected) in [
+        ("s1", ExportStep::OldSidecarMoved, ExportVerdict::Incomplete),
+        ("s2", ExportStep::DataMoved, ExportVerdict::Incomplete),
+        ("s3", ExportStep::SidecarMoved, ExportVerdict::Finished),
+    ] {
+        let dir = tempdir().unwrap();
+        let target = dir.path().join("map.png");
+        let staging = dir.path().join(format!(".map.png.omo-tmp-{suffix}"));
+        fs::create_dir(&staging).unwrap();
+        fs::write(staging.join(".omo-owner"), STAGING_OWNER_MARKER).unwrap();
+        fs::write(staging.join("data"), png).unwrap();
+        fs::write(staging.join("sidecar"), sidecar(&hash)).unwrap();
+        let result = commit_staged(&target, &staging, false, |step| {
+            if step == killed_at {
+                Err(io::Error::other("injected process kill"))
+            } else {
+                Ok(())
+            }
+        });
+        assert!(result.is_err());
+        let entries = scan_export_dir(dir.path()).unwrap();
+        assert_eq!(entries.len(), 1);
+        assert_eq!(entries[0].target, target);
+        assert_eq!(entries[0].verdict, expected);
+        assert_eq!(
+            is_saved(&target).unwrap(),
+            expected == ExportVerdict::Finished
+        );
+    }
+}

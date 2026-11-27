@@ -3,6 +3,8 @@ pub mod export_scan;
 pub mod fixture_result;
 pub mod ipc_pages;
 pub mod main_thread_probe;
+pub mod map_host;
+pub mod map_view;
 pub mod preview_queue;
 pub mod process;
 pub mod project_io;

@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use thiserror::Error;
 
+use crate::map::{MapStateError, MapViewState};
 use crate::preview_key::PreviewWindow;
 use crate::stations::{StationSnapshot, import::canonical_bytes};
 
@@ -62,6 +63,8 @@ pub struct ProjectDoc {
     pub sql_tabs: Vec<SqlTab>,
     #[serde(default)]
     pub view: ProjectViewState,
+    #[serde(default, skip_serializing_if = "MapViewState::is_default")]
+    pub map: MapViewState,
     #[serde(skip)]
     path: Option<PathBuf>,
 }
@@ -82,6 +85,8 @@ pub enum ProjectFileError {
         "CorruptSnapshot: stations snapshot hash mismatch (expected {expected}, computed {actual})"
     )]
     CorruptSnapshot { expected: String, actual: String },
+    #[error("invalid map view state: {0}")]
+    InvalidMapState(#[from] MapStateError),
     #[error("project JSON is invalid: {0}")]
     InvalidJson(#[from] serde_json::Error),
     #[error("project file I/O failed: {0}")]
@@ -110,6 +115,7 @@ impl ProjectDoc {
             max_distance_m: 7200,
             sql_tabs: Vec::new(),
             view: ProjectViewState::default(),
+            map: MapViewState::default(),
             path: None,
         }
     }
@@ -153,6 +159,7 @@ impl ProjectDoc {
         app_data: Option<&Path>,
     ) -> Result<(), ProjectFileError> {
         self.schema = PROJECT_SCHEMA_V1.to_owned();
+        self.map = self.map.clone().canonical()?;
         let bytes = serde_json::to_vec_pretty(self)?;
         let parent = target.parent().unwrap_or_else(|| Path::new("."));
         std::fs::create_dir_all(parent)?;
@@ -181,15 +188,25 @@ impl ProjectDoc {
 
     pub fn open_from_path(target: &Path) -> Result<OpenOutcome, ProjectFileError> {
         let bytes = std::fs::read(target)?;
-        let mut doc: ProjectDoc = serde_json::from_slice(&bytes)?;
-        let major = doc
-            .schema
-            .strip_prefix("omo-project/")
+        // Peek at the schema before full deserialization so a future major version with
+        // altered field types is reported as unsupported, not as invalid JSON.
+        let raw: serde_json::Value = serde_json::from_slice(&bytes)?;
+        let schema = raw
+            .get("schema")
+            .and_then(serde_json::Value::as_str)
+            .map(str::to_owned);
+        let major = schema
+            .as_deref()
+            .and_then(|s| s.strip_prefix("omo-project/"))
             .and_then(|v| v.split('.').next())
             .and_then(|v| v.parse::<u32>().ok());
         if major != Some(1) {
-            return Err(ProjectFileError::UnsupportedSchema(doc.schema));
+            return Err(ProjectFileError::UnsupportedSchema(
+                schema.unwrap_or_default(),
+            ));
         }
+        let mut doc: ProjectDoc = serde_json::from_value(raw)?;
+        doc.map = doc.map.clone().canonical()?;
         let mut notice = None;
         if let Some(snapshot) = &doc.stations {
             let actual = format!("{:x}", Sha256::digest(canonical_bytes(&snapshot.rows)));

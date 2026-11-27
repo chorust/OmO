@@ -173,6 +173,7 @@ impl BootstrappedConn {
                 spatial_preinstall: "not_requested".to_owned(),
                 spatial_after_lock: "not_run".to_owned(),
             },
+            remote_tuning: None,
         };
         Self {
             connection: Some(connection),

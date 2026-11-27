@@ -49,6 +49,30 @@ pub fn format_utc_rfc3339(secs_since_epoch: i64) -> String {
     format!("{year:04}-{month:02}-{day:02}T{hour:02}:{minute:02}:{second:02}Z")
 }
 
+/// Parse `YYYY-MM-DDTHH:MM[:SS]` with an optional trailing `Z` into Unix seconds (UTC).
+pub fn parse_utc_rfc3339(text: &str) -> Option<i64> {
+    let core = text.strip_suffix('Z').unwrap_or(text);
+    let (date, time) = core.split_once('T')?;
+    let mut d = date.split('-');
+    let year: i64 = d.next()?.parse().ok()?;
+    let month: i64 = d.next()?.parse().ok().filter(|m| (1..=12).contains(m))?;
+    let day: i64 = d.next()?.parse().ok().filter(|v| (1..=31).contains(v))?;
+    if d.next().is_some() {
+        return None;
+    }
+    let mut t = time.split(':');
+    let hour: i64 = t.next()?.parse().ok().filter(|h| (0..24).contains(h))?;
+    let minute: i64 = t.next()?.parse().ok().filter(|m| (0..60).contains(m))?;
+    let second: i64 = match t.next() {
+        Some(s) => s.parse().ok().filter(|s| (0..60).contains(s))?,
+        None => 0,
+    };
+    if t.next().is_some() {
+        return None;
+    }
+    Some(days_from_civil(year, month, day) * 86_400 + hour * 3_600 + minute * 60 + second)
+}
+
 /// Current wall-clock UTC time formatted as `YYYY-MM-DDTHH:MM:SSZ`.
 pub fn now_utc_rfc3339() -> String {
     let secs = SystemTime::now()
@@ -60,7 +84,7 @@ pub fn now_utc_rfc3339() -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::{civil_from_days, days_from_civil, format_utc_rfc3339};
+    use super::{civil_from_days, days_from_civil, format_utc_rfc3339, parse_utc_rfc3339};
 
     #[test]
     fn roundtrips_epoch_leap_and_year_boundaries() {
@@ -74,5 +98,18 @@ mod tests {
         for (y, m, d) in [(1970, 1, 1), (2024, 2, 29), (2026, 11, 23), (2100, 3, 1)] {
             assert_eq!(civil_from_days(days_from_civil(y, m, d)), (y, m, d));
         }
+    }
+
+    #[test]
+    fn parses_what_it_formats_and_rejects_garbage() {
+        for secs in [0, 1_709_251_199, 1_798_761_600] {
+            assert_eq!(parse_utc_rfc3339(&format_utc_rfc3339(secs)), Some(secs));
+        }
+        assert_eq!(
+            parse_utc_rfc3339("2026-11-25T06:00Z"),
+            parse_utc_rfc3339("2026-11-25T06:00:00Z")
+        );
+        assert_eq!(parse_utc_rfc3339("2026-13-25T06:00Z"), None);
+        assert_eq!(parse_utc_rfc3339("nope"), None);
     }
 }

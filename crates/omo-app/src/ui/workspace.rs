@@ -38,7 +38,9 @@ use crate::host::{
     runtime::{self, EngineHandle, RuntimeEvent},
 };
 
-use super::{dialogs, plot_view, project_ctl, series_panel, sql_view, table_view, tasks_view};
+use super::{
+    dialogs, map_view, plot_view, project_ctl, series_panel, sql_view, table_view, tasks_view,
+};
 
 const INITIAL_SQL: &str = "-- Edit this query, then run a preview.\nSELECT 1 AS value";
 const INITIAL_SQL_ENV: &str = "OMOBENCH_INITIAL_SQL";
@@ -134,6 +136,12 @@ fn Workspace() -> impl IntoElement {
         result,
         plot_input,
         stale_result,
+    );
+    let map = map_view::MapController::new(
+        engine.clone(),
+        series.clone(),
+        worker_ready,
+        worker_generation,
     );
 
     if let Some(fixture_path) = fixture_path {
@@ -334,6 +342,7 @@ fn Workspace() -> impl IntoElement {
         let file_status = file_status;
         let dispatch_next = dispatch_next_preview.clone();
         let series = series.clone();
+        let map = map.clone();
         spawn(async move {
             loop {
                 loop {
@@ -383,6 +392,16 @@ fn Workspace() -> impl IntoElement {
                                 }
                                 _ => {}
                             }
+                            if matches!(
+                                event.0.kind.as_str(),
+                                "result" | "failed" | "progress" | "export_committed"
+                            ) && map.handle_event(
+                                event.0.kind.as_str(),
+                                event.0.request_id,
+                                &event.0.body,
+                            ) {
+                                continue;
+                            }
                             if matches!(event.0.kind.as_str(), "result" | "failed" | "progress")
                                 && series.handle_event(
                                     event.0.kind.as_str(),
@@ -395,6 +414,11 @@ fn Workspace() -> impl IntoElement {
                             }
                             match event.0.kind.as_str() {
                                 "ready" => {
+                                    if previous_generation != 0
+                                        && previous_generation != event.0.worker_generation
+                                    {
+                                        map.on_worker_restart();
+                                    }
                                     if previous_generation != 0
                                         && previous_generation != event.0.worker_generation
                                         && current_result.get_untracked().is_some_and(|reference| {
@@ -743,18 +767,32 @@ fn Workspace() -> impl IntoElement {
         let cancelled_previews = Rc::clone(&cancelled_previews);
         let engine = engine.clone();
         let task_status = task_status;
-        move || match preview_queue.with(|queue| queue.running_request(DOC_ID)) {
-            Some(request_id) => match engine.cancel(JOB_ID, request_id) {
-                Ok(()) => {
-                    cancelled_previews.borrow_mut().insert(request_id);
-                    task_status.set(format!("Cancellation requested for preview {request_id}."))
+        let map = map.clone();
+        let series = series.clone();
+        move || {
+            if let Some(request_id) = preview_queue.with(|queue| queue.running_request(DOC_ID)) {
+                match engine.cancel(JOB_ID, request_id) {
+                    Ok(()) => {
+                        cancelled_previews.borrow_mut().insert(request_id);
+                        task_status.set(format!("Cancellation requested for preview {request_id}."))
+                    }
+                    Err(error) => {
+                        cancelled_previews.borrow_mut().remove(&request_id);
+                        task_status.set(format!("Could not cancel preview {request_id}: {error}"))
+                    }
                 }
-                Err(error) => {
-                    cancelled_previews.borrow_mut().remove(&request_id);
-                    task_status.set(format!("Could not cancel preview {request_id}: {error}"))
-                }
-            },
-            None => task_status.set("No worker query is active.".into()),
+                return;
+            }
+            if map.cancel_active() {
+                task_status.set("Cancellation requested for active map task.".into());
+                return;
+            }
+            if series.has_active_series() {
+                series.cancel_series();
+                task_status.set("Cancellation requested for active series task.".into());
+                return;
+            }
+            task_status.set("No worker query is active.".into());
         }
     });
 
@@ -913,7 +951,8 @@ fn Workspace() -> impl IntoElement {
 
     let show_left = dock_ref;
     let show_bottom = dock_ref;
-    let project = project_ctl::ProjectController::new(series.clone(), sql, on_edit.clone());
+    let project =
+        project_ctl::ProjectController::new(series.clone(), map.clone(), sql, on_edit.clone());
     project.install_window();
     project.start_draft_scheduler();
     project.offer_recovery();
@@ -926,6 +965,7 @@ fn Workspace() -> impl IntoElement {
     let menu_cancel = cancel_task.clone();
     let menu_open = open_station_csv.clone();
     let menu_export = choose_export_path.clone();
+    let menu_map_export = map.clone();
     set_application_menu(vec![
         MenuItem::submenu(
             "Omobench",
@@ -962,6 +1002,7 @@ fn Workspace() -> impl IntoElement {
                     .on_select(move || menu_cancel()),
                 MenuItem::separator(),
                 MenuItem::new("Choose export destination…").on_select(move || menu_export()),
+                MenuItem::new("Export Map PNG…").on_select(move || menu_map_export.choose_export()),
                 MenuItem::separator(),
                 MenuItem::role(MenuRole::Quit),
             ],
@@ -998,6 +1039,7 @@ fn Workspace() -> impl IntoElement {
     let retry_for_panel = run_preview.clone();
     let cancel_for_panel = cancel_task.clone();
     let export_manual_for_panel = export_manually.clone();
+    let map_for_panel = map.clone();
     let status_for_footer = task_status;
     let worker_state_for_header = worker_state;
 
@@ -1053,6 +1095,7 @@ fn Workspace() -> impl IntoElement {
                                     series_for_source.clone(),
                                     open_for_panel.clone(),
                                 ).into_element(),
+                                "map" => map_view::panel(map_for_panel.clone()).into_element(),
                                 "series" => series_panel::panel(
                                     series_for_panel.clone(),
                                     apply_sql.clone(),
@@ -1091,6 +1134,7 @@ fn Workspace() -> impl IntoElement {
                             let label = match tab.panel.as_str() {
                                 "sources" => "Sources",
                                 "series" => "Series",
+                                "map" => "Map",
                                 "query" => "SQL editor",
                                 "results" => "Results",
                                 "chart" => "Plot",
@@ -1138,22 +1182,25 @@ fn default_layout() -> DockAreaLayout {
             .panel("series")
             .panel("query")
             .panel("results")
-            .panel("chart"),
+            .panel("chart")
+            .panel("map"),
     )
     .with_dock(DockPlacement::Left, sources)
     .with_dock(DockPlacement::Bottom, tasks)
 }
 
 fn panel_options() -> Vec<DockPanelOptions> {
-    ["sources", "series", "query", "results", "chart", "tasks"]
-        .into_iter()
-        .map(|id| {
-            let mut options = DockPanelOptions::new(id);
-            options.closable = Some(false);
-            options.zoomable = Some(true);
-            options
-        })
-        .collect()
+    [
+        "sources", "series", "map", "query", "results", "chart", "tasks",
+    ]
+    .into_iter()
+    .map(|id| {
+        let mut options = DockPanelOptions::new(id);
+        options.closable = Some(false);
+        options.zoomable = Some(true);
+        options
+    })
+    .collect()
 }
 
 #[cfg(test)]

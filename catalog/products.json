@@ -1,6 +1,6 @@
 {
   "schema": "omo-catalog/1",
-  "version": "2026-11-23.1",
+  "version": "2026-11-25.1",
   "entries": [
     {
       "id": "ecmwf_ifs.temperature_2m",
@@ -22,6 +22,11 @@
         "object": "{YYYY}/{MM}/{DD}/{HH}00Z/{variable}.om",
         "meta": "{YYYY}/{MM}/{DD}/{HH}00Z/meta.json"
       },
+      "spatial_layout": {
+        "kind": "data_spatial",
+        "base": "s3://openmeteo/data_spatial/ecmwf_ifs/",
+        "object": "{YYYY}/{MM}/{DD}/{HH}00Z/{valid_YYYY}-{valid_MM}-{valid_DD}T{valid_HH}{valid_mm}.om"
+      },
       "grid": {
         "kind": "reduced_gaussian_o1280",
         "duckomo_domain": "ecmwf_ifs",
@@ -38,7 +43,7 @@
       "attribution": [
         "Weather data by Open-Meteo.com (CC BY 4.0, https://open-meteo.com/en/licence)",
         "Copyright © <run year> European Centre for Medium-Range Weather Forecasts (ECMWF). Source: www.ecmwf.int. Licence: CC BY 4.0. ECMWF does not accept any liability whatsoever for any error or omission in the data, their availability, or for any loss or damage arising from their use.",
-        "Modified: nearest-point sampling to user stations by omobench"
+        "Modified: nearest-point sampling and regional tile rasterisation by omobench"
       ]
     }
   ]

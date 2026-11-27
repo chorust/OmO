@@ -46,6 +46,9 @@ enum Command {
     Cancel(CancelArgs),
     /// Inject a process failure at one of the atomic export commit points.
     ExportKill(ExportKillArgs),
+    /// SIGKILL the real worker during a map field load or tile render and check generation
+    /// rollover, tile-file reaping and recovery (`SC-007`).
+    MapCrash(MapCrashArgs),
 }
 
 #[derive(Debug, Args)]
@@ -85,6 +88,37 @@ struct CrashInjectArgs {
 }
 
 #[derive(Debug, Args)]
+struct MapCrashArgs {
+    /// The real `omo-worker` executable.
+    #[arg(long)]
+    worker: PathBuf,
+    /// Worker bootstrap config (JSON); its `data_dir/results` is the supervised result root.
+    #[arg(long)]
+    config: PathBuf,
+    /// `map_load_field` request body (JSON), used for the `load` kill point.
+    #[arg(long)]
+    load_body: PathBuf,
+    /// A `.pmtiles` archive rendered before the kill (to leave tile files behind) and after
+    /// recovery (to prove the new generation works).
+    #[arg(long)]
+    archive: PathBuf,
+    /// Kill during the field load or during a tile render.
+    #[arg(long, value_enum)]
+    at: MapCrashPoint,
+    #[arg(long, default_value_t = 10, value_parser = clap::value_parser!(u32).range(1..=1000))]
+    trials: u32,
+    /// Seconds to wait for each worker step.
+    #[arg(long, default_value_t = 300)]
+    timeout_s: u64,
+}
+
+#[derive(Clone, Copy, Debug, ValueEnum)]
+enum MapCrashPoint {
+    Load,
+    Render,
+}
+
+#[derive(Debug, Args)]
 struct ExportKillArgs {
     /// Commit boundary after which to inject the failure.
     #[arg(long, value_enum)]
@@ -92,8 +126,9 @@ struct ExportKillArgs {
     /// Keep the recovery files in this directory instead of a temporary directory.
     #[arg(long)]
     directory: Option<PathBuf>,
-    /// What is being exported: the M0 fixture bytes, or a received M1 series result
-    /// (`omo-export-sidecar/2` with stations, catalog, run, window, plan and attribution).
+    /// What is being exported: the M0 fixture bytes, a received M1 series result
+    /// (`omo-export-sidecar/2` with stations, catalog, run, window, plan and attribution), or an
+    /// M2 composite map PNG (`omo-export-sidecar/3`).
     #[arg(long, value_enum, default_value = "fixture")]
     source: ExportKillSource,
 }
@@ -102,6 +137,8 @@ struct ExportKillArgs {
 enum ExportKillSource {
     Fixture,
     Series,
+    /// A composite map PNG with `omo-export-sidecar/3`, rendered by the real compositor.
+    Map,
 }
 
 #[derive(Clone, Copy, Debug, ValueEnum)]
@@ -143,6 +180,7 @@ fn main() {
         Command::CrashInject(args) => crash_inject(args),
         Command::Cancel(args) => cancel(args),
         Command::ExportKill(args) => export_kill(args),
+        Command::MapCrash(args) => map_crash(args),
     };
     if let Err(error) = result {
         eprintln!("omo-harness: {error:#}");
@@ -398,6 +436,9 @@ fn export_kill_enabled(args: ExportKillArgs) -> anyhow::Result<()> {
             (path, true)
         }
     };
+    if matches!(args.source, ExportKillSource::Map) {
+        return export_kill_map(args.at, root, temporary);
+    }
     let target = root.join("report.csv");
     let old_data = b"old data";
     std::fs::write(&target, old_data)?;
@@ -416,6 +457,7 @@ fn export_kill_enabled(args: ExportKillArgs) -> anyhow::Result<()> {
     let new_data: &[u8] = match args.source {
         ExportKillSource::Fixture => b"new data",
         ExportKillSource::Series => series_csv,
+        ExportKillSource::Map => unreachable!("handled by export_kill_map"),
     };
     std::fs::write(staging.join("data"), new_data)?;
     let new_hash = format!("{:x}", Sha256::digest(new_data));
@@ -438,6 +480,7 @@ fn export_kill_enabled(args: ExportKillArgs) -> anyhow::Result<()> {
             "query": null,
             "attribution": ["Weather data by Open-Meteo.com (CC BY 4.0)", "Copyright © 2026 ECMWF"],
         }),
+        ExportKillSource::Map => unreachable!("handled by export_kill_map"),
     };
     std::fs::write(staging.join("sidecar"), serde_json::to_vec(&new_sidecar)?)?;
 
@@ -491,6 +534,142 @@ fn export_kill_enabled(args: ExportKillArgs) -> anyhow::Result<()> {
     Ok(())
 }
 
+/// `export-kill --source map`: render a real composite PNG, publish it over an existing map
+/// export with `export_map_png`, and kill the commit at the requested step.
+#[cfg(feature = "in-process-engine")]
+fn export_kill_map(at: ExportKillPoint, root: PathBuf, temporary: bool) -> anyhow::Result<()> {
+    use std::collections::HashMap;
+
+    use omo_app::host::export_scan::{ExportVerdict, is_saved, scan_export_dir};
+    use omo_engine::{
+        export::{ExportStep, export_map_png, sidecar_path},
+        map::compose_export::{build_sidecar, compose},
+    };
+    use omo_protocol::map::{
+        ExportLayer, ExportLayerKind, ExportStation, ExportViewport, MapExportRequest,
+    };
+    use sha2::{Digest, Sha256};
+
+    let layer = |id: &str, kind| ExportLayer {
+        id: id.to_owned(),
+        kind,
+        path: None,
+        opacity: 1.0,
+    };
+    let request = MapExportRequest {
+        revision: 1,
+        field_id: None,
+        viewport: ExportViewport {
+            center_lat: 35.0,
+            center_lon: 118.0,
+            zoom: 4,
+            width: 640,
+            height: 400,
+        },
+        stations: vec![ExportStation {
+            id: "S001".into(),
+            lat: 34.8,
+            lon: 117.9,
+            selected: true,
+        }],
+        stations_sha256: Some("deadbeef".into()),
+        catalog_entry: "ecmwf_ifs.temperature_2m".into(),
+        catalog_version: "harness".into(),
+        forecast: None,
+        color_scale: None,
+        layers: vec![
+            layer("coastlines", ExportLayerKind::BuiltinCoastlines),
+            layer("stations", ExportLayerKind::StationOverlay),
+        ],
+        attribution: vec![
+            omo_protocol::attribution::NATURAL_EARTH.to_owned(),
+            omo_protocol::attribution::MODIFIED.to_owned(),
+        ],
+        title: "export-kill harness".into(),
+        subtitle: "composite map PNG".into(),
+    };
+    let composed = compose(&request, None, &HashMap::new(), &mut || Ok(()))?;
+
+    let target = root.join("map.png");
+    let old_png = b"old composite";
+    std::fs::write(&target, old_png)?;
+    let old_hash = format!("{:x}", Sha256::digest(old_png));
+    std::fs::write(
+        sidecar_path(&target),
+        serde_json::to_vec(&json!({
+            "schema": omo_protocol::export::SIDECAR_SCHEMA_V3,
+            "data": {"file": "map.png", "format": "png", "sha256": old_hash},
+        }))?,
+    )?;
+
+    let injected_at = match at {
+        ExportKillPoint::Step1 => ExportStep::OldSidecarMoved,
+        ExportKillPoint::Step2 => ExportStep::DataMoved,
+        ExportKillPoint::Step3 => ExportStep::SidecarMoved,
+    };
+    let commit = export_map_png(
+        &target,
+        &composed.png,
+        |sha| {
+            build_sidecar(
+                &request,
+                &composed,
+                sha,
+                "map.png",
+                json!({"channel": "harness"}),
+                "2026-11-26T00:00:00Z",
+            )
+        },
+        true,
+        |_| {},
+        |step| {
+            if step == injected_at {
+                Err(io::Error::other("injected process termination"))
+            } else {
+                Ok(())
+            }
+        },
+    );
+    anyhow::ensure!(
+        commit.is_err(),
+        "fault injection did not interrupt the commit"
+    );
+    let entries = scan_export_dir(&root)?;
+    anyhow::ensure!(
+        entries.len() == 1,
+        "recovery did not report exactly one export"
+    );
+    let expected = if matches!(at, ExportKillPoint::Step3) {
+        ExportVerdict::Finished
+    } else {
+        ExportVerdict::Incomplete
+    };
+    anyhow::ensure!(
+        entries[0].verdict == expected,
+        "unexpected recovery verdict: {:?}",
+        entries[0].verdict
+    );
+    let saved = is_saved(&target)?;
+    anyhow::ensure!(
+        saved == matches!(expected, ExportVerdict::Finished),
+        "saved predicate disagrees with recovery verdict"
+    );
+    println!(
+        "{}",
+        serde_json::to_string_pretty(&json!({
+            "status": "passed", "scenario": "export_kill_injection", "source": "map",
+            "at": format!("{:?}", at).to_lowercase(),
+            "recovery": format!("{expected:?}").to_lowercase(), "target": target,
+            "saved": saved,
+            "png_bytes": composed.png.len(),
+        }))?
+    );
+    if temporary {
+        std::fs::remove_dir_all(root)?;
+    }
+    Ok(())
+}
+
 fn parse_cancel_levels(raw: &str) -> anyhow::Result<Vec<u8>> {
     let mut levels = Vec::new();
     for part in raw.split(',') {
@@ -502,6 +681,246 @@ fn parse_cancel_levels(raw: &str) -> anyhow::Result<Vec<u8>> {
     }
     anyhow::ensure!(!levels.is_empty(), "at least one cancel level is required");
     Ok(levels)
+}
+
+fn count_files(dir: &std::path::Path) -> usize {
+    let Ok(entries) = std::fs::read_dir(dir) else {
+        return 0;
+    };
+    entries
+        .flatten()
+        .map(|entry| {
+            let path = entry.path();
+            if path.is_dir() { count_files(&path) } else { 1 }
+        })
+        .sum()
+}
+
+fn worker_child_pid() -> anyhow::Result<u32> {
+    let output = std::process::Command::new("pgrep")
+        .args(["-P", &std::process::id().to_string(), "omo-worker"])
+        .output()?;
+    String::from_utf8_lossy(&output.stdout)
+        .lines()
+        .next()
+        .and_then(|line| line.trim().parse().ok())
+        .ok_or_else(|| anyhow::anyhow!("no omo-worker child process found"))
+}
+
+fn map_render_body(archive: &std::path::Path, tag: &str, tiles: u32) -> Value {
+    let tiles: Vec<Value> = (0..tiles)
+        .map(|index| json!({"z": 5, "x": index % 32, "y": 10 + index / 32}))
+        .collect();
+    json!({
+        "result_id": tag,
+        "revision": 1,
+        "color_scale": {"palette": "turbo", "min": 0.0, "max": 1.0},
+        "layers": [{"layer_id": "archive", "kind": "local_pmtiles", "path": archive}],
+        "tiles": tiles,
+    })
+}
+
+/// Wait until `done` accepts an event for `request_id`, or the deadline passes.
+fn wait_map_event(
+    supervisor: &EngineSupervisor,
+    request_id: u64,
+    deadline: Instant,
+    mut done: impl FnMut(&str, &Value) -> bool,
+) -> anyhow::Result<(String, Value)> {
+    while Instant::now() < deadline {
+        match supervisor.try_recv()? {
+            Some(event) => {
+                if event.0.request_id == request_id && done(&event.0.kind, &event.0.body) {
+                    return Ok((event.0.kind, event.0.body));
+                }
+            }
+            None => thread::sleep(Duration::from_millis(5)),
+        }
+    }
+    anyhow::bail!("timed out waiting for request {request_id}")
+}
+
+/// One `map-crash` trial: the real worker under the real supervisor, killed with SIGKILL.
+fn map_crash_trial(
+    args: &MapCrashArgs,
+    trial: u32,
+    config: &Value,
+    load_body: &Value,
+) -> anyhow::Result<Value> {
+    let data_dir = std::env::temp_dir().join(format!("omo-map-crash-{}", uuid::Uuid::new_v4()));
+    std::fs::create_dir_all(&data_dir)?;
+    let mut config = config.clone();
+    config["data_dir"] = json!(data_dir);
+    let result_root = data_dir.join("results");
+    std::fs::create_dir_all(&result_root)?;
+    let timeout = Duration::from_secs(args.timeout_s);
+    let mut supervisor = EngineSupervisor::start_child(&args.worker, config, &result_root)?;
+    let generation = supervisor.generation();
+    let job = 1u64;
+
+    // Leave generation-scoped tile files behind so a missed reap is visible.
+    let seed_id = 1u64;
+    supervisor.send_request(Envelope::new(
+        generation,
+        job,
+        seed_id,
+        "map_render_tiles",
+        map_render_body(&args.archive, "seed", 8),
+    ))?;
+    let (kind, _) = wait_map_event(&supervisor, seed_id, Instant::now() + timeout, |kind, _| {
+        matches!(kind, "result" | "failed")
+    })?;
+    anyhow::ensure!(kind == "result", "seed render failed");
+    let files_before = count_files(&result_root.join(format!("g{generation}")));
+    anyhow::ensure!(files_before > 0, "the seed render left no files to reap");
+
+    let victim_id = 2u64;
+    let in_flight = match args.at {
+        MapCrashPoint::Load => {
+            supervisor.send_request(Envelope::new(
+                generation,
+                job,
+                victim_id,
+                "map_load_field",
+                load_body.clone(),
+            ))?;
+            let reached = wait_map_event(
+                &supervisor,
+                victim_id,
+                Instant::now() + timeout,
+                |kind, body| {
+                    matches!(kind, "result" | "failed")
+                        || (kind == "progress"
+                            && body.get("stage").and_then(Value::as_str) == Some("reading"))
+                },
+            )?;
+            reached.0 == "progress"
+        }
+        MapCrashPoint::Render => {
+            supervisor.send_request(Envelope::new(
+                generation,
+                job,
+                victim_id,
+                "map_render_tiles",
+                map_render_body(&args.archive, "victim", 96),
+            ))?;
+            // Kill a few milliseconds in; the delay varies per trial to sweep the render.
+            thread::sleep(Duration::from_millis(u64::from(trial % 10) * 4 + 2));
+            // Drain what arrived meanwhile: a finished render means the kill missed the request.
+            let mut finished = false;
+            while let Some(event) = supervisor.try_recv()? {
+                if event.0.request_id == victim_id
+                    && matches!(event.0.kind.as_str(), "result" | "failed")
+                {
+                    finished = true;
+                }
+            }
+            !finished
+        }
+    };
+    let pid = worker_child_pid()?;
+    std::process::Command::new("kill")
+        .args(["-KILL", &pid.to_string()])
+        .status()?;
+
+    let deadline = Instant::now() + Duration::from_secs(60);
+    while supervisor.generation() == generation && Instant::now() < deadline {
+        thread::sleep(Duration::from_millis(20));
+    }
+    let next = supervisor.generation();
+    anyhow::ensure!(
+        next == generation + 1,
+        "generation did not roll over ({generation} -> {next})"
+    );
+    let leaked = count_files(&result_root.join(format!("g{generation}")));
+    let crashed = {
+        let mut seen = false;
+        let until = Instant::now() + Duration::from_secs(10);
+        while !seen && Instant::now() < until {
+            match supervisor.try_recv()? {
+                Some(event) if event.0.request_id == victim_id && event.0.kind == "failed" => {
+                    seen = matches!(
+                        parse_fail_kind(&event.0.body),
+                        Some(FailKind::WorkerCrashed)
+                    );
+                }
+                Some(_) => {}
+                None => thread::sleep(Duration::from_millis(10)),
+            }
+        }
+        seen
+    };
+
+    // Recovery: the new generation renders and writes into its own directory.
+    let retry_id = 3u64;
+    let retry_deadline = Instant::now() + timeout;
+    let mut retried = false;
+    while !retried && Instant::now() < retry_deadline {
+        supervisor.send_request(Envelope::new(
+            next,
+            job,
+            retry_id,
+            "map_render_tiles",
+            map_render_body(&args.archive, "retry", 4),
+        ))?;
+        let (kind, body) = wait_map_event(&supervisor, retry_id, retry_deadline, |kind, _| {
+            matches!(kind, "result" | "failed")
+        })?;
+        // The replacement worker may still be bootstrapping; retry until it answers.
+        if kind == "result" {
+            retried = body["tiles"]
+                .as_array()
+                .is_some_and(|tiles| !tiles.is_empty());
+        } else {
+            thread::sleep(Duration::from_millis(500));
+        }
+    }
+    let new_files = count_files(&result_root.join(format!("g{next}")));
+    supervisor.shutdown();
+    let after_shutdown = count_files(&result_root);
+    let _ = std::fs::remove_dir_all(&data_dir);
+    let ok = leaked == 0 && crashed && retried && new_files > 0 && after_shutdown == 0;
+    Ok(json!({
+        "trial": trial,
+        "at": format!("{:?}", args.at).to_lowercase(),
+        "ok": ok,
+        "request_in_flight_at_kill": in_flight,
+        "generation": [generation, next],
+        "files_before_kill": files_before,
+        "leaked_old_generation_files": leaked,
+        "worker_crashed_reported": crashed,
+        "retry_succeeded": retried,
+        "new_generation_files": new_files,
+        "files_after_shutdown": after_shutdown,
+    }))
+}
+
+fn map_crash(args: MapCrashArgs) -> anyhow::Result<()> {
+    let config: Value = serde_json::from_slice(&std::fs::read(&args.config)?)?;
+    let load_body: Value = serde_json::from_slice(&std::fs::read(&args.load_body)?)?;
+    let mut passed = 0u32;
+    let mut trials = Vec::new();
+    for trial in 0..args.trials {
+        let outcome = map_crash_trial(&args, trial, &config, &load_body).unwrap_or_else(
+            |error| json!({"trial": trial, "ok": false, "error": format!("{error:#}")}),
+        );
+        println!("{outcome}");
+        if outcome["ok"] == json!(true) {
+            passed += 1;
+        }
+        trials.push(outcome);
+    }
+    println!(
+        "{}",
+        json!({"scenario": "map_crash", "at": format!("{:?}", args.at).to_lowercase(), "trials": args.trials, "passed": passed})
+    );
+    anyhow::ensure!(
+        passed == args.trials,
+        "{} of {} trials failed",
+        args.trials - passed,
+        args.trials
+    );
+    Ok(())
 }
 
 fn temporary_result_root() -> anyhow::Result<PathBuf> {

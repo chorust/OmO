@@ -137,6 +137,18 @@ OMOBENCH_BOOTSTRAP_CONFIG=/abs/path/to/bootstrap.json ./omo-app
 
 M1 验证脚本：`scripts/ci-verify-series.py`（网络烟测，网络失败报告 `skipped(network)`，绝不计为通过）、`scripts/export-pinned-series.py` + `scripts/compare-o1280-oracle.py`（SC-003 真值对照）。验收矩阵见 [docs/m1/acceptance.md](docs/m1/acceptance.md)。
 
+### M2：区域瓦片地图与图层栈
+
+`omo-app` 的 **Map** 标签页在滑动地图上展示已确认的站点（见 [M2 Spec](specs/003-m2-regional-tile-map/spec.md)）：
+
+1. **取景与加载**：地图自动框选已确认站点，并为当前视口加一格瓦片边距加载所选目录条目的数值场。`map_load_field` 优先读取 Open-Meteo `data_spatial/<model>` 归档，必要时回退到 `data_run` 归档，徽标会标明实际来源（回退时显示 `data_run fallback`）。参考主机上冷启动首次区域加载约 25 s（`SC-001` 预算：中位数 < 30 s）。
+2. **浏览**：拖动平移、滚轮缩放（z1–z12）、用 ◀ ▶ 切换有效时刻、五种色板（`turbo`、`viridis`、`coolwarm`、`magma`、`cividis`）可选，色标范围可锁定。悬停显示原生数值、单位、匹配格点与格距，读数来自 worker 缓存的数值场（`map_inspect`），绝不从瓦片像素反推。已接收数据带 `received, not saved` 徽标。
+3. **图层栈**（工具栏 **Layers**）：内置 Natural Earth 海岸线与国界（公有领域，随程序打包，离线可用）、预报场、站点叠加层，以及任意数量的本地 `.pmtiles` 归档。每层可隐藏、调序并设置不透明度。输入归档绝对路径即可挂载；支持栅格（PNG/JPEG/WebP）与矢量（MVT，使用固定内置主题绘制）PMTiles v3，内部压缩支持 gzip、brotli、zstd。损坏或不支持的归档保留在图层栈中并显示诊断，不会阻塞其他图层。程序不会访问任何远程瓦片服务。
+4. **Export Map PNG…**（工具栏按钮与 **File** 菜单）：地图稳定后，将可见图层、站点、色标、起报/有效时间标题和署名页脚合成为一张 PNG，并写入溯源 sidecar `<name>.png.omo.json`（`omo-export-sidecar/3`：视口、有效时刻、`source_layout`、色标、含归档指纹的图层列表、署名，以及 PNG 的 `/data/sha256`）。sidecar 原子重命名是唯一提交点，成功后徽标才变为 `saved → <path>`。选择已存在的目标会先确认；系统保存对话框不可用时出现手动路径输入框。
+5. **工程**：视口、有效时刻（以小时 lead 保存）、色标和图层栈保存在 `.omoproj`（schema 仍为 `omo-project/1`，地图为新增字段；M1 工程原样打开并使用默认地图，更高主版本 `omo-project/2+` 文件会在解析前被拒绝），并参与未保存标记、自动草稿与崩溃恢复。
+
+地图与导出中的署名：预报数据 **ECMWF IFS HRES** 经 **Open-Meteo**（CC BY 4.0）提供；内置海岸线与国界来自 **Natural Earth**（公有领域）；每个已挂载归档显示其自身 `attribution` 元数据。
+
 ### 无头引导探测（`omo-probe`）
 
 用于独立验证 DuckDB `v2.0.0` + `duckomo v0.4.0` 引导、重复稳定性、R4 `spatial` 预装以及离线隔离：
@@ -182,7 +194,7 @@ cargo +1.100.0 run -p omo-app --bin omo-harness --locked -- \
   gen-result --rows 1000000 --cols 20 --output /tmp/omo-1m.arrow
 OMOBENCH_FIXTURE_RESULT=/tmp/omo-1m.arrow cargo +1.100.0 run -p omo-app --bin omo-app --locked
 
-# 其他子命令: progress | crash-inject | cancel | export-kill
+# 其他子命令: progress | crash-inject | cancel | export-kill（`--source map` 对应合成 PNG）| map-crash（对真实 worker 在地图加载/渲染中 SIGKILL）
 cargo +1.100.0 run -p omo-app --bin omo-harness --locked -- --help
 ```
 
@@ -238,7 +250,7 @@ flowchart LR
 | :--- | :--- | :--- |
 | **001 · M0 Skeleton Engine** | 已发布 `v0.1.0-m0` | 骨架引擎、锁定引导、受监管 worker、NSH 原生壳层、站点序列方案决策与 CI/Release 验证 |
 | **002 · M1 Station Time Series** | 当前已发布 `v0.1.0-m1`（见 [验收矩阵](docs/m1/acceptance.md)） | 真实目录接入（默认 ECMWF IFS HRES · 2 m 气温 · 未来 0–7 天）、站点 CSV 导入、单/多站时间序列工作流与工程持久化 |
-| **003 · M2 Static Regional Map** | 待定细化 | 静态区域地图任务、版本绑定、PNG + sidecar 导出 |
+| **003 · M2 Regional Tile Map & Layer Stack** | 已实现，待验收（见[验收矩阵](docs/m2/acceptance.md)） | 站点取景滑动地图、数值场瓦片与悬停读数、离线海岸线、本地 `.pmtiles` 图层、合成 PNG + `omo-export-sidecar/3`、`.omoproj` 地图状态 |
 | **004 · L1 Declarative Reports** | 待定细化 | 版本化 `ReportSpec`（`omo-report/1`）、只读快照隔离渲染 |
 | **005 · M3 Dynamical Icechunk** | 待定细化 | 统一 `Source` 抽象、STAC 发现与 Icechunk 接入，复用同一 `station_series` 输出 |
 
@@ -288,6 +300,7 @@ CI 矩阵覆盖 `ubuntu-24.04`（`linux_amd64`）、`ubuntu-24.04-arm`（`linux_
 | :--- | :--- |
 | M0 规范与验证 Quickstart | [M0 Spec](specs/001-m0-skeleton-engine/spec.md) · [Quickstart](specs/001-m0-skeleton-engine/quickstart.md) |
 | M1 规范、契约与验收 | [M1 Spec](specs/002-m1-station-time-series/spec.md) · [Quickstart](specs/002-m1-station-time-series/quickstart.md) · [Acceptance Matrix](docs/m1/acceptance.md) |
+| M2 规范、契约与验收 | [M2 Spec](specs/003-m2-regional-tile-map/spec.md) · [Quickstart](specs/003-m2-regional-tile-map/quickstart.md) · [Acceptance Matrix](docs/m2/acceptance.md) |
 | M0 验收矩阵与实测证据 | [Acceptance Matrix](docs/m0/acceptance.md) · [Linux 前置依赖](docs/m0/linux-prereqs.md) |
 | 关键架构决策记录 | [Duckomo 渠道决策](docs/m0/decisions/channel.md) · [站点序列方案](docs/m0/decisions/series-plan.md) · [R4 Spatial 预装](docs/m0/decisions/r4.md) · [NSH 壳层决策](docs/m0/decisions/shell.md) · [引擎来源](docs/m0/decisions/engine-source.md) |
 | 扩展版本与哈希锁定 | [duckomo.lock.json](artifacts/duckomo.lock.json) |

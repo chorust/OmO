@@ -97,7 +97,20 @@ pub struct BootstrapConfig {
     pub install_spatial_before_lock: bool,
     #[serde(default)]
     pub database_path: Option<PathBuf>,
+    /// Largest merged remote read in bytes (`duckomo_remote_max_request`). `None` selects
+    /// [`DEFAULT_REMOTE_MAX_REQUEST`] for remote sessions. Must be set before the lock.
+    #[serde(default)]
+    pub duckomo_remote_max_request: Option<u64>,
+    /// Largest gap in bytes bridged when merging reads (`duckomo_remote_merge_gap`). `None`
+    /// selects [`DEFAULT_REMOTE_MERGE_GAP`] for remote sessions. Must be set before the lock.
+    #[serde(default)]
+    pub duckomo_remote_merge_gap: Option<u64>,
 }
+
+/// `4 MiB`: lets a regional `data_spatial` band move in a few large range requests.
+pub const DEFAULT_REMOTE_MAX_REQUEST: u64 = 4 * 1024 * 1024;
+/// `64 KiB`: bridge small gaps instead of issuing another request.
+pub const DEFAULT_REMOTE_MERGE_GAP: u64 = 64 * 1024;
 
 const fn default_httpfs_timeout_ms() -> u64 {
     15_000
@@ -112,6 +125,16 @@ impl BootstrapConfig {
         self.database_path
             .clone()
             .unwrap_or_else(|| self.data_dir.join("omobench.duckdb"))
+    }
+
+    pub fn remote_max_request(&self) -> u64 {
+        self.duckomo_remote_max_request
+            .unwrap_or(DEFAULT_REMOTE_MAX_REQUEST)
+    }
+
+    pub fn remote_merge_gap(&self) -> u64 {
+        self.duckomo_remote_merge_gap
+            .unwrap_or(DEFAULT_REMOTE_MERGE_GAP)
     }
 
     pub fn httpfs_timeout(&self) -> std::time::Duration {

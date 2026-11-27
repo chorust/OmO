@@ -265,6 +265,8 @@ fn execute(args: Args) -> Result<SpikeReport, String> {
         no_network: false,
         install_spatial_before_lock: matches!(args.plan, PlanArg::B),
         database_path: None,
+        duckomo_remote_max_request: None,
+        duckomo_remote_merge_gap: None,
     };
     let mut connection = open_bootstrapped(config).map_err(|error| error.to_string())?;
     let run = match args.plan {
@@ -472,6 +474,8 @@ fn execute_plan_g(args: &Args) -> Result<Value, String> {
         no_network: false,
         install_spatial_before_lock: matches!(args.select, SelectMode::Regions),
         database_path: None,
+        duckomo_remote_max_request: None,
+        duckomo_remote_merge_gap: None,
     };
     let mut connection = open_bootstrapped(config.clone()).map_err(|error| error.to_string())?;
     let source = ConnMetaSource {
@@ -676,7 +680,14 @@ fn crosscheck_points(
 ) -> Result<Value, String> {
     let total = O1280::points() as usize;
     let step = (total / sample_count.max(1)).max(1);
-    let mut indices = vec![0u32, 10, 19, (total - 20) as u32, (total - 10) as u32, (total - 1) as u32];
+    let mut indices = vec![
+        0u32,
+        10,
+        19,
+        (total - 20) as u32,
+        (total - 10) as u32,
+        (total - 1) as u32,
+    ];
     let mut idx = 0usize;
     while indices.len() < sample_count && idx < total {
         let candidate = idx as u32;
@@ -705,29 +716,31 @@ fn crosscheck_points(
         let cfg = config.clone();
         let object_url = object_url.to_owned();
         let domain = domain.to_owned();
-        handles.push(std::thread::spawn(move || -> Result<(usize, Vec<Value>), String> {
-            let conn = open_bootstrapped(cfg).map_err(|error| error.to_string())?;
-            let mut matched = 0usize;
-            let mut diffs = Vec::new();
-            for point in &chunk {
-                let coords =
-                    plan_g::probe_om_point_coordinates(&conn, &object_url, &domain, point)
-                        .map_err(|error| error.to_string())?;
-                if coords.len() == 1
-                    && coords[0].0.to_bits() == point.lat.to_bits()
-                    && coords[0].1.to_bits() == point.lon.to_bits()
-                {
-                    matched += 1;
-                } else if diffs.len() < 5 {
-                    diffs.push(serde_json::json!({
-                        "flat_index": point.flat_index,
-                        "expected": [point.lat, point.lon],
-                        "actual": coords,
-                    }));
+        handles.push(std::thread::spawn(
+            move || -> Result<(usize, Vec<Value>), String> {
+                let conn = open_bootstrapped(cfg).map_err(|error| error.to_string())?;
+                let mut matched = 0usize;
+                let mut diffs = Vec::new();
+                for point in &chunk {
+                    let coords =
+                        plan_g::probe_om_point_coordinates(&conn, &object_url, &domain, point)
+                            .map_err(|error| error.to_string())?;
+                    if coords.len() == 1
+                        && coords[0].0.to_bits() == point.lat.to_bits()
+                        && coords[0].1.to_bits() == point.lon.to_bits()
+                    {
+                        matched += 1;
+                    } else if diffs.len() < 5 {
+                        diffs.push(serde_json::json!({
+                            "flat_index": point.flat_index,
+                            "expected": [point.lat, point.lon],
+                            "actual": coords,
+                        }));
+                    }
                 }
-            }
-            Ok((matched, diffs))
-        }));
+                Ok((matched, diffs))
+            },
+        ));
     }
     let mut matched = 0usize;
     let mut mismatches = Vec::new();

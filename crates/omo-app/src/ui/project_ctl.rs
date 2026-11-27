@@ -16,7 +16,7 @@ use omo_project::{
     preview_key::PreviewWindow,
 };
 
-use super::series_panel::SeriesController;
+use super::{map_view::MapController, series_panel::SeriesController};
 use crate::host::{project_io, series_host::now_utc_iso};
 
 const DRAFT_DEBOUNCE: Duration = Duration::from_secs(2);
@@ -25,6 +25,7 @@ const DRAFT_INTERVAL: Duration = Duration::from_secs(30);
 #[derive(Clone)]
 pub(super) struct ProjectController {
     series: SeriesController,
+    map: MapController,
     sql: Signal<String>,
     on_edit: Rc<dyn Fn(String)>,
     doc: Rc<RefCell<ProjectDoc>>,
@@ -35,10 +36,17 @@ pub(super) struct ProjectController {
 }
 
 impl ProjectController {
-    pub fn new(series: SeriesController, sql: Signal<String>, on_edit: Rc<dyn Fn(String)>) -> Self {
+    pub fn new(
+        series: SeriesController,
+        map: MapController,
+        sql: Signal<String>,
+        on_edit: Rc<dyn Fn(String)>,
+    ) -> Self {
         let doc = ProjectDoc::new(new_doc_id());
+        map.set_doc_id(doc.doc_id().to_owned());
         let this = Self {
             series,
+            map,
             sql,
             on_edit,
             doc: Rc::new(RefCell::new(doc)),
@@ -54,7 +62,7 @@ impl ProjectController {
     /// Cheap change fingerprint; tracks every persisted input reactively.
     pub fn fingerprint(&self) -> String {
         format!(
-            "{}|{}|{}|{}|{}|{}|{}",
+            "{}|{}|{}|{}|{}|{}|{}|{}",
             self.series
                 .snapshot
                 .get()
@@ -66,6 +74,7 @@ impl ProjectController {
             self.series.max_distance.get(),
             self.series.station_filter.get(),
             self.sql.get(),
+            self.map.state_fingerprint(),
         )
     }
 
@@ -148,10 +157,15 @@ impl ProjectController {
             .filter(|id| !id.is_empty())
             .map(str::to_owned)
             .collect();
+        doc.map = self.map.snapshot_state();
         doc
     }
 
     fn apply_doc(&self, doc: ProjectDoc, stations_path: Option<PathBuf>, dirty: bool) {
+        // The map first: its saved viewport must be in place before the new stations trigger
+        // the automatic framing.
+        self.map.set_doc_id(doc.doc_id().to_owned());
+        self.map.apply_state(doc.map.clone());
         self.path.set(doc.path().map(Path::to_path_buf));
         self.series.snapshot.set(doc.stations.clone());
         self.series.stations_path.set(stations_path);
@@ -425,20 +439,18 @@ impl ProjectController {
                     let mut doc = latest.draft.doc.clone();
                     doc.set_path(latest.draft.project_path.clone());
                     let doc_for_io = doc.clone();
-                    let stations_path = blocking(move || {
-                        project_io::materialize_stations(&doc_for_io, &app_data)
-                    })
-                    .await
-                    .ok()
-                    .flatten();
+                    let stations_path =
+                        blocking(move || project_io::materialize_stations(&doc_for_io, &app_data))
+                            .await
+                            .ok()
+                            .flatten();
                     this.apply_doc(doc, stations_path, true);
                     this.staged_fingerprint.set(Some(this.fingerprint()));
                     this.status
                         .set("Recovered unsaved draft (not yet saved to project file).".into());
                 }
                 Ok(answer) if answer.action.as_deref() == Some("discard") => {
-                    let _ =
-                        blocking(move || omo_project::draft::discard(&app_data, &doc_id)).await;
+                    let _ = blocking(move || omo_project::draft::discard(&app_data, &doc_id)).await;
                 }
                 _ => {}
             }

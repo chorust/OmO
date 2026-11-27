@@ -10,9 +10,12 @@ pub const SIDECAR_SCHEMA: &str = "omo-export-sidecar/1";
 /// M1 export provenance sidecar schema.
 pub const SIDECAR_SCHEMA_V2: &str = "omo-export-sidecar/2";
 
-/// Return true if `schema` is a supported export sidecar schema (`/1` or `/2`).
+/// M2 composite map PNG export provenance sidecar schema.
+pub const SIDECAR_SCHEMA_V3: &str = "omo-export-sidecar/3";
+
+/// Return true if `schema` is a supported export sidecar schema (`/1`, `/2`, or `/3`).
 pub fn is_supported_sidecar_schema(schema: &str) -> bool {
-    schema == SIDECAR_SCHEMA || schema == SIDECAR_SCHEMA_V2
+    schema == SIDECAR_SCHEMA || schema == SIDECAR_SCHEMA_V2 || schema == SIDECAR_SCHEMA_V3
 }
 
 /// Filename suffix appended to an export target to name its provenance sidecar.

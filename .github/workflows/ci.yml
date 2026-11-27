@@ -62,3 +62,6 @@ jobs:
       - name: Verify M1 series smoke test (network; skipped(network) is never a pass)
         if: matrix.duckomo_platform != ''
         run: python3 scripts/ci-verify-series.py
+      - name: Verify M2 map smoke test (field, 4 tiles, readout, composite PNG; skipped(network) is never a pass)
+        if: matrix.duckomo_platform != ''
+        run: python3 scripts/ci-verify-map.py

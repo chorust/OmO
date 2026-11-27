@@ -28,6 +28,7 @@ APP_DIRECT_FORBIDDEN_RE = re.compile(
     r"^(?:reqwest|ureq|hyper|isahc)$",
     re.I,
 )
+ENGINE_FORBIDDEN_RE = re.compile(r"^(?:zstd-sys|tokio|reqwest)$", re.I)
 HOST_NSH_RE = re.compile(r"\bnsh_[A-Za-z0-9_]*\b")
 
 
@@ -183,6 +184,11 @@ def static_violations(base: pathlib.Path) -> list[str]:
         version = engine_duckdb.get("version") if isinstance(engine_duckdb, dict) else engine_duckdb
         if version != "=1.20000.1":
             violations.append(f"omo-engine: duckdb must be pinned to =1.20000.1, found {version!r}")
+    for table in dependency_tables(engine_data):
+        for name, spec in table.items():
+            for dep in dependency_names(name, spec):
+                if ENGINE_FORBIDDEN_RE.match(dep):
+                    violations.append(f"omo-engine: forbidden dependency `{dep}` in {engine_path}")
     root_workspace = tomllib.loads((base / "Cargo.toml").read_text()).get("workspace", {}).get("dependencies", {})
     workspace_duckdb = root_workspace.get("duckdb")
     workspace_version = workspace_duckdb.get("version") if isinstance(workspace_duckdb, dict) else workspace_duckdb
@@ -220,6 +226,9 @@ def self_test() -> int:
         ("omo-protocol", "gpui", None),
         ("omo-worker", "tauri", None),
         ("omo-project", "nsh-platform-gpui", None),
+        ("omo-engine", "zstd-sys", None),
+        ("omo-engine", "tokio", None),
+        ("omo-engine", "reqwest", None),
         (APP, "duckdb", None),
         (APP, "libduckdb-sys", None),
         (APP, "gpui", None),

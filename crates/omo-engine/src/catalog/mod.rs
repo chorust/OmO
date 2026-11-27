@@ -44,6 +44,8 @@ pub enum CatalogError {
     UnknownLayout { kind: String },
     #[error("unknown grid kind `{kind}`")]
     UnknownGrid { kind: String },
+    #[error("invalid spatial_layout: {detail}")]
+    InvalidSpatialLayout { detail: String },
     #[error("default window {start}–{end} h is outside the declared cycle horizons")]
     WindowOutsideHorizons { start: u32, end: u32 },
     #[error("catalog has no entries")]
@@ -63,11 +65,12 @@ impl Catalog {
                 CatalogError::UnsupportedSchema { schema }
             }
             CatalogValidationError::MissingVersion => CatalogError::MissingVersion,
-            CatalogValidationError::DefaultCount { count } => {
-                CatalogError::DefaultCount { count }
-            }
+            CatalogValidationError::DefaultCount { count } => CatalogError::DefaultCount { count },
             CatalogValidationError::UnknownLayout { kind } => CatalogError::UnknownLayout { kind },
             CatalogValidationError::UnknownGrid { kind } => CatalogError::UnknownGrid { kind },
+            CatalogValidationError::InvalidSpatialLayout { detail } => {
+                CatalogError::InvalidSpatialLayout { detail }
+            }
             CatalogValidationError::WindowOutsideHorizons { start, end } => {
                 CatalogError::WindowOutsideHorizons { start, end }
             }
@@ -94,6 +97,39 @@ pub fn object_url(entry: &CatalogEntry, reference_time_utc: &str) -> String {
 
 pub fn meta_url(entry: &CatalogEntry, reference_time_utc: &str) -> String {
     render_template(entry, &entry.layout.meta, reference_time_utc)
+}
+
+/// `data_spatial` object URL for one run and one valid time, or `None` when the entry does
+/// not declare a `spatial_layout`.
+pub fn spatial_object_url(
+    entry: &CatalogEntry,
+    reference_time_utc: &str,
+    valid_time_utc: &str,
+) -> Option<String> {
+    let spatial = entry.spatial_layout.as_ref()?;
+    let run = run::split_reference(reference_time_utc);
+    let valid = run::split_reference(valid_time_utc);
+    let valid_digits: String = valid_time_utc
+        .chars()
+        .filter(|ch| ch.is_ascii_digit())
+        .collect();
+    let valid_minute = valid_digits.get(10..12).unwrap_or("00").to_owned();
+    let relative = spatial
+        .object
+        .replace("{valid_YYYY}", &valid.year)
+        .replace("{valid_MM}", &valid.month)
+        .replace("{valid_DD}", &valid.day)
+        .replace("{valid_HH}", &valid.hour)
+        .replace("{valid_mm}", &valid_minute)
+        .replace("{YYYY}", &run.year)
+        .replace("{MM}", &run.month)
+        .replace("{DD}", &run.day)
+        .replace("{HH}", &run.hour);
+    Some(format!(
+        "{}/{}",
+        spatial.base.trim_end_matches('/'),
+        relative.trim_start_matches('/')
+    ))
 }
 
 fn render_template(entry: &CatalogEntry, template: &str, reference_time_utc: &str) -> String {

@@ -81,6 +81,26 @@ impl O1280 {
         (lat_f32(y), lon_f32(x, nx_const(y)))
     }
 
+    pub fn rows() -> usize {
+        ROWS
+    }
+
+    /// Float32 latitude of row `y` (north to south).
+    pub fn lat_of_row(y: usize) -> f32 {
+        assert!(y < ROWS, "O1280 row {y} is outside 0..{ROWS}");
+        lat_f32(y)
+    }
+
+    /// Column of the grid point in row `y` whose Float32 longitude equals `lon` exactly, if any.
+    pub fn column_of(y: usize, lon: f32) -> Option<usize> {
+        let nx = Self::nx(y) as usize;
+        let east = if lon < 0.0 { lon + 360.0 } else { lon };
+        let guess = (f64::from(east) * nx as f64 / 360.0).round() as usize % nx;
+        [guess, (guess + 1) % nx, (guess + nx - 1) % nx]
+            .into_iter()
+            .find(|&x| lon_f32(x, nx as u32).to_bits() == lon.to_bits())
+    }
+
     /// Row whose Float32 latitude is closest to `lat`.
     pub fn row_near_lat(lat: f64) -> usize {
         if !lat.is_finite() {

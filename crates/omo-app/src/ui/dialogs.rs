@@ -39,6 +39,30 @@ pub(crate) fn choose_stations_csv(
     });
 }
 
+pub(crate) fn choose_pmtiles(
+    on_selected: impl Fn(PathBuf) + 'static,
+    on_error: impl Fn(String) + 'static,
+) {
+    spawn(async move {
+        let answer = pick_paths(
+            OpenDialog::files()
+                .filter(FileFilter::new("PMTiles archives", ["pmtiles"]))
+                .title("Add local PMTiles layer")
+                .button_label("Add layer"),
+        )
+        .await;
+        match answer {
+            Ok(Some(paths)) => {
+                if let Some(path) = paths.into_iter().next() {
+                    on_selected(path);
+                }
+            }
+            Ok(None) => {}
+            Err(error) => on_error(error),
+        }
+    });
+}
+
 pub(crate) fn choose_export_path(
     on_selected: impl Fn(PathBuf, bool) + 'static,
     on_error: impl Fn(String) + 'static,
@@ -56,6 +80,30 @@ pub(crate) fn choose_export_path(
         match answer {
             Ok(Some(path)) => confirm_export_path(path, on_selected, on_error),
             Ok(None) => {}
+            Err(error) => on_error(error),
+        }
+    });
+}
+
+/// Save chooser for the composite map PNG; the replace confirmation follows via
+/// [`confirm_export_path`].
+pub(crate) fn choose_map_export_path(
+    on_selected: impl Fn(PathBuf, bool) + 'static,
+    on_error: impl Fn(String) + 'static,
+) {
+    spawn(async move {
+        let answer = pick_save_path(
+            SaveDialog::new()
+                .file_name("omobench-map.png")
+                .filter(FileFilter::new("PNG images", ["png"]))
+                .title("Export map")
+                .button_label("Export"),
+        )
+        .await;
+
+        match answer {
+            Ok(Some(path)) => confirm_export_path(path, on_selected, on_error),
+            Ok(None) => on_error("save dialog closed with no path".into()),
             Err(error) => on_error(error),
         }
     });

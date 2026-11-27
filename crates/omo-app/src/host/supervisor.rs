@@ -86,16 +86,12 @@ impl SupervisorCore {
                 EventDisposition::Accepted
             }
             omo_protocol::generation::GenerationDisposition::Stale => {
-                let mut result_files_deleted = ["result_ref", "plot_ref", "matches_ref"]
-                    .into_iter()
-                    .filter_map(|key| envelope.body.get(key)?.get("path")?.as_str())
+                let mut paths = Vec::new();
+                collect_result_paths(&envelope.body, &mut paths);
+                let result_files_deleted = paths
+                    .iter()
                     .filter(|path| self.remove_result_if_owned(Path::new(path)))
                     .count();
-                if let Some(parquet) = envelope.body.get("parquet_path").and_then(Value::as_str) {
-                    if self.remove_result_if_owned(Path::new(parquet)) {
-                        result_files_deleted += 1;
-                    }
-                }
                 EventDisposition::DiscardedStale {
                     result_files_deleted,
                 }
@@ -117,8 +113,40 @@ impl SupervisorCore {
                 *state = JobState::Failed(omo_protocol::state::FailKind::WorkerCrashed);
             }
         }
+        self.reap_current_generation();
         self.generation = self.generation.saturating_add(1);
         self.last_heartbeat = at;
+    }
+
+    /// Recursively remove `<result_root>/g<generation>/` (stale tiles, fields, staging
+    /// files). Returns the number of generation directories removed (`0` or `1`).
+    /// Called on worker crash/restart for the dying generation and on clean shutdown.
+    pub fn reap_current_generation(&self) -> usize {
+        self.reap_generation_dir(self.generation)
+    }
+
+    fn reap_generation_dir(&self, generation: u64) -> usize {
+        let Some(root) = &self.result_root else {
+            return 0;
+        };
+        let Ok(canonical_root) = std::fs::canonicalize(root) else {
+            return 0;
+        };
+        let dir = canonical_root.join(format!("g{generation}"));
+        // `symlink_metadata` so a symlink named `g<N>` is never followed out of the root.
+        let Ok(meta) = std::fs::symlink_metadata(&dir) else {
+            return 0;
+        };
+        if !meta.is_dir() {
+            return 0;
+        }
+        let Ok(canonical_dir) = std::fs::canonicalize(&dir) else {
+            return 0;
+        };
+        if canonical_dir.parent() != Some(canonical_root.as_path()) {
+            return 0;
+        }
+        usize::from(std::fs::remove_dir_all(&canonical_dir).is_ok())
     }
 
     fn remove_result_if_owned(&self, path: &Path) -> bool {
@@ -132,7 +160,8 @@ impl SupervisorCore {
             return false;
         };
         let ext = canonical_path.extension().and_then(|ext| ext.to_str());
-        if !canonical_path.starts_with(&canonical_root) || !matches!(ext, Some("arrow" | "parquet"))
+        if !canonical_path.starts_with(&canonical_root)
+            || !matches!(ext, Some("arrow" | "parquet" | "rgba" | "png" | "f32bin"))
         {
             return false;
         }
@@ -428,6 +457,7 @@ async fn supervisor_loop<F: WorkerFactory>(
                     }
                     Some(SupervisorCommand::Shutdown) | None => {
                         let _ = worker.kill();
+                        core.reap_current_generation();
                         return;
                     }
                 }
@@ -591,7 +621,31 @@ fn is_tracked_request(kind: &str) -> bool {
             | "resolve_run"
             | "series"
             | "sql_session"
+            | "map_load_field"
+            | "map_render_tiles"
+            | "map_inspect"
+            | "map_layer_probe"
     )
+}
+
+/// Every string in `value` that could name a worker-written result file. Ownership and the
+/// extension whitelist are enforced by `remove_result_if_owned`.
+fn collect_result_paths(value: &Value, out: &mut Vec<String>) {
+    match value {
+        Value::String(text) => {
+            let ext = Path::new(text).extension().and_then(|ext| ext.to_str());
+            if matches!(ext, Some("arrow" | "parquet" | "rgba" | "png" | "f32bin")) {
+                out.push(text.clone());
+            }
+        }
+        Value::Array(items) => items
+            .iter()
+            .for_each(|item| collect_result_paths(item, out)),
+        Value::Object(map) => map
+            .values()
+            .for_each(|item| collect_result_paths(item, out)),
+        _ => {}
+    }
 }
 
 #[allow(clippy::too_many_arguments)]

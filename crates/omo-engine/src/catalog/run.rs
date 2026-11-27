@@ -350,7 +350,8 @@ fn civil_to_unix(
             "invalid civil time {year:04}-{month:02}-{day:02}T{hour:02}:{minute:02}:{second:02}Z"
         )));
     }
-    let days = omo_protocol::utc::days_from_civil(i64::from(year), i64::from(month), i64::from(day));
+    let days =
+        omo_protocol::utc::days_from_civil(i64::from(year), i64::from(month), i64::from(day));
     Ok(days * 86400 + i64::from(hour) * 3600 + i64::from(minute) * 60 + i64::from(second))
 }
 

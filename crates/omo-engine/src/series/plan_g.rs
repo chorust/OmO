@@ -230,83 +230,87 @@ impl PointReader for ParallelDuckDbPointReader<'_> {
             let mut handles = Vec::with_capacity(workers);
             for batch in unique_points.chunks(chunk_size) {
                 let cancel = cancel.clone();
-                handles.push(scope.spawn(move || -> Result<(Vec<PointRow>, PlanGScanStats), SeriesError> {
-                    if let Some(cancel) = &cancel {
-                        cancel.check()?;
-                    }
-                    let conn = crate::open_bootstrapped(config.clone()).map_err(|error| {
-                        SeriesError::DuckDb {
-                            stage: "plan_g_worker_open",
-                            reason: error.to_string(),
-                        }
-                    })?;
-                    let db = conn.connection().map_err(|error| SeriesError::DuckDb {
-                        stage: "plan_g_worker_conn",
-                        reason: error.to_string(),
-                    })?;
-                    if let Some(cancel) = &cancel {
-                        cancel.register(conn.interrupt_handle().map_err(|error| {
-                            SeriesError::DuckDb {
-                                stage: "plan_g_worker_interrupt",
-                                reason: error.to_string(),
-                            }
-                        })?);
-                    }
-                    let mut out = Vec::new();
-                    let mut stats = PlanGScanStats::default();
-                    for point in batch {
+                handles.push(scope.spawn(
+                    move || -> Result<(Vec<PointRow>, PlanGScanStats), SeriesError> {
                         if let Some(cancel) = &cancel {
                             cancel.check()?;
                         }
-                        let sql = read_om_sql(https_ref, domain, std::slice::from_ref(point));
-                        let mut stmt = db.prepare(&sql).map_err(|error| SeriesError::DuckDb {
-                            stage: "plan_g_prepare",
+                        let conn = crate::open_bootstrapped(config.clone()).map_err(|error| {
+                            SeriesError::DuckDb {
+                                stage: "plan_g_worker_open",
+                                reason: error.to_string(),
+                            }
+                        })?;
+                        let db = conn.connection().map_err(|error| SeriesError::DuckDb {
+                            stage: "plan_g_worker_conn",
                             reason: error.to_string(),
                         })?;
-                        let rows = stmt
-                            .query_map([], |row| {
-                                Ok(PointRow {
-                                    lat: row.get::<_, f32>(0)?,
-                                    lon: row.get::<_, f32>(1)?,
-                                    time_index: 0,
-                                    valid_time: row.get::<_, Option<String>>(2)?,
-                                    value: row.get::<_, Option<f64>>(3)?,
-                                })
-                            })
-                            .map_err(|error| SeriesError::DuckDb {
-                                stage: "plan_g_query",
-                                reason: error.to_string(),
-                            })?;
-                        for row in rows {
-                            out.push(row.map_err(|error| SeriesError::DuckDb {
-                                stage: "plan_g_read",
-                                reason: error.to_string(),
+                        if let Some(cancel) = &cancel {
+                            cancel.register(conn.interrupt_handle().map_err(|error| {
+                                SeriesError::DuckDb {
+                                    stage: "plan_g_worker_interrupt",
+                                    reason: error.to_string(),
+                                }
                             })?);
                         }
-                        if let Ok(measurement) = crate::series::read_latest_scan_measurement(db) {
-                            stats.bytes_fetched = stats.bytes_fetched.saturating_add(
-                                measurement
-                                    .raw_metrics
-                                    .pointer("/legacy_v2/bytes_fetched")
-                                    .and_then(serde_json::Value::as_u64)
-                                    .or(measurement.physical_read_bytes)
-                                    .or(measurement.data_bytes)
-                                    .unwrap_or(0),
-                            );
-                            stats.read_requests = stats.read_requests.saturating_add(
-                                measurement
-                                    .raw_metrics
-                                    .pointer("/legacy_v2/read_requests")
-                                    .and_then(serde_json::Value::as_u64)
-                                    .unwrap_or(0),
-                            );
-                            stats.data_bytes = stats
-                                .data_bytes
-                                .saturating_add(measurement.data_bytes.unwrap_or(0));
+                        let mut out = Vec::new();
+                        let mut stats = PlanGScanStats::default();
+                        for point in batch {
+                            if let Some(cancel) = &cancel {
+                                cancel.check()?;
+                            }
+                            let sql = read_om_sql(https_ref, domain, std::slice::from_ref(point));
+                            let mut stmt =
+                                db.prepare(&sql).map_err(|error| SeriesError::DuckDb {
+                                    stage: "plan_g_prepare",
+                                    reason: error.to_string(),
+                                })?;
+                            let rows = stmt
+                                .query_map([], |row| {
+                                    Ok(PointRow {
+                                        lat: row.get::<_, f32>(0)?,
+                                        lon: row.get::<_, f32>(1)?,
+                                        time_index: 0,
+                                        valid_time: row.get::<_, Option<String>>(2)?,
+                                        value: row.get::<_, Option<f64>>(3)?,
+                                    })
+                                })
+                                .map_err(|error| SeriesError::DuckDb {
+                                    stage: "plan_g_query",
+                                    reason: error.to_string(),
+                                })?;
+                            for row in rows {
+                                out.push(row.map_err(|error| SeriesError::DuckDb {
+                                    stage: "plan_g_read",
+                                    reason: error.to_string(),
+                                })?);
+                            }
+                            if let Ok(measurement) = crate::series::read_latest_scan_measurement(db)
+                            {
+                                stats.bytes_fetched = stats.bytes_fetched.saturating_add(
+                                    measurement
+                                        .raw_metrics
+                                        .pointer("/legacy_v2/bytes_fetched")
+                                        .and_then(serde_json::Value::as_u64)
+                                        .or(measurement.physical_read_bytes)
+                                        .or(measurement.data_bytes)
+                                        .unwrap_or(0),
+                                );
+                                stats.read_requests = stats.read_requests.saturating_add(
+                                    measurement
+                                        .raw_metrics
+                                        .pointer("/legacy_v2/read_requests")
+                                        .and_then(serde_json::Value::as_u64)
+                                        .unwrap_or(0),
+                                );
+                                stats.data_bytes = stats
+                                    .data_bytes
+                                    .saturating_add(measurement.data_bytes.unwrap_or(0));
+                            }
                         }
-                    }
-                    Ok((out, stats))
-                }));
+                        Ok((out, stats))
+                    },
+                ));
             }
             let mut merged = Vec::new();
             let mut total_stats = PlanGScanStats::default();
@@ -316,10 +320,12 @@ impl PointReader for ParallelDuckDbPointReader<'_> {
                     reason: "plan G reader thread panicked".into(),
                 })??;
                 merged.extend(part);
-                total_stats.bytes_fetched =
-                    total_stats.bytes_fetched.saturating_add(stats.bytes_fetched);
-                total_stats.read_requests =
-                    total_stats.read_requests.saturating_add(stats.read_requests);
+                total_stats.bytes_fetched = total_stats
+                    .bytes_fetched
+                    .saturating_add(stats.bytes_fetched);
+                total_stats.read_requests = total_stats
+                    .read_requests
+                    .saturating_add(stats.read_requests);
                 total_stats.data_bytes = total_stats.data_bytes.saturating_add(stats.data_bytes);
             }
             self.scan_stats.bytes_fetched = self
@@ -581,17 +587,18 @@ impl PointReader for DuckDbPointReader<'_> {
         points: &[SelectedPoint],
     ) -> Result<Vec<PointRow>, SeriesError> {
         let https = crate::catalog::open_meteo_https(object_url);
-        let db = self.conn.connection().map_err(|error| SeriesError::DuckDb {
-            stage: "plan_g_conn",
-            reason: error.to_string(),
-        })?;
-        let sql = read_om_sql(&https, self.domain, points);
-        let mut statement = db
-            .prepare(&sql)
+        let db = self
+            .conn
+            .connection()
             .map_err(|error| SeriesError::DuckDb {
-                stage: "plan_g_prepare",
+                stage: "plan_g_conn",
                 reason: error.to_string(),
             })?;
+        let sql = read_om_sql(&https, self.domain, points);
+        let mut statement = db.prepare(&sql).map_err(|error| SeriesError::DuckDb {
+            stage: "plan_g_prepare",
+            reason: error.to_string(),
+        })?;
         let rows = statement
             .query_map([], |row| {
                 Ok(PointRow {

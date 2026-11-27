@@ -2,6 +2,7 @@
 
 pub mod doc;
 pub mod draft;
+pub mod map;
 pub mod preview_key;
 pub mod stations;
 

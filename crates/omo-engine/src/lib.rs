@@ -8,6 +8,7 @@ pub mod export;
 pub mod grid;
 pub mod limits;
 pub mod lock;
+pub mod map;
 pub mod plot;
 pub mod probe;
 pub mod query;

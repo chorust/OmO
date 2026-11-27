@@ -104,6 +104,18 @@ pub trait WorkerBackend: Send + 'static {
     fn export(&mut self, _body: &Value) -> Result<Value, BackendError> {
         Err("export is unavailable".into())
     }
+    fn map_load_field(&mut self, _body: &Value) -> Result<Value, BackendError> {
+        Err("map_load_field is unavailable".into())
+    }
+    fn map_render_tiles(&mut self, _body: &Value) -> Result<Value, BackendError> {
+        Err("map_render_tiles is unavailable".into())
+    }
+    fn map_inspect(&mut self, _body: &Value) -> Result<Value, BackendError> {
+        Err("map_inspect is unavailable".into())
+    }
+    fn map_layer_probe(&mut self, _body: &Value) -> Result<Value, BackendError> {
+        Err("map_layer_probe is unavailable".into())
+    }
     fn interrupt(&mut self, request_id: u64) -> Result<(), String>;
     fn ensure_spatial(&mut self) -> Result<Value, String>;
 }
@@ -203,7 +215,7 @@ where
                         if matches!(
                             request.kind.as_str(),
                             "catalog_check" | "resolve_run" | "series" | "sql_session"
-                        ) =>
+                        ) || is_map_request(&request.kind) =>
                     {
                         let mut body = match payload {
                             Value::Object(map) => Value::Object(map),
@@ -300,10 +312,7 @@ where
                     }
                 }
             }
-            "query" | "export" | "series_plan" | "catalog_check" | "resolve_run" | "series"
-            | "sql_session"
-                if ready && active.is_none() =>
-            {
+            kind if is_task_request(kind) && ready && active.is_none() => {
                 let mut engine = backend.take().expect("idle backend");
                 if let Err(message) = engine.probe_task() {
                     send_failed(
@@ -332,7 +341,8 @@ where
                 let tx = done_tx.clone();
                 let task_kind = request.kind.clone();
                 let initial_stage = match task_kind.as_str() {
-                    "series" => "planning",
+                    "series" | "map_load_field" => "planning",
+                    "map_render_tiles" | "map_inspect" | "map_layer_probe" => "reading",
                     "export" => "writing",
                     _ => "reading",
                 };
@@ -355,6 +365,10 @@ where
                         "resolve_run" => engine.resolve_run(&body),
                         "series" => engine.series(&body),
                         "sql_session" => engine.sql_session(&body),
+                        "map_load_field" => engine.map_load_field(&body),
+                        "map_render_tiles" => engine.map_render_tiles(&body),
+                        "map_inspect" => engine.map_inspect(&body),
+                        "map_layer_probe" => engine.map_layer_probe(&body),
                         _ => engine.query(&body),
                     };
                     engine.set_stage_reporter(None);
@@ -410,19 +424,13 @@ where
                 }
                 return Ok(WorkerExit::Shutdown);
             }
-            "query" | "export" | "series_plan" | "catalog_check" | "resolve_run" | "series"
-            | "sql_session"
-                if !ready =>
-            {
-                send_failed(
-                    stdout,
-                    &request,
-                    FailKind::Bootstrap("worker is not bootstrapped".into()),
-                    "worker is not bootstrapped",
-                )?
-            }
-            "query" | "export" | "series_plan" | "catalog_check" | "resolve_run" | "series"
-            | "sql_session" | "ensure_spatial" => send_failed(
+            kind if is_task_request(kind) && !ready => send_failed(
+                stdout,
+                &request,
+                FailKind::Bootstrap("worker is not bootstrapped".into()),
+                "worker is not bootstrapped",
+            )?,
+            kind if is_task_request(kind) || kind == "ensure_spatial" => send_failed(
                 stdout,
                 &request,
                 FailKind::Query("busy: worker already has an active request".into()),
@@ -439,6 +447,28 @@ where
             }
         }
     }
+}
+
+/// M2 map requests; their results are plain `result` bodies like the M1 request kinds.
+fn is_map_request(kind: &str) -> bool {
+    matches!(
+        kind,
+        "map_load_field" | "map_render_tiles" | "map_inspect" | "map_layer_probe"
+    )
+}
+
+/// Requests that occupy the single worker task slot.
+fn is_task_request(kind: &str) -> bool {
+    matches!(
+        kind,
+        "query"
+            | "export"
+            | "series_plan"
+            | "catalog_check"
+            | "resolve_run"
+            | "series"
+            | "sql_session"
+    ) || is_map_request(kind)
 }
 
 fn query_result_event_body(request_id: u64, payload: Value) -> Value {

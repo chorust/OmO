@@ -137,6 +137,18 @@ Data attribution: Weather data by Open-Meteo.com (CC BY 4.0); Copyright © ECMWF
 
 M1 verification scripts: `scripts/ci-verify-series.py` (network smoke test; a network failure reports `skipped(network)` and never counts as a pass), `scripts/export-pinned-series.py` + `scripts/compare-o1280-oracle.py` (SC-003 oracle comparison). The acceptance matrix is in [docs/m1/acceptance.md](docs/m1/acceptance.md).
 
+### M2: regional tile map & layer stack
+
+The **Map** tab of `omo-app` shows the confirmed stations over a slippy map (see the [M2 Spec](specs/003-m2-regional-tile-map/spec.md)):
+
+1. **Frame and load**: the map frames the confirmed stations and loads the selected catalog entry's numeric field for the viewport plus a one-tile margin. A numeric `map_load_field` reads the Open-Meteo `data_spatial/<model>` archive first and falls back to the `data_run` archive; the badge says which one was used (`data_run fallback` is shown when the fallback was needed). The first cold load of a regional field takes about 25 s on the reference host (`SC-001` budget: median < 30 s).
+2. **Navigate**: drag to pan, scroll to zoom (z1–z12), step the valid time with the ◀ ▶ buttons, pick one of five palettes (`turbo`, `viridis`, `coolwarm`, `magma`, `cividis`) and optionally lock the colour range. Hovering shows the native numeric value, its unit, the matched grid point and the grid spacing, read from the worker-cached field (`map_inspect`) — never from a tile pixel. Received data is badged `received, not saved`.
+3. **Layer Stack** (toolbar **Layers**): built-in Natural Earth coastlines and borders (public domain, bundled, works offline), the forecast field, the station overlay, and any number of local `.pmtiles` archives. Each layer can be hidden, re-ordered and given an opacity. Mount an archive by typing its absolute path; raster (PNG/JPEG/WebP) and vector (MVT, drawn with a fixed built-in theme) PMTiles v3 archives are supported, with gzip, brotli or zstd internal compression. A corrupt or unsupported archive stays in the stack with its diagnostic and never blocks the other layers. No remote tile server is ever contacted.
+4. **Export Map PNG…** (toolbar button and **File** menu): once the map has settled, the visible layers, stations, colour bar, run / valid-time header and attribution footer are composited into one PNG together with a provenance sidecar `<name>.png.omo.json` (`omo-export-sidecar/3`: viewport, valid time, `source_layout`, colour scale, layer list with archive fingerprints, attribution, and `/data/sha256` of the PNG). The atomic sidecar rename is the single commit point; the badge changes to `saved → <path>` only after it succeeds. Choosing an existing destination asks for confirmation; if the system save dialog is unavailable a manual path field appears.
+5. **Projects**: the viewport, valid time (stored as a lead in hours), colour scale and layer stack are saved in `.omoproj` (still `omo-project/1`, the map is an additive field; M1 projects open unchanged with the default map, and a newer `omo-project/2+` file is refused before parsing) and take part in dirty state, auto-drafts and crash recovery.
+
+Attribution shown on the map and in exports: **ECMWF IFS HRES** via **Open-Meteo** (CC BY 4.0) for the forecast, **Natural Earth** (public domain) for the built-in coastlines and borders, and each mounted archive's own `attribution` metadata.
+
 ### Headless bootstrap probe (`omo-probe`)
 
 Verify DuckDB `v2.0.0` + `duckomo v0.4.0` bootstrap repeatability, R4 `spatial` provisioning, and offline isolation headlessly:
@@ -182,7 +194,7 @@ cargo +1.100.0 run -p omo-app --bin omo-harness --locked -- \
   gen-result --rows 1000000 --cols 20 --output /tmp/omo-1m.arrow
 OMOBENCH_FIXTURE_RESULT=/tmp/omo-1m.arrow cargo +1.100.0 run -p omo-app --bin omo-app --locked
 
-# Other subcommands: progress | crash-inject | cancel | export-kill
+# Other subcommands: progress | crash-inject | cancel | export-kill (`--source map` for the composite PNG) | map-crash (SIGKILL the real worker mid map-load/render)
 cargo +1.100.0 run -p omo-app --bin omo-harness --locked -- --help
 ```
 
@@ -238,7 +250,7 @@ flowchart LR
 | :--- | :--- | :--- |
 | **001 · M0 Skeleton Engine** | Released (`v0.1.0-m0`) | Skeleton engine, locked bootstrap, supervised worker, NSH native shell, station-series plan decision, CI & release verification |
 | **002 · M1 Station Time Series** | Released (`v0.1.0-m1`, see the [acceptance matrix](docs/m1/acceptance.md)) | Product catalog integration (default: ECMWF IFS HRES · 2 m temperature · 0–7 day horizon), UI station CSV ingestion, station time-series workflows, and project persistence |
-| **003 · M2 Static Regional Map** | Needs refinement | Revision-bound regional map jobs, PNG + sidecar export |
+| **003 · M2 Regional Tile Map & Layer Stack** | Implemented, awaiting acceptance (see [acceptance matrix](docs/m2/acceptance.md)) | Station-framed slippy map, numeric field tiles and hover readout, offline coastlines, local `.pmtiles` layers, composite PNG + `omo-export-sidecar/3`, `.omoproj` map state |
 | **004 · L1 Declarative Reports** | Needs refinement | Versioned `ReportSpec` (`omo-report/1`), allow-listed Rust renderer on frozen read-only snapshots |
 | **005 · M3 Dynamical Icechunk** | Needs refinement | Unified `Source` abstraction, STAC discovery, and Icechunk backend emitting the same `station_series` schema |
 
@@ -288,6 +300,7 @@ CI covers `ubuntu-24.04` (`linux_amd64`), `ubuntu-24.04-arm` (`linux_arm64`), `m
 | :--- | :--- |
 | M0 specification & validation quickstart | [M0 Spec](specs/001-m0-skeleton-engine/spec.md) · [Quickstart](specs/001-m0-skeleton-engine/quickstart.md) |
 | M1 specification, contracts & acceptance | [M1 Spec](specs/002-m1-station-time-series/spec.md) · [Quickstart](specs/002-m1-station-time-series/quickstart.md) · [Acceptance Matrix](docs/m1/acceptance.md) |
+| M2 specification, contracts & acceptance | [M2 Spec](specs/003-m2-regional-tile-map/spec.md) · [Quickstart](specs/003-m2-regional-tile-map/quickstart.md) · [Acceptance Matrix](docs/m2/acceptance.md) |
 | Acceptance matrix & measurements | [Acceptance Matrix](docs/m0/acceptance.md) · [Linux Prerequisites](docs/m0/linux-prereqs.md) |
 | Architecture decision records | [Channel Decision](docs/m0/decisions/channel.md) · [Series Plan](docs/m0/decisions/series-plan.md) · [R4 Spatial](docs/m0/decisions/r4.md) · [NSH Shell](docs/m0/decisions/shell.md) · [Engine Source](docs/m0/decisions/engine-source.md) |
 | Locked extension hashes & keys | [duckomo.lock.json](artifacts/duckomo.lock.json) |

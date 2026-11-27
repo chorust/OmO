@@ -45,9 +45,168 @@ struct EngineBackend {
     query_by_result: HashMap<String, QueryInfo>,
     series_cancel: std::sync::Arc<omo_engine::series::SeriesCancel>,
     stage_reporter: Option<StageReporter>,
+    fields: omo_engine::map::FieldCache,
+    pmtiles: HashMap<String, CachedPmtiles>,
+}
+
+/// An open `.pmtiles` archive keyed by path; reopened when the file changes on disk.
+struct CachedPmtiles {
+    len: u64,
+    modified: Option<std::time::SystemTime>,
+    layer: std::sync::Arc<omo_engine::map::pmtiles_layer::PmtilesLayer>,
 }
 
 impl EngineBackend {
+    /// Open (or reuse) the archive at `path`.
+    fn open_pmtiles(
+        &mut self,
+        path: &str,
+    ) -> Result<std::sync::Arc<omo_engine::map::pmtiles_layer::PmtilesLayer>, String> {
+        let meta = std::fs::metadata(path).map_err(|e| format!("cannot read `{path}`: {e}"))?;
+        let (len, modified) = (meta.len(), meta.modified().ok());
+        if let Some(cached) = self.pmtiles.get(path)
+            && cached.len == len
+            && cached.modified == modified
+        {
+            return Ok(std::sync::Arc::clone(&cached.layer));
+        }
+        let layer = std::sync::Arc::new(
+            omo_engine::map::pmtiles_layer::PmtilesLayer::open(std::path::Path::new(path))
+                .map_err(|e| e.to_string())?,
+        );
+        if self.pmtiles.len() >= 8 {
+            self.pmtiles.clear();
+        }
+        self.pmtiles.insert(
+            path.to_owned(),
+            CachedPmtiles {
+                len,
+                modified,
+                layer: std::sync::Arc::clone(&layer),
+            },
+        );
+        Ok(layer)
+    }
+
+    /// `export` with a `map_export` snapshot: render the composite PNG synchronously from the
+    /// worker-resident field and mounted archives, then publish it with its `/3` sidecar.
+    fn export_map_png(&mut self, body: &Value) -> Result<Value, BackendError> {
+        use omo_engine::map::compose_export::{self, ComposeError};
+        use omo_protocol::map::{ExportLayerKind, MapExportRequest};
+        let report = self
+            .conn
+            .as_ref()
+            .ok_or("engine is not bootstrapped")?
+            .report()
+            .clone();
+        let target = PathBuf::from(
+            body.get("target")
+                .and_then(Value::as_str)
+                .ok_or("export target is required")?,
+        );
+        if !target.is_absolute() {
+            return Err("export target must be absolute".into());
+        }
+        if body.get("format").and_then(Value::as_str) != Some("png") {
+            return Err("map export format must be png".into());
+        }
+        let confirmed = body
+            .get("overwrite_confirmed")
+            .and_then(Value::as_bool)
+            .unwrap_or(false);
+        let req: MapExportRequest = serde_json::from_value(
+            body.get("map_export")
+                .cloned()
+                .ok_or("map_export snapshot is required")?,
+        )
+        .map_err(|e| e.to_string())?;
+        // Fail before any file is staged when the target would need confirmation.
+        if (target.exists() || omo_engine::export::sidecar_path(&target).exists()) && !confirmed {
+            return Err(BackendError::new(
+                omo_engine::export::ExportError::OverwriteConfirmationRequired.to_string(),
+            ));
+        }
+        self.report_stage("reading");
+        let mut archives = HashMap::new();
+        for layer in &req.layers {
+            if layer.kind != ExportLayerKind::LocalPmtiles {
+                continue;
+            }
+            let path = layer.path.as_deref().unwrap_or_default();
+            match self.open_pmtiles(path) {
+                Ok(archive) => {
+                    archives.insert(layer.id.clone(), archive);
+                }
+                Err(message) => {
+                    return Err(BackendError::typed(
+                        FailKind::InvalidLayer,
+                        format!("layer `{}`: {message}", layer.id),
+                    ));
+                }
+            }
+        }
+        self.report_stage("rendering");
+        let cancel = std::sync::Arc::clone(&self.series_cancel);
+        let field_id = req.field_id.clone();
+        let field = match field_id.as_deref() {
+            Some(id) => self.fields.get(id),
+            None => None,
+        };
+        let composed = compose_export::compose(&req, field, &archives, &mut || {
+            cancel.check().map_err(|_| ComposeError::Cancelled)
+        })
+        .map_err(|e| match e {
+            ComposeError::Cancelled => BackendError::new("export cancelled"),
+            ComposeError::Layer { .. } => {
+                BackendError::typed(FailKind::InvalidLayer, e.to_string())
+            }
+            other => BackendError::new(other.to_string()),
+        })?;
+        let file_name = target
+            .file_name()
+            .and_then(|n| n.to_str())
+            .ok_or("export target has no file name")?
+            .to_owned();
+        let engine = serde_json::json!({
+            "duckdb_version": report.duckdb_version,
+            "duckomo_version": report.duckomo_version,
+            "channel": report.channel.as_str(),
+        });
+        let exported_at = omo_protocol::utc::now_utc_rfc3339();
+        let stage_reporter = self.stage_reporter.clone();
+        let sha256 = omo_engine::export::export_map_png(
+            &target,
+            &composed.png,
+            |sha| {
+                compose_export::build_sidecar(
+                    &req,
+                    &composed,
+                    sha,
+                    &file_name,
+                    engine,
+                    &exported_at,
+                )
+            },
+            confirmed,
+            |stage| {
+                if let Some(reporter) = &stage_reporter {
+                    reporter.set_stage(stage);
+                }
+            },
+            |_| Ok(()),
+        )
+        .map_err(|e| BackendError::new(e.to_string()))?;
+        Ok(serde_json::json!({
+            "request_id": body.get("request_id"),
+            "target": target,
+            "sidecar": omo_engine::export::sidecar_path(&target),
+            "sidecar_path": omo_engine::export::sidecar_path(&target),
+            "data_sha256": sha256,
+            "sha256": sha256,
+            "bytes": composed.png.len(),
+        }))
+    }
+
     fn report_stage(&self, stage: &'static str) {
         if let Some(reporter) = &self.stage_reporter {
             reporter.set_stage(stage);
@@ -208,6 +367,304 @@ impl WorkerBackend for EngineBackend {
         };
         let run = resolve(&req.entry, &source, selector).map_err(map_run_error)?;
         serde_json::to_value(ResolveRunResult { run }).map_err(|e| e.to_string().into())
+    }
+
+    /// `map_load_field`: resolve the run and valid time, read the regional field, and keep it in
+    /// the bounded per-generation cache for tile rendering and inspection.
+    fn map_load_field(&mut self, body: &Value) -> Result<Value, BackendError> {
+        use omo_engine::map::fetch::{self, LoadFieldParams};
+        use omo_protocol::map::{LoadFieldRequest, LoadFieldResult, MapRunSelector};
+        self.report_stage("planning");
+        let config = self
+            .bootstrap_config
+            .clone()
+            .ok_or("bootstrap config is missing")?;
+        let req: LoadFieldRequest =
+            serde_json::from_value(body.clone()).map_err(|e| e.to_string())?;
+        let run = {
+            let conn = self.conn.as_ref().ok_or("engine is not bootstrapped")?;
+            if !conn.capabilities().remote {
+                return Err(BackendError::typed(
+                    FailKind::Capability("capability `remote` is unavailable".into()),
+                    "capability `remote` is unavailable",
+                ));
+            }
+            let source = ConnMetaSource {
+                conn,
+                entry: &req.catalog_entry,
+            };
+            let selector = match &req.run {
+                MapRunSelector::LatestComplete => RunRef::LatestComplete,
+                MapRunSelector::Explicit(utc) => RunRef::Explicit(utc.clone()),
+            };
+            resolve(&req.catalog_entry, &source, selector).map_err(map_run_error)?
+        };
+        let valid_time = match &req.valid_time_utc {
+            None => run.valid_times.first().cloned(),
+            Some(requested) => run
+                .valid_times
+                .iter()
+                .find(|published| published.as_str() == requested.as_str())
+                .cloned(),
+        }
+        .ok_or_else(|| {
+            BackendError::typed(
+                FailKind::ValidTimeUnavailable,
+                format!(
+                    "valid time {} is not published by run {}",
+                    req.valid_time_utc.as_deref().unwrap_or("<first>"),
+                    run.reference_time_utc
+                ),
+            )
+        })?;
+        self.series_cancel.check().map_err(map_series_error)?;
+        let stage = self.stage_reporter.clone();
+        let mut progress = |name: &'static str, _detail: Option<&str>| {
+            if let Some(reporter) = &stage {
+                reporter.set_stage(name);
+            }
+        };
+        let loaded = fetch::load_field(
+            &LoadFieldParams {
+                config: &config,
+                entry: &req.catalog_entry,
+                field_id: &req.field_id,
+                reference_time_utc: &run.reference_time_utc,
+                valid_time_utc: &valid_time,
+                bbox: &req.bbox,
+                force_data_run: req.force_data_run,
+                readers: std::env::var("OMO_MAP_READERS")
+                    .ok()
+                    .and_then(|v| v.parse().ok())
+                    .unwrap_or(fetch::MAX_READERS),
+                cancel: Some(std::sync::Arc::clone(&self.series_cancel)),
+            },
+            &mut progress,
+        )
+        .map_err(map_fetch_error)?;
+        let field = loaded.field;
+        let result = LoadFieldResult {
+            field_id: field.field_id.clone(),
+            run,
+            valid_time_utc: field.valid_time_utc.clone(),
+            source_layout: field.source_layout,
+            fallback_notice: loaded.fallback_notice,
+            source_object: field.source_object.clone(),
+            object_version: field.object_version.clone(),
+            stats: field.stats.clone(),
+            coverage_bbox: field.coverage.clone(),
+            scan_metrics: loaded.metrics.to_json(),
+            readout_path: None,
+        };
+        self.fields.insert(field);
+        serde_json::to_value(result).map_err(|e| e.to_string().into())
+    }
+
+    /// `map_render_tiles`: rasterize the visible tile batch from the cached numeric field and
+    /// write each non-empty tile as generation-scoped straight RGBA8 (`256 x 256`).
+    fn map_render_tiles(&mut self, body: &Value) -> Result<Value, BackendError> {
+        use omo_engine::map::raster::{ColorLut, render_tile};
+        use omo_protocol::map::{
+            LayerError, RenderLayerKind, RenderTilesRequest, RenderTilesResult, RenderedTile,
+        };
+        const MAX_TILES_PER_BATCH: usize = 128;
+        self.report_stage("reading");
+        let req: RenderTilesRequest =
+            serde_json::from_value(body.clone()).map_err(|e| e.to_string())?;
+        if req.tiles.len() > MAX_TILES_PER_BATCH {
+            return Err(format!(
+                "tile batch of {} exceeds {MAX_TILES_PER_BATCH}",
+                req.tiles.len()
+            )
+            .into());
+        }
+        if let Some(bad) = req.tiles.iter().find(|tile| !tile.is_valid()) {
+            return Err(format!("invalid tile coordinate z{}/{}/{}", bad.z, bad.x, bad.y).into());
+        }
+        let lut = ColorLut::new(&req.color_scale.palette).map_err(|e| e.to_string())?;
+        let dir = self.result_root.join(format!("g{}", self.generation));
+        std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
+        let mut tiles = Vec::new();
+        let mut layer_errors = Vec::new();
+        for layer in &req.layers {
+            match layer.kind {
+                RenderLayerKind::ForecastField => {
+                    let Some(field_id) = req.field_id.as_deref() else {
+                        layer_errors.push(LayerError {
+                            layer_id: layer.layer_id.clone(),
+                            message: "no field is loaded".into(),
+                        });
+                        continue;
+                    };
+                    let Some(field) = self.fields.get(field_id) else {
+                        layer_errors.push(LayerError {
+                            layer_id: layer.layer_id.clone(),
+                            message: format!("field `{field_id}` is not loaded"),
+                        });
+                        continue;
+                    };
+                    let sampler = field.values.sampler();
+                    for tile in &req.tiles {
+                        self.series_cancel.check().map_err(map_series_error)?;
+                        let (pixels, empty) = render_tile(
+                            &sampler,
+                            &lut,
+                            req.color_scale.min,
+                            req.color_scale.max,
+                            tile.z,
+                            tile.x,
+                            tile.y,
+                        );
+                        let rgba_path = if empty {
+                            String::new()
+                        } else {
+                            let path = dir.join(format!(
+                                "tile_{}_{}_{}_{}_{}.rgba",
+                                req.revision,
+                                sanitize_layer_id(&layer.layer_id),
+                                tile.z,
+                                tile.x,
+                                tile.y
+                            ));
+                            write_atomic(&path, &pixels).map_err(|e| e.to_string())?;
+                            path.to_string_lossy().into_owned()
+                        };
+                        tiles.push(RenderedTile {
+                            layer_id: layer.layer_id.clone(),
+                            z: tile.z,
+                            x: tile.x,
+                            y: tile.y,
+                            width: omo_protocol::map::MAP_TILE_SIZE,
+                            height: omo_protocol::map::MAP_TILE_SIZE,
+                            rgba_path,
+                            empty,
+                        });
+                    }
+                }
+                RenderLayerKind::LocalPmtiles => {
+                    let archive = layer
+                        .path
+                        .as_deref()
+                        .ok_or_else(|| "local PMTiles layer has no path".to_owned())
+                        .and_then(|path| self.open_pmtiles(path));
+                    let archive = match archive {
+                        Ok(archive) => archive,
+                        Err(message) => {
+                            layer_errors.push(LayerError {
+                                layer_id: layer.layer_id.clone(),
+                                message,
+                            });
+                            continue;
+                        }
+                    };
+                    let mut failed = false;
+                    for tile in &req.tiles {
+                        self.series_cancel.check().map_err(map_series_error)?;
+                        let rendered = if failed {
+                            Ok(None)
+                        } else {
+                            archive.tile_rgba(tile.z, tile.x, tile.y)
+                        };
+                        let pixels = match rendered {
+                            Ok(pixels) => pixels,
+                            Err(error) => {
+                                // One broken tile marks the layer; healthy layers still render.
+                                failed = true;
+                                layer_errors.push(LayerError {
+                                    layer_id: layer.layer_id.clone(),
+                                    message: error.to_string(),
+                                });
+                                None
+                            }
+                        };
+                        let pixels =
+                            pixels.filter(|px| px.as_chunks::<4>().0.iter().any(|p| p[3] != 0));
+                        let rgba_path = match &pixels {
+                            Some(pixels) => {
+                                let path = dir.join(format!(
+                                    "tile_{}_{}_{}_{}_{}.rgba",
+                                    req.revision,
+                                    sanitize_layer_id(&layer.layer_id),
+                                    tile.z,
+                                    tile.x,
+                                    tile.y
+                                ));
+                                write_atomic(&path, pixels).map_err(|e| e.to_string())?;
+                                path.to_string_lossy().into_owned()
+                            }
+                            None => String::new(),
+                        };
+                        tiles.push(RenderedTile {
+                            layer_id: layer.layer_id.clone(),
+                            z: tile.z,
+                            x: tile.x,
+                            y: tile.y,
+                            width: omo_protocol::map::MAP_TILE_SIZE,
+                            height: omo_protocol::map::MAP_TILE_SIZE,
+                            rgba_path,
+                            empty: pixels.is_none(),
+                        });
+                    }
+                }
+            }
+        }
+        serde_json::to_value(RenderTilesResult {
+            result_id: req.result_id,
+            revision: req.revision,
+            tiles,
+            layer_errors,
+        })
+        .map_err(|e| e.to_string().into())
+    }
+
+    /// `map_layer_probe`: validate a local `.pmtiles` archive and describe it.
+    fn map_layer_probe(&mut self, body: &Value) -> Result<Value, BackendError> {
+        use omo_protocol::map::{LayerProbeRequest, LayerProbeResult, RenderLayerKind};
+        self.report_stage("reading");
+        let req: LayerProbeRequest =
+            serde_json::from_value(body.clone()).map_err(|e| e.to_string())?;
+        let invalid = |message: String| BackendError::typed(FailKind::InvalidLayer, message);
+        if req.kind != RenderLayerKind::LocalPmtiles {
+            return Err(invalid(format!(
+                "layer `{}` is not a local PMTiles layer",
+                req.layer_id
+            )));
+        }
+        let archive =
+            omo_engine::map::pmtiles_layer::PmtilesLayer::open(std::path::Path::new(&req.path))
+                .map_err(|e| invalid(format!("{}: {e}", req.path)))?;
+        archive
+            .smoke_check()
+            .map_err(|e| invalid(format!("{}: {e}", req.path)))?;
+        let info = archive.info(true);
+        serde_json::to_value(LayerProbeResult {
+            layer_id: req.layer_id,
+            info,
+        })
+        .map_err(|e| e.to_string().into())
+    }
+
+    /// `map_inspect`: exact nearest-cell numeric readout from the cached field.
+    fn map_inspect(&mut self, body: &Value) -> Result<Value, BackendError> {
+        use omo_protocol::map::{ForecastSampleState, InspectRequest, InspectResult};
+        self.report_stage("reading");
+        let req: InspectRequest =
+            serde_json::from_value(body.clone()).map_err(|e| e.to_string())?;
+        let sample = match self.fields.peek(&req.field_id) {
+            Some(field) => omo_engine::map::inspect_field(
+                field,
+                req.latitude,
+                req.longitude,
+                req.max_distance_m,
+            ),
+            None => ForecastSampleState::NotLoaded,
+        };
+        serde_json::to_value(InspectResult {
+            latitude: req.latitude,
+            longitude: req.longitude,
+            sample,
+        })
+        .map_err(|e| e.to_string().into())
     }
 
     fn series(&mut self, body: &Value) -> Result<Value, BackendError> {
@@ -402,10 +859,7 @@ impl WorkerBackend for EngineBackend {
             .and_then(Value::as_str)
             .ok_or("series_plan plan is required")?;
         if plan != "A" && plan != "B" {
-            return Err(format!(
-                "series_plan plan must be \"A\" or \"B\", got `{plan}`"
-            )
-            .into());
+            return Err(format!("series_plan plan must be \"A\" or \"B\", got `{plan}`").into());
         }
         let stations_path = body
             .get("stations_ref")
@@ -484,6 +938,9 @@ impl WorkerBackend for EngineBackend {
     }
 
     fn export(&mut self, body: &Value) -> Result<Value, BackendError> {
+        if body.get("map_export").is_some() {
+            return self.export_map_png(body);
+        }
         let conn = self.conn.as_ref().ok_or("engine is not bootstrapped")?;
         let (sql, known_rows) = if let Some(sql) = body.get("sql").and_then(Value::as_str) {
             (
@@ -573,52 +1030,11 @@ fn parse_utc_instant(value: &Value) -> Result<i64, String> {
 }
 
 fn parse_rfc3339_utc_seconds(text: &str) -> Result<i64, String> {
-    let core = text
-        .strip_suffix('Z')
-        .ok_or_else(|| format!("window_utc timestamp must end with Z: {text}"))?;
-    let (date, time) = core
-        .split_once('T')
-        .ok_or_else(|| format!("invalid RFC 3339 UTC timestamp: {text}"))?;
-    let mut date_parts = date.split('-');
-    let year: i64 = date_parts
-        .next()
-        .and_then(|s| s.parse().ok())
-        .ok_or_else(|| format!("invalid year in timestamp: {text}"))?;
-    let month: u32 = date_parts
-        .next()
-        .and_then(|s| s.parse().ok())
-        .filter(|m| (1..=12).contains(m))
-        .ok_or_else(|| format!("invalid month in timestamp: {text}"))?;
-    let day: u32 = date_parts
-        .next()
-        .and_then(|s| s.parse().ok())
-        .filter(|d| (1..=31).contains(d))
-        .ok_or_else(|| format!("invalid day in timestamp: {text}"))?;
-    if date_parts.next().is_some() {
-        return Err(format!("invalid date in timestamp: {text}"));
+    if !text.ends_with('Z') {
+        return Err(format!("window_utc timestamp must end with Z: {text}"));
     }
-    let mut time_parts = time.split(':');
-    let hour: u32 = time_parts
-        .next()
-        .and_then(|s| s.parse().ok())
-        .filter(|h| *h < 24)
-        .ok_or_else(|| format!("invalid hour in timestamp: {text}"))?;
-    let minute: u32 = time_parts
-        .next()
-        .and_then(|s| s.parse().ok())
-        .filter(|m| *m < 60)
-        .ok_or_else(|| format!("invalid minute in timestamp: {text}"))?;
-    let second: u32 = time_parts
-        .next()
-        .and_then(|s| s.parse().ok())
-        .filter(|s| *s < 60)
-        .ok_or_else(|| format!("invalid second in timestamp: {text}"))?;
-    if time_parts.next().is_some() {
-        return Err(format!("invalid time in timestamp: {text}"));
-    }
-
-    let days = omo_protocol::utc::days_from_civil(year, i64::from(month), i64::from(day));
-    Ok(days * 86_400 + i64::from(hour) * 3_600 + i64::from(minute) * 60 + i64::from(second))
+    omo_protocol::utc::parse_utc_rfc3339(text)
+        .ok_or_else(|| format!("invalid RFC 3339 UTC timestamp: {text}"))
 }
 
 fn map_run_error(error: RunError) -> BackendError {
@@ -644,6 +1060,42 @@ fn map_series_error(error: SeriesError) -> BackendError {
         }
         SeriesError::SourceChanged(ref msg) => {
             BackendError::typed(FailKind::SourceChanged, msg.clone())
+        }
+        other => BackendError::new(other.to_string()),
+    }
+}
+
+/// Layer ids become part of a file name: keep `[A-Za-z0-9_-]`, replace everything else.
+fn sanitize_layer_id(id: &str) -> String {
+    id.chars()
+        .map(|c| {
+            if c.is_ascii_alphanumeric() || c == '-' || c == '_' {
+                c
+            } else {
+                '_'
+            }
+        })
+        .collect()
+}
+
+/// Write `bytes` to `path` via a sibling temp file and rename so readers never see a partial tile.
+fn write_atomic(path: &std::path::Path, bytes: &[u8]) -> std::io::Result<()> {
+    let tmp = path.with_extension("rgba.tmp");
+    std::fs::write(&tmp, bytes)?;
+    std::fs::rename(&tmp, path)
+}
+
+fn map_fetch_error(error: omo_engine::map::fetch::FetchError) -> BackendError {
+    use omo_engine::map::fetch::FetchError;
+    match error {
+        FetchError::ValidTimeUnavailable(ref msg) => {
+            BackendError::typed(FailKind::ValidTimeUnavailable, msg.clone())
+        }
+        FetchError::SourceChanged(ref msg) => {
+            BackendError::typed(FailKind::SourceChanged, msg.clone())
+        }
+        FetchError::GridMismatch(ref msg) => {
+            BackendError::typed(FailKind::GridMismatch, msg.clone())
         }
         other => BackendError::new(other.to_string()),
     }

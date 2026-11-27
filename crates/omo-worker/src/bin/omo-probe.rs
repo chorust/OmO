@@ -160,6 +160,8 @@ fn run(args: Args) -> Result<(ProbeReport, bool), String> {
             no_network: args.no_network,
             install_spatial_before_lock: args.r4,
             database_path: None,
+            duckomo_remote_max_request: None,
+            duckomo_remote_merge_gap: None,
         };
 
         let attempt = if is_measurement {

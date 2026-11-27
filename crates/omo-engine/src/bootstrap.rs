@@ -120,6 +120,15 @@ pub struct BootstrapReport {
     pub timings_ms: BootstrapTimings,
     pub extension_settings: Vec<(String, String)>,
     pub r4: R4Report,
+    /// Remote-read tuning applied before the configuration lock; `None` for local-only sessions.
+    #[serde(default)]
+    pub remote_tuning: Option<RemoteTuning>,
+}
+
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
+pub struct RemoteTuning {
+    pub max_request_bytes: u64,
+    pub merge_gap_bytes: u64,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -334,6 +343,24 @@ pub(crate) fn open_and_bootstrap(
         "not_requested".to_owned()
     };
 
+    // `duckomo` registers these options at load; they cannot change once locked (M2 `S1-M2`).
+    let remote_tuning = if remote {
+        let tuning = RemoteTuning {
+            max_request_bytes: config.remote_max_request(),
+            merge_gap_bytes: config.remote_merge_gap(),
+        };
+        conn.execute_batch(&format!(
+            "SET duckomo_remote_max_request = {}; SET duckomo_remote_merge_gap = {};",
+            tuning.max_request_bytes, tuning.merge_gap_bytes
+        ))
+        .map_err(|error| BootstrapError::Configuration {
+            reason: format!("could not apply duckomo remote read tuning before the lock: {error}"),
+        })?;
+        Some(tuning)
+    } else {
+        None
+    };
+
     let lock_started = Instant::now();
     let unsigned_close = if channel.allows_unsigned_extensions() {
         conn.execute_batch("SET allow_unsigned_extensions = false;")
@@ -392,6 +419,19 @@ pub(crate) fn open_and_bootstrap(
         return Err(BootstrapError::ConfigLock {
             reason: format!("lock_configuration reported {locked}"),
         });
+    }
+    if let Some(tuning) = remote_tuning {
+        for (name, expected) in [
+            ("duckomo_remote_max_request", tuning.max_request_bytes),
+            ("duckomo_remote_merge_gap", tuning.merge_gap_bytes),
+        ] {
+            let actual = setting(&conn, name, "configuration_lock")?;
+            if actual.parse::<u64>().ok() != Some(expected) {
+                return Err(BootstrapError::ConfigLock {
+                    reason: format!("{name} reported {actual} after the lock, expected {expected}"),
+                });
+            }
+        }
     }
     let extension_settings = extension_settings_snapshot(&conn)?;
     let lock_ms = millis(lock_started);
@@ -455,6 +495,7 @@ pub(crate) fn open_and_bootstrap(
             spatial_preinstall,
             spatial_after_lock: "not_run".to_owned(),
         },
+        remote_tuning,
     };
     Ok((conn, report))
 }

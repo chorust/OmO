@@ -256,6 +256,45 @@ pub fn export_sql_with_progress(
     Ok(hash)
 }
 
+/// Publish a composite map PNG with its `omo-export-sidecar/3`. The staging, owner marker, backup
+/// and rename ordering are exactly those of [`commit_staged`]; `sidecar` receives the PNG's
+/// SHA-256 and returns the document to store. `after_step` is the fault-injection hook.
+pub fn export_map_png(
+    target: &Path,
+    png: &[u8],
+    sidecar: impl FnOnce(&str) -> serde_json::Value,
+    overwrite_confirmed: bool,
+    mut on_stage: impl FnMut(&'static str),
+    after_step: impl FnMut(ExportStep) -> io::Result<()>,
+) -> Result<String, ExportError> {
+    let parent = target.parent().ok_or(ExportError::InvalidPath)?;
+    let name = target
+        .file_name()
+        .and_then(|v| v.to_str())
+        .ok_or(ExportError::InvalidPath)?;
+    if (target.exists() || sidecar_path(target).exists()) && !overwrite_confirmed {
+        return Err(ExportError::OverwriteConfirmationRequired);
+    }
+    on_stage("writing");
+    let staging = tempfile::Builder::new()
+        .prefix(&format!(".{name}.omo-tmp-"))
+        .tempdir_in(parent)?;
+    fs::write(staging.path().join(".omo-owner"), STAGING_OWNER_MARKER)?;
+    fs::write(staging.path().join("data"), png)?;
+    let hash = format!("{:x}", Sha256::digest(png));
+    fs::write(
+        staging.path().join("sidecar"),
+        serde_json::to_vec_pretty(&sidecar(&hash))
+            .map_err(|e| ExportError::Query(e.to_string()))?,
+    )?;
+    fs::File::open(staging.path())?.sync_all()?;
+    on_stage("committing");
+    // Persist the staging directory so failures after the first commit step remain recoverable.
+    let staging = staging.keep();
+    commit_staged(target, &staging, overwrite_confirmed, after_step)?;
+    Ok(hash)
+}
+
 fn now_utc_rfc3339() -> String {
     omo_protocol::utc::now_utc_rfc3339()
 }

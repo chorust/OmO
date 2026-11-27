@@ -38,6 +38,49 @@ pub struct GridSpec {
     pub points: u64,
 }
 
+/// Optional Open-Meteo `data_spatial` single-timestep layout (feature 003, `contracts/catalog-m2.md`).
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct SpatialLayout {
+    pub kind: String,
+    pub base: String,
+    pub object: String,
+}
+
+pub const SPATIAL_LAYOUT_KIND: &str = "data_spatial";
+const SPATIAL_OBJECT_TOKENS: &[&str] = &[
+    "{YYYY}",
+    "{MM}",
+    "{DD}",
+    "{HH}",
+    "{valid_YYYY}",
+    "{valid_MM}",
+    "{valid_DD}",
+    "{valid_HH}",
+    "{valid_mm}",
+];
+
+impl SpatialLayout {
+    /// Returns a human-readable reason when the layout is invalid. The `kind` is checked
+    /// separately so callers can report `UnknownLayout`.
+    pub fn validate_shape(&self) -> Result<(), String> {
+        let base = self.base.as_str();
+        if base.is_empty()
+            || !(base.starts_with("s3://") || base.starts_with("https://"))
+            || !base.ends_with('/')
+        {
+            return Err(format!(
+                "spatial_layout.base `{base}` must be a non-empty s3:// or https:// URL ending with `/`"
+            ));
+        }
+        for token in SPATIAL_OBJECT_TOKENS {
+            if !self.object.contains(token) {
+                return Err(format!("spatial_layout.object is missing token `{token}`"));
+            }
+        }
+        Ok(())
+    }
+}
+
 /// One `omo-catalog/1` entry. Field names match `contracts/catalog.md`.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct CatalogEntry {
@@ -46,6 +89,8 @@ pub struct CatalogEntry {
     pub product: Product,
     pub variable: Variable,
     pub layout: DataLayout,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub spatial_layout: Option<SpatialLayout>,
     pub grid: GridSpec,
     pub cycles: BTreeMap<String, u32>,
     pub default_window_h: [u32; 2],
@@ -209,6 +254,8 @@ pub enum CatalogValidationError {
     UnknownLayout { kind: String },
     #[error("unknown grid kind `{kind}`")]
     UnknownGrid { kind: String },
+    #[error("invalid spatial_layout: {detail}")]
+    InvalidSpatialLayout { detail: String },
     #[error("default window {start}–{end} h is outside the declared cycle horizons")]
     WindowOutsideHorizons { start: u32, end: u32 },
     #[error("catalog has no entries")]
@@ -247,6 +294,16 @@ impl CatalogDocument {
                 return Err(CatalogValidationError::UnknownLayout {
                     kind: entry.layout.kind.clone(),
                 });
+            }
+            if let Some(spatial) = &entry.spatial_layout {
+                if spatial.kind != SPATIAL_LAYOUT_KIND {
+                    return Err(CatalogValidationError::UnknownLayout {
+                        kind: spatial.kind.clone(),
+                    });
+                }
+                spatial
+                    .validate_shape()
+                    .map_err(|detail| CatalogValidationError::InvalidSpatialLayout { detail })?;
             }
             if !KNOWN_GRIDS.contains(&entry.grid.kind.as_str()) {
                 return Err(CatalogValidationError::UnknownGrid {
